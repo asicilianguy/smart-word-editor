@@ -8,8 +8,19 @@ import { Table } from "@tiptap/extension-table";
 import TableRow from "@tiptap/extension-table-row";
 import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
-import { useEffect, forwardRef, useImperativeHandle, useRef } from "react";
+import {
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
+  useRef,
+  useCallback,
+} from "react";
 import type { JSONContent } from "@tiptap/react";
+import {
+  Checkbox,
+  CHECKBOX_UNCHECKED,
+  CHECKBOX_CHECKED,
+} from "./extensions/checkbox-extension";
 
 // ============================================================================
 // TYPES
@@ -32,6 +43,8 @@ interface TipTapEditorProps {
     hasCursor: boolean,
     selectedText?: string
   ) => void;
+  /** Chiamato quando una checkbox viene togglata. Riceve indice e nuovo stato. */
+  onCheckboxToggle?: (checkboxIndex: number, newChecked: boolean) => void;
 }
 
 const SELECTION_DEBOUNCE_MS = 100;
@@ -42,7 +55,7 @@ const SELECTION_DEBOUNCE_MS = 100;
 
 export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(
   function TipTapEditor(
-    { initialContent, onContentChange, onSelectionChange },
+    { initialContent, onContentChange, onSelectionChange, onCheckboxToggle },
     ref
   ) {
     const selectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -51,6 +64,17 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(
       to: number;
       text: string;
     } | null>(null);
+
+    // Callback per quando una checkbox viene togglata
+    // Riceve (checkboxIndex, newChecked) dalla nuova estensione
+    const handleCheckboxToggle = useCallback(
+      (checkboxIndex: number, newChecked: boolean) => {
+        if (onCheckboxToggle) {
+          onCheckboxToggle(checkboxIndex, newChecked);
+        }
+      },
+      [onCheckboxToggle]
+    );
 
     const editor = useEditor({
       immediatelyRender: false,
@@ -86,6 +110,10 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(
           HTMLAttributes: {
             class: "docx-header-cell",
           },
+        }),
+        // Estensione checkbox interattive (versione 4 - per indice)
+        Checkbox.configure({
+          onToggle: handleCheckboxToggle,
         }),
       ],
       content: initialContent,
@@ -233,7 +261,7 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(
           </div>
         </div>
 
-        {/* Stili per tabelle */}
+        {/* Stili per tabelle e checkbox */}
         <style jsx global>{`
           /* Reset prose table styles */
           .docx-preview .ProseMirror table {
@@ -272,9 +300,31 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(
             margin: 0;
           }
 
-          /* Checkbox styling */
-          .docx-preview .ProseMirror {
-            font-family: inherit;
+          /* Checkbox interattive */
+          .docx-preview .ProseMirror .tiptap-checkbox {
+            cursor: pointer;
+            font-size: 1.1em;
+            padding: 0 2px;
+            border-radius: 2px;
+            transition: all 0.15s ease;
+            user-select: none;
+          }
+
+          .docx-preview .ProseMirror .tiptap-checkbox:hover {
+            background-color: #dbeafe;
+            transform: scale(1.2);
+          }
+
+          .docx-preview .ProseMirror .tiptap-checkbox[data-checked="true"] {
+            color: #16a34a;
+          }
+
+          .docx-preview .ProseMirror .tiptap-checkbox[data-checked="false"] {
+            color: #6b7280;
+          }
+
+          .docx-preview .ProseMirror .tiptap-checkbox:active {
+            transform: scale(0.95);
           }
 
           /* Dark mode */
@@ -294,6 +344,24 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(
           .dark .docx-preview .ProseMirror td.selectedCell,
           .dark .docx-preview .ProseMirror th.selectedCell {
             background-color: #1e3a5f;
+          }
+
+          .dark .docx-preview .ProseMirror .tiptap-checkbox:hover {
+            background-color: #1e3a5f;
+          }
+
+          .dark
+            .docx-preview
+            .ProseMirror
+            .tiptap-checkbox[data-checked="true"] {
+            color: #22c55e;
+          }
+
+          .dark
+            .docx-preview
+            .ProseMirror
+            .tiptap-checkbox[data-checked="false"] {
+            color: #9ca3af;
           }
         `}</style>
       </div>

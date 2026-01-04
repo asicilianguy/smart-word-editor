@@ -4,7 +4,6 @@ import { useState, useCallback, useRef } from "react";
 import type { JSONContent } from "@tiptap/react";
 import {
   parseDocument,
-  generateDocument,
   type DocumentContent,
   type Modification,
 } from "@/lib/api-client";
@@ -12,9 +11,17 @@ import type { DocumentState } from "@/lib/document-types";
 import { convertToTipTap } from "@/lib/content-converter";
 
 /**
- * Rappresenta una sostituzione esplicita fatta dall'utente
+ * Modifica checkbox (per indice)
  */
-export interface ExplicitReplacement {
+export interface CheckboxModification {
+  checkboxIndex: number;
+  newChecked: boolean;
+}
+
+/**
+ * Sostituzione testo
+ */
+export interface TextReplacement {
   id: string;
   originalText: string;
   newText: string;
@@ -24,10 +31,9 @@ export interface ExplicitReplacement {
 /**
  * Hook per la gestione del documento con TipTap
  *
- * IMPORTANTE: Le sostituzioni vengono tracciate esplicitamente quando
- * l'utente seleziona testo e lo sostituisce con un valore dal vault.
- * Questo approccio è molto più affidabile rispetto al confronto
- * tra contenuto TipTap e originale.
+ * VERSIONE 4:
+ * - Testo: tracking esplicito delle sostituzioni
+ * - Checkbox: identificate per INDICE (0, 1, 2, ...), non per matching testuale
  */
 export function useDocument() {
   const [documentState, setDocumentState] = useState<DocumentState | null>(
@@ -37,10 +43,16 @@ export function useDocument() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Traccia le sostituzioni esplicite fatte dall'utente
-  const [replacements, setReplacements] = useState<ExplicitReplacement[]>([]);
+  // Sostituzioni testo
+  const [textReplacements, setTextReplacements] = useState<TextReplacement[]>(
+    []
+  );
 
-  // Contenuto originale
+  // Modifiche checkbox (per indice!)
+  const [checkboxModifications, setCheckboxModifications] = useState<
+    Map<number, boolean>
+  >(new Map());
+
   const originalContent = useRef<DocumentContent | null>(null);
 
   /**
@@ -49,7 +61,8 @@ export function useDocument() {
   const uploadDocument = useCallback(async (file: File) => {
     setIsLoading(true);
     setError(null);
-    setReplacements([]); // Reset sostituzioni
+    setTextReplacements([]);
+    setCheckboxModifications(new Map());
 
     try {
       console.log("[useDocument] Inizio upload file:", file.name);
@@ -59,14 +72,10 @@ export function useDocument() {
         throw new Error("Errore durante il parsing del documento");
       }
 
-      // Salva l'originale
       originalContent.current = JSON.parse(JSON.stringify(response.content));
-
-      // Converti in formato TipTap
       const tiptap = convertToTipTap(response.content);
       setTiptapContent(tiptap);
 
-      // Imposta lo stato del documento
       setDocumentState({
         originalFile: file,
         content: response.content,
@@ -74,13 +83,11 @@ export function useDocument() {
         modifications: [],
       });
 
-      console.log("[useDocument] Upload completato con successo");
+      console.log("[useDocument] Upload completato");
     } catch (err) {
       console.error("[useDocument] Errore upload:", err);
       setError(
-        err instanceof Error
-          ? err.message
-          : "Errore durante il caricamento del documento"
+        err instanceof Error ? err.message : "Errore durante il caricamento"
       );
     } finally {
       setIsLoading(false);
@@ -88,73 +95,94 @@ export function useDocument() {
   }, []);
 
   /**
-   * Registra una sostituzione esplicita
-   *
-   * Questa funzione viene chiamata quando l'utente seleziona testo
-   * e lo sostituisce con un valore dal vault o testo libero.
+   * Registra una sostituzione TESTO
    */
-  const registerReplacement = useCallback(
+  const registerTextReplacement = useCallback(
     (originalText: string, newText: string) => {
       if (!originalText || originalText === newText) return;
 
-      const replacement: ExplicitReplacement = {
+      const replacement: TextReplacement = {
         id: crypto.randomUUID(),
         originalText: originalText.trim(),
         newText: newText,
         timestamp: Date.now(),
       };
 
-      console.log("[useDocument] Registrata sostituzione:", replacement);
+      console.log(
+        "[useDocument] Sostituzione testo:",
+        replacement.originalText.slice(0, 30)
+      );
 
-      setReplacements((prev) => {
-        // Rimuovi eventuali sostituzioni precedenti con lo stesso testo originale
+      setTextReplacements((prev) => {
         const filtered = prev.filter(
           (r) => r.originalText !== replacement.originalText
         );
         return [...filtered, replacement];
       });
 
-      // Aggiorna anche le modifications nel documentState per il contatore UI
-      setDocumentState((prev) => {
-        if (!prev) return prev;
-
-        const modification: Modification = {
-          position: {
-            type: "paragraph",
-            paragraph_index: 0,
-            run_index: 0,
-            char_start: 0,
-            char_end: originalText.length,
-          },
-          original_text: originalText.trim(),
-          new_text: newText,
-        };
-
-        // Rimuovi modifiche precedenti con lo stesso testo originale
-        const existingMods = prev.modifications.filter(
-          (m) => m.original_text !== originalText.trim()
-        );
-
-        return {
-          ...prev,
-          modifications: [...existingMods, modification],
-        };
-      });
+      // Aggiorna UI counter
+      updateModificationsCount();
     },
     []
   );
 
   /**
-   * Aggiorna il contenuto TipTap (per sincronizzazione UI)
-   * NON genera più modifications - queste vengono tracciate esplicitamente
+   * Registra modifica CHECKBOX (per indice)
+   */
+  const registerCheckboxModification = useCallback(
+    (checkboxIndex: number, newChecked: boolean) => {
+      console.log(
+        `[useDocument] Checkbox #${checkboxIndex} → ${newChecked ? "☑" : "☐"}`
+      );
+
+      setCheckboxModifications((prev) => {
+        const next = new Map(prev);
+        next.set(checkboxIndex, newChecked);
+        return next;
+      });
+
+      // Aggiorna UI counter
+      updateModificationsCount();
+    },
+    []
+  );
+
+  /**
+   * Aggiorna il contatore modifiche per la UI
+   */
+  const updateModificationsCount = useCallback(() => {
+    setDocumentState((prev) => {
+      if (!prev) return prev;
+
+      // Crea un array finto di modifiche solo per il contatore UI
+      const totalMods = textReplacements.length + checkboxModifications.size;
+      const fakeMods: Modification[] = Array(totalMods)
+        .fill(null)
+        .map((_, i) => ({
+          position: {
+            type: "paragraph" as const,
+            paragraph_index: 0,
+            run_index: 0,
+            char_start: 0,
+            char_end: 0,
+          },
+          original_text: `mod_${i}`,
+          new_text: `mod_${i}`,
+        }));
+
+      return { ...prev, modifications: fakeMods };
+    });
+  }, [textReplacements, checkboxModifications]);
+
+  /**
+   * Aggiorna contenuto TipTap
    */
   const handleTiptapChange = useCallback((newTiptapContent: JSONContent) => {
     setTiptapContent(newTiptapContent);
-    // Non facciamo più il confronto qui - le modifiche sono tracciate esplicitamente
   }, []);
 
   /**
-   * Scarica il documento DOCX con le modifiche applicate
+   * Scarica il documento con modifiche
    */
   const downloadDocument = useCallback(async () => {
     if (!documentState) return;
@@ -163,11 +191,11 @@ export function useDocument() {
     setError(null);
 
     try {
-      // Converti le sostituzioni esplicite in Modifications per il backend
-      const modifications: Modification[] = replacements.map((r) => ({
+      // Prepara modifiche testo
+      const textMods: Modification[] = textReplacements.map((r) => ({
         position: {
           type: "paragraph" as const,
-          paragraph_index: 0, // Non usato - il backend cerca per testo
+          paragraph_index: 0,
           run_index: 0,
           char_start: 0,
           char_end: r.originalText.length,
@@ -176,11 +204,21 @@ export function useDocument() {
         new_text: r.newText,
       }));
 
-      console.log("[useDocument] Invio modifiche al backend:", modifications);
+      // Prepara modifiche checkbox (per indice!)
+      const checkboxMods: CheckboxModification[] = [];
+      checkboxModifications.forEach((newChecked, checkboxIndex) => {
+        checkboxMods.push({ checkboxIndex, newChecked });
+      });
 
-      const blob = await generateDocument(
+      console.log("[useDocument] Invio:", {
+        textMods: textMods.length,
+        checkboxMods: checkboxMods.length,
+      });
+
+      const blob = await generateDocumentWithCheckboxes(
         documentState.originalFile,
-        modifications
+        textMods,
+        checkboxMods
       );
 
       // Trigger download
@@ -194,81 +232,83 @@ export function useDocument() {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("[useDocument] Errore download:", err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Errore durante il download del documento"
-      );
+      setError(err instanceof Error ? err.message : "Errore download");
     } finally {
       setIsLoading(false);
     }
-  }, [documentState, replacements]);
+  }, [documentState, textReplacements, checkboxModifications]);
 
   /**
-   * Annulla una sostituzione specifica
-   */
-  const undoReplacement = useCallback(
-    (id: string) => {
-      setReplacements((prev) => prev.filter((r) => r.id !== id));
-
-      setDocumentState((prev) => {
-        if (!prev) return prev;
-        const replacement = replacements.find((r) => r.id === id);
-        if (!replacement) return prev;
-
-        return {
-          ...prev,
-          modifications: prev.modifications.filter(
-            (m) => m.original_text !== replacement.originalText
-          ),
-        };
-      });
-    },
-    [replacements]
-  );
-
-  /**
-   * Resetta lo stato
+   * Reset
    */
   const resetDocument = useCallback(() => {
     setDocumentState(null);
     setTiptapContent(null);
-    setReplacements([]);
+    setTextReplacements([]);
+    setCheckboxModifications(new Map());
     originalContent.current = null;
     setError(null);
   }, []);
 
+  // Calcola numero modifiche per UI
+  const totalModifications =
+    textReplacements.length + checkboxModifications.size;
+
   return {
-    // Stato
     document: documentState,
     content: documentState?.content ?? null,
     metadata: documentState?.metadata ?? null,
     modifications: documentState?.modifications ?? [],
-    replacements,
     tiptapContent,
     isLoading,
     error,
+    totalModifications,
 
-    // Azioni
     uploadDocument,
     handleTiptapChange,
-    registerReplacement,
-    undoReplacement,
+    registerTextReplacement,
+    registerCheckboxModification,
     downloadDocument,
     resetDocument,
   };
 }
 
 // ============================================================================
-// HELPERS
+// API HELPER
 // ============================================================================
+
+async function generateDocumentWithCheckboxes(
+  file: File,
+  textModifications: Modification[],
+  checkboxModifications: CheckboxModification[]
+): Promise<Blob> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("modifications", JSON.stringify(textModifications));
+  formData.append(
+    "checkbox_modifications",
+    JSON.stringify(checkboxModifications)
+  );
+
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+  const response = await fetch(`${API_BASE}/api/documents/generate`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Errore generazione: ${response.statusText}`);
+  }
+
+  return response.blob();
+}
 
 function getModifiedFileName(originalName: string): string {
   const lastDot = originalName.lastIndexOf(".");
-  if (lastDot === -1) {
-    return `${originalName}_modificato`;
-  }
-  const baseName = originalName.substring(0, lastDot);
-  const extension = originalName.substring(lastDot);
-  return `${baseName}_modificato${extension}`;
+  if (lastDot === -1) return `${originalName}_modificato`;
+  return `${originalName.substring(
+    0,
+    lastDot
+  )}_modificato${originalName.substring(lastDot)}`;
 }

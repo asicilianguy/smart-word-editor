@@ -33,12 +33,13 @@ export default function Page() {
   const {
     document: documentState,
     tiptapContent,
-    modifications,
+    totalModifications,
     isLoading,
     error,
     uploadDocument,
     handleTiptapChange,
-    registerReplacement,
+    registerTextReplacement,
+    registerCheckboxModification,
     downloadDocument,
     resetDocument,
   } = useDocument();
@@ -97,7 +98,7 @@ export default function Page() {
         editorRef.current.replaceSelection(value.value);
 
         // IMPORTANTE: Registra la sostituzione per il backend
-        registerReplacement(selectedText, value.value);
+        registerTextReplacement(selectedText, value.value);
       } else if (hasCursor) {
         // Solo cursore → inserisci (nessuna registrazione necessaria)
         editorRef.current.insertText(value.value);
@@ -106,13 +107,28 @@ export default function Page() {
       // Rimetti il focus sull'editor
       editorRef.current.focus();
     },
-    [hasSelection, hasCursor, selectedText, registerReplacement]
+    [hasSelection, hasCursor, selectedText, registerTextReplacement]
+  );
+
+  /**
+   * Gestisce il toggle di una checkbox
+   * Riceve l'indice della checkbox e il nuovo stato
+   */
+  const handleCheckboxToggle = useCallback(
+    (checkboxIndex: number, newChecked: boolean) => {
+      // Registra la modifica con l'indice
+      registerCheckboxModification(checkboxIndex, newChecked);
+      console.log(
+        `[Page] Checkbox #${checkboxIndex} → ${newChecked ? "☑" : "☐"}`
+      );
+    },
+    [registerCheckboxModification]
   );
 
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="h-16 border-b border-border bg-card flex items-center justify-between px-6 flex-shrink-0">
+      <header className="h-16 border-b border-border bg-card flex items-center justify-between px-6 shrink-0">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
             <FileText className="h-5 w-5 text-primary-foreground" />
@@ -128,12 +144,12 @@ export default function Page() {
         <div className="flex items-center gap-3">
           <BackendStatus status={backendStatus} />
 
-          {documentState && modifications.length > 0 && (
+          {documentState && totalModifications > 0 && (
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground bg-muted px-3 py-1.5 rounded-md">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
               <span>
-                {modifications.length} modific
-                {modifications.length === 1 ? "a" : "he"}
+                {totalModifications} modific
+                {totalModifications === 1 ? "a" : "he"}
               </span>
             </div>
           )}
@@ -187,7 +203,7 @@ export default function Page() {
 
         <div className="flex-1 flex overflow-hidden">
           {/* Editor Area - 70% */}
-          <div className="flex-[7] overflow-hidden">
+          <div className="flex-7 overflow-hidden">
             {!documentState && !isLoading && !error && (
               <EmptyState
                 backendStatus={backendStatus}
@@ -209,12 +225,13 @@ export default function Page() {
                 initialContent={tiptapContent}
                 onContentChange={handleTiptapChange}
                 onSelectionChange={handleSelectionChange}
+                onCheckboxToggle={handleCheckboxToggle}
               />
             )}
           </div>
 
           {/* Vault Sidebar - 30% */}
-          <div className="flex-[3] overflow-hidden">
+          <div className="flex-3 overflow-hidden">
             <VaultSidebar
               categories={vaultData}
               onValueClick={handleVaultValueClick}
