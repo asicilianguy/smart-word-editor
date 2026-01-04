@@ -1,15 +1,16 @@
 /**
  * Converte il contenuto dal formato backend (DocumentContent) al formato TipTap JSON
- * e viceversa per generare le modifiche.
  *
- * SEMPLIFICATO: usa solo funzionalità base di TipTap (StarterKit)
+ * VERSIONE CON TABELLE:
+ * - Supporto VERO per tabelle (richiede @tiptap/extension-table)
+ * - Checkbox normalizzate a ☐/☑ nel parser backend
+ * - Preview fedele al documento originale
  */
 
 import type {
   DocumentContent,
   ParagraphElement,
   TableElement,
-  Modification,
 } from "@/lib/api-client";
 import type { JSONContent } from "@tiptap/react";
 
@@ -31,17 +32,18 @@ export function convertToTipTap(content: DocumentContent): JSONContent {
     return doc;
   }
 
-  content.elements.forEach((element, index) => {
+  content.elements.forEach((element) => {
     if (element.type === "paragraph") {
       const para = convertParagraphToTipTap(element);
       if (para) {
         doc.content!.push(para);
       }
     } else if (element.type === "table") {
-      // Converti ogni cella della tabella come paragrafo separato
-      // (TipTap base non supporta tabelle senza estensione)
-      const tableParagraphs = convertTableToParagraphs(element);
-      doc.content!.push(...tableParagraphs);
+      // Converti come tabella VERA di TipTap
+      const table = convertTableToTipTap(element);
+      if (table) {
+        doc.content!.push(table);
+      }
     }
   });
 
@@ -54,6 +56,9 @@ export function convertToTipTap(content: DocumentContent): JSONContent {
   return doc;
 }
 
+/**
+ * Converte un paragrafo in formato TipTap
+ */
 function convertParagraphToTipTap(
   paragraph: ParagraphElement
 ): JSONContent | null {
@@ -62,7 +67,6 @@ function convertParagraphToTipTap(
     content: [],
   };
 
-  // Aggiungi il testo dei run
   paragraph.runs.forEach((run) => {
     if (run.text && run.text.length > 0) {
       const textNode: JSONContent = {
@@ -70,7 +74,7 @@ function convertParagraphToTipTap(
         text: run.text,
       };
 
-      // Aggiungi marks per stili (solo quelli supportati da StarterKit)
+      // Aggiungi marks per stili
       const marks: JSONContent[] = [];
       if (run.style.bold) {
         marks.push({ type: "bold" });
@@ -78,7 +82,6 @@ function convertParagraphToTipTap(
       if (run.style.italic) {
         marks.push({ type: "italic" });
       }
-      // Underline richiede estensione separata, ma l'abbiamo aggiunta
       if (run.style.underline) {
         marks.push({ type: "underline" });
       }
@@ -91,7 +94,6 @@ function convertParagraphToTipTap(
     }
   });
 
-  // Ritorna il paragrafo anche se vuoto (TipTap gestisce paragrafi vuoti)
   if (node.content!.length === 0) {
     delete node.content;
   }
@@ -99,222 +101,111 @@ function convertParagraphToTipTap(
   return node;
 }
 
-function convertTableToParagraphs(table: TableElement): JSONContent[] {
-  const paragraphs: JSONContent[] = [];
-
-  // Aggiungi un separatore visivo prima della tabella
-  paragraphs.push({
-    type: "paragraph",
-    content: [
-      { type: "text", text: "═══ TABELLA ═══", marks: [{ type: "bold" }] },
-    ],
-  });
+/**
+ * Converte una tabella in formato TipTap Table
+ *
+ * Struttura TipTap:
+ * {
+ *   type: "table",
+ *   content: [
+ *     { type: "tableRow", content: [
+ *       { type: "tableHeader" | "tableCell", content: [{ type: "paragraph", ... }] }
+ *     ]}
+ *   ]
+ * }
+ */
+function convertTableToTipTap(table: TableElement): JSONContent {
+  const tableNode: JSONContent = {
+    type: "table",
+    content: [],
+  };
 
   table.rows.forEach((row, rowIndex) => {
-    row.cells.forEach((cell, cellIndex) => {
-      cell.paragraphs.forEach((para) => {
-        const text = para.runs.map((r) => r.text).join("");
-        if (text.trim()) {
-          paragraphs.push({
-            type: "paragraph",
-            content: [
-              {
+    const rowNode: JSONContent = {
+      type: "tableRow",
+      content: [],
+    };
+
+    row.cells.forEach((cell) => {
+      // Prima riga = header, altre = celle normali
+      const cellType = rowIndex === 0 ? "tableHeader" : "tableCell";
+
+      const cellNode: JSONContent = {
+        type: cellType,
+        content: [],
+      };
+
+      // Ogni cella contiene paragrafi
+      if (cell.paragraphs && cell.paragraphs.length > 0) {
+        cell.paragraphs.forEach((para) => {
+          const textContent: JSONContent[] = [];
+
+          para.runs.forEach((run) => {
+            if (run.text && run.text.length > 0) {
+              const textNode: JSONContent = {
                 type: "text",
-                text: `[R${rowIndex + 1}C${cellIndex + 1}] `,
-                marks: [{ type: "bold" }],
-              },
-              { type: "text", text: text },
-            ],
+                text: run.text,
+              };
+
+              // Marks per stili
+              const marks: JSONContent[] = [];
+              if (run.style.bold) marks.push({ type: "bold" });
+              if (run.style.italic) marks.push({ type: "italic" });
+              if (run.style.underline) marks.push({ type: "underline" });
+
+              if (marks.length > 0) {
+                textNode.marks = marks as any;
+              }
+
+              textContent.push(textNode);
+            }
           });
-        }
-      });
-    });
-  });
 
-  // Separatore di fine tabella
-  paragraphs.push({
-    type: "paragraph",
-    content: [
-      { type: "text", text: "═══════════════", marks: [{ type: "bold" }] },
-    ],
-  });
-
-  return paragraphs;
-}
-
-// ============================================================================
-// TIPTAP → MODIFICATIONS (per il backend)
-// ============================================================================
-
-/**
- * Confronta il contenuto originale con quello modificato in TipTap
- * e genera la lista di modifiche per il backend
- */
-export function generateModificationsFromTipTap(
-  originalContent: DocumentContent,
-  tiptapContent: JSONContent
-): Modification[] {
-  const modifications: Modification[] = [];
-
-  if (!tiptapContent.content) return modifications;
-
-  // Estrai tutto il testo da TipTap come array di stringhe (un elemento per paragrafo)
-  const tiptapTexts: string[] = [];
-  tiptapContent.content.forEach((node) => {
-    if (node.type === "paragraph") {
-      tiptapTexts.push(extractTextFromNode(node));
-    }
-  });
-
-  // Indice per tracciare la posizione in tiptapTexts
-  let tiptapIndex = 0;
-
-  // Confronta con l'originale
-  originalContent.elements.forEach((element, elementIndex) => {
-    if (element.type === "paragraph") {
-      const originalText = element.runs.map((r) => r.text).join("");
-      const currentText = tiptapTexts[tiptapIndex] || "";
-      tiptapIndex++;
-
-      if (originalText !== currentText) {
-        modifications.push({
-          position: {
+          cellNode.content!.push({
             type: "paragraph",
-            paragraph_index: elementIndex,
-            run_index: 0,
-            char_start: 0,
-            char_end: originalText.length,
-          },
-          original_text: originalText,
-          new_text: currentText,
+            content: textContent.length > 0 ? textContent : undefined,
+          });
         });
       }
-    } else if (element.type === "table") {
-      // Salta il separatore "TABELLA"
-      tiptapIndex++;
 
-      element.rows.forEach((row, rowIndex) => {
-        row.cells.forEach((cell, cellIndex) => {
-          cell.paragraphs.forEach((para, paraIndex) => {
-            const originalText = para.runs.map((r) => r.text).join("");
+      // Se la cella è vuota, aggiungi un paragrafo vuoto
+      if (cellNode.content!.length === 0) {
+        cellNode.content!.push({ type: "paragraph" });
+      }
 
-            // Il testo in TipTap ha il prefisso [R1C1], lo rimuoviamo
-            let currentText = tiptapTexts[tiptapIndex] || "";
-            const prefixMatch = currentText.match(/^\[R\d+C\d+\]\s*/);
-            if (prefixMatch) {
-              currentText = currentText.substring(prefixMatch[0].length);
-            }
-            tiptapIndex++;
+      rowNode.content!.push(cellNode);
+    });
 
-            if (originalText !== currentText && originalText.trim()) {
-              modifications.push({
-                position: {
-                  type: "table",
-                  table_index: elementIndex,
-                  row_index: rowIndex,
-                  cell_index: cellIndex,
-                  cell_paragraph_index: paraIndex,
-                  run_index: 0,
-                  char_start: 0,
-                  char_end: originalText.length,
-                },
-                original_text: originalText,
-                new_text: currentText,
-              });
-            }
-          });
-        });
+    // Assicurati che ogni riga abbia almeno una cella
+    if (rowNode.content!.length === 0) {
+      rowNode.content!.push({
+        type: rowIndex === 0 ? "tableHeader" : "tableCell",
+        content: [{ type: "paragraph" }],
       });
-
-      // Salta il separatore di fine tabella
-      tiptapIndex++;
     }
+
+    tableNode.content!.push(rowNode);
   });
 
-  return modifications;
-}
-
-function extractTextFromNode(node: JSONContent): string {
-  if (node.type === "text") {
-    return node.text || "";
-  }
-
-  if (!node.content) return "";
-
-  return node.content.map((child) => extractTextFromNode(child)).join("");
+  return tableNode;
 }
 
 // ============================================================================
-// UTILITY: Aggiorna DocumentContent dal TipTap (per sincronizzazione stato)
+// FUNZIONI LEGACY (mantenute per compatibilità ma non più usate)
 // ============================================================================
 
 /**
- * Aggiorna il DocumentContent con il contenuto modificato da TipTap
+ * @deprecated - Le modifiche sono ora tracciate esplicitamente
+ */
+export function generateModificationsFromTipTap(): never[] {
+  return [];
+}
+
+/**
+ * @deprecated - Non più usata
  */
 export function updateDocumentContentFromTipTap(
-  original: DocumentContent,
-  tiptapContent: JSONContent
+  original: DocumentContent
 ): DocumentContent {
-  const updated = JSON.parse(JSON.stringify(original)) as DocumentContent;
-
-  if (!tiptapContent.content) return updated;
-
-  // Estrai testi da TipTap
-  const tiptapTexts: string[] = [];
-  tiptapContent.content.forEach((node) => {
-    if (node.type === "paragraph") {
-      tiptapTexts.push(extractTextFromNode(node));
-    }
-  });
-
-  let tiptapIndex = 0;
-
-  updated.elements.forEach((element) => {
-    if (element.type === "paragraph") {
-      const newText = tiptapTexts[tiptapIndex] || "";
-      tiptapIndex++;
-
-      if (element.runs.length > 0) {
-        element.runs = [
-          {
-            ...element.runs[0],
-            index: 0,
-            text: newText,
-          },
-        ];
-      }
-    } else if (element.type === "table") {
-      // Salta separatore
-      tiptapIndex++;
-
-      element.rows.forEach((row) => {
-        row.cells.forEach((cell) => {
-          cell.paragraphs.forEach((para) => {
-            let newText = tiptapTexts[tiptapIndex] || "";
-            // Rimuovi prefisso [R1C1]
-            const prefixMatch = newText.match(/^\[R\d+C\d+\]\s*/);
-            if (prefixMatch) {
-              newText = newText.substring(prefixMatch[0].length);
-            }
-            tiptapIndex++;
-
-            if (para.runs.length > 0) {
-              para.runs = [
-                {
-                  ...para.runs[0],
-                  index: 0,
-                  text: newText,
-                },
-              ];
-            }
-          });
-        });
-      });
-
-      // Salta separatore fine
-      tiptapIndex++;
-    }
-  });
-
-  return updated;
+  return original;
 }

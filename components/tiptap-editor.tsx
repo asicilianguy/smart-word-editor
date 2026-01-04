@@ -4,6 +4,10 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Underline from "@tiptap/extension-underline";
+import { Table } from "@tiptap/extension-table";
+import TableRow from "@tiptap/extension-table-row";
+import TableCell from "@tiptap/extension-table-cell";
+import TableHeader from "@tiptap/extension-table-header";
 import { useEffect, forwardRef, useImperativeHandle, useRef } from "react";
 import type { JSONContent } from "@tiptap/react";
 
@@ -12,24 +16,17 @@ import type { JSONContent } from "@tiptap/react";
 // ============================================================================
 
 export interface TipTapEditorHandle {
-  /** Inserisce testo alla posizione corrente del cursore */
   insertText: (text: string) => void;
-  /** Sostituisce la selezione corrente con il testo */
   replaceSelection: (text: string) => void;
-  /** Ottiene il contenuto JSON dell'editor */
   getContent: () => JSONContent;
-  /** Verifica se c'è una selezione di testo */
   hasSelection: () => boolean;
-  /** Focus sull'editor */
   focus: () => void;
+  getSelectedText: () => string | undefined;
 }
 
 interface TipTapEditorProps {
-  /** Contenuto iniziale in formato TipTap JSON */
   initialContent: JSONContent;
-  /** Callback quando il contenuto cambia */
   onContentChange?: (content: JSONContent) => void;
-  /** Callback quando lo stato della selezione cambia */
   onSelectionChange?: (
     hasSelection: boolean,
     hasCursor: boolean,
@@ -37,7 +34,6 @@ interface TipTapEditorProps {
   ) => void;
 }
 
-// Debounce delay in ms
 const SELECTION_DEBOUNCE_MS = 100;
 
 // ============================================================================
@@ -49,10 +45,7 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(
     { initialContent, onContentChange, onSelectionChange },
     ref
   ) {
-    // Ref per debounce
     const selectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-    // Salva la selezione corrente per mantenerla anche dopo blur
     const savedSelectionRef = useRef<{
       from: number;
       to: number;
@@ -76,6 +69,24 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(
           placeholder: "Clicca qui per iniziare a digitare...",
         }),
         Underline,
+        // Estensioni tabella
+        Table.configure({
+          resizable: false,
+          HTMLAttributes: {
+            class: "docx-table",
+          },
+        }),
+        TableRow,
+        TableCell.configure({
+          HTMLAttributes: {
+            class: "docx-cell",
+          },
+        }),
+        TableHeader.configure({
+          HTMLAttributes: {
+            class: "docx-header-cell",
+          },
+        }),
       ],
       content: initialContent,
       onCreate: ({ editor }) => {
@@ -90,19 +101,17 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(
       editorProps: {
         attributes: {
           class:
-            "prose prose-sm sm:prose-base max-w-none focus:outline-none min-h-[600px] px-16 py-12",
+            "prose prose-sm sm:prose-base max-w-none focus:outline-none min-h-[600px] px-12 py-8",
         },
       },
       onUpdate: ({ editor }) => {
         onContentChange?.(editor.getJSON());
       },
       onSelectionUpdate: ({ editor }) => {
-        // Cancella il timeout precedente
         if (selectionTimeoutRef.current) {
           clearTimeout(selectionTimeoutRef.current);
         }
 
-        // Debounce per evitare chiamate multiple durante il drag
         selectionTimeoutRef.current = setTimeout(() => {
           const { from, to } = editor.state.selection;
           const hasSelection = from !== to;
@@ -111,19 +120,15 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(
             const selectedText = editor.state.doc
               .textBetween(from, to, " ")
               .trim();
-            // Salva la selezione
             savedSelectionRef.current = { from, to, text: selectedText };
             onSelectionChange?.(true, true, selectedText);
           } else {
-            // Selezione vuota (solo cursore) - resetta la selezione salvata
             savedSelectionRef.current = null;
             onSelectionChange?.(false, true, undefined);
           }
         }, SELECTION_DEBOUNCE_MS);
       },
       onFocus: ({ editor }) => {
-        // Quando l'editor riprende il focus, controlla se c'è una selezione salvata
-        // e se la selezione corrente è diversa
         const { from, to } = editor.state.selection;
         const hasSelection = from !== to;
 
@@ -134,7 +139,6 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(
           savedSelectionRef.current = { from, to, text: selectedText };
           onSelectionChange?.(true, true, selectedText);
         } else if (savedSelectionRef.current) {
-          // Mantieni la selezione salvata
           onSelectionChange?.(true, true, savedSelectionRef.current.text);
         } else {
           onSelectionChange?.(false, true, undefined);
@@ -144,9 +148,6 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(
         if (selectionTimeoutRef.current) {
           clearTimeout(selectionTimeoutRef.current);
         }
-        // NON resettare la selezione su blur!
-        // La selezione salvata rimane disponibile per la sidebar
-        // Notifica solo che non c'è più il cursore attivo, ma mantieni hasSelection
         if (savedSelectionRef.current) {
           onSelectionChange?.(true, false, savedSelectionRef.current.text);
         } else {
@@ -155,7 +156,6 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(
       },
     });
 
-    // Cleanup timeout on unmount
     useEffect(() => {
       return () => {
         if (selectionTimeoutRef.current) {
@@ -164,18 +164,15 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(
       };
     }, []);
 
-    // Espone i metodi al parent via ref
     useImperativeHandle(ref, () => ({
       insertText: (text: string) => {
         if (editor) {
           editor.chain().focus().insertContent(text).run();
-          // Dopo l'inserimento, resetta la selezione salvata
           savedSelectionRef.current = null;
         }
       },
       replaceSelection: (text: string) => {
         if (editor) {
-          // Se c'è una selezione salvata, ripristinala prima di sostituire
           if (savedSelectionRef.current) {
             const { from, to } = savedSelectionRef.current;
             editor
@@ -188,7 +185,6 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(
           } else {
             editor.chain().focus().deleteSelection().insertContent(text).run();
           }
-          // Resetta la selezione salvata dopo la sostituzione
           savedSelectionRef.current = null;
           onSelectionChange?.(false, true, undefined);
         }
@@ -197,7 +193,6 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(
         return editor?.getJSON() || { type: "doc", content: [] };
       },
       hasSelection: () => {
-        // Considera anche la selezione salvata
         if (savedSelectionRef.current) return true;
         if (!editor) return false;
         const { from, to } = editor.state.selection;
@@ -206,16 +201,17 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(
       focus: () => {
         editor?.chain().focus().run();
       },
+      getSelectedText: () => {
+        return savedSelectionRef.current?.text;
+      },
     }));
 
-    // Aggiorna il contenuto se cambia dall'esterno
     useEffect(() => {
       if (editor && initialContent) {
         const currentContent = JSON.stringify(editor.getJSON());
         const newContent = JSON.stringify(initialContent);
         if (currentContent !== newContent) {
           editor.commands.setContent(initialContent);
-          // Resetta la selezione quando cambia il documento
           savedSelectionRef.current = null;
         }
       }
@@ -232,10 +228,74 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(
     return (
       <div className="h-full overflow-y-auto bg-background">
         <div className="mx-auto max-w-4xl py-8">
-          <div className="bg-card shadow-lg rounded-lg border border-border min-h-[11in]">
+          <div className="bg-card shadow-lg rounded-lg border border-border min-h-[11in] docx-preview">
             <EditorContent editor={editor} />
           </div>
         </div>
+
+        {/* Stili per tabelle */}
+        <style jsx global>{`
+          /* Reset prose table styles */
+          .docx-preview .ProseMirror table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 0.75rem 0;
+            table-layout: auto;
+          }
+
+          .docx-preview .ProseMirror td,
+          .docx-preview .ProseMirror th {
+            border: 1px solid #d1d5db;
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+            vertical-align: top;
+            min-width: 50px;
+          }
+
+          .docx-preview .ProseMirror th {
+            background-color: #f9fafb;
+            font-weight: 600;
+          }
+
+          .docx-preview .ProseMirror tr:nth-child(even) td {
+            background-color: #fafafa;
+          }
+
+          /* Selezione nelle celle */
+          .docx-preview .ProseMirror td.selectedCell,
+          .docx-preview .ProseMirror th.selectedCell {
+            background-color: #dbeafe;
+          }
+
+          .docx-preview .ProseMirror td p,
+          .docx-preview .ProseMirror th p {
+            margin: 0;
+          }
+
+          /* Checkbox styling */
+          .docx-preview .ProseMirror {
+            font-family: inherit;
+          }
+
+          /* Dark mode */
+          .dark .docx-preview .ProseMirror td,
+          .dark .docx-preview .ProseMirror th {
+            border-color: #374151;
+          }
+
+          .dark .docx-preview .ProseMirror th {
+            background-color: #1f2937;
+          }
+
+          .dark .docx-preview .ProseMirror tr:nth-child(even) td {
+            background-color: #111827;
+          }
+
+          .dark .docx-preview .ProseMirror td.selectedCell,
+          .dark .docx-preview .ProseMirror th.selectedCell {
+            background-color: #1e3a5f;
+          }
+        `}</style>
       </div>
     );
   }
