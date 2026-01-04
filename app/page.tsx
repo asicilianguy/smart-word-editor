@@ -17,6 +17,11 @@ import {
   type TipTapEditorHandle,
 } from "@/components/tiptap-editor";
 import { VaultSidebar } from "@/components/vault-sidebar";
+import { PreviewInfoBanner } from "@/components/preview-info-banner";
+import {
+  DownloadDialog,
+  type DownloadFormat,
+} from "@/components/download-dialog";
 import { useDocument } from "@/hooks/use-document";
 import { vaultData } from "@/lib/vault-data";
 import { healthCheck } from "@/lib/api-client";
@@ -51,6 +56,10 @@ export default function Page() {
   const [backendStatus, setBackendStatus] = useState<
     "checking" | "online" | "offline"
   >("checking");
+
+  // Stato download dialog
+  const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Verifica connessione backend all'avvio
   useEffect(() => {
@@ -125,6 +134,21 @@ export default function Page() {
     [registerCheckboxModification]
   );
 
+  /**
+   * Gestisce il download con nome e formato
+   */
+  const handleDownload = useCallback(
+    async (fileName: string, format: DownloadFormat) => {
+      setIsDownloading(true);
+      try {
+        await downloadDocument(fileName, format);
+      } finally {
+        setIsDownloading(false);
+      }
+    },
+    [downloadDocument]
+  );
+
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
@@ -170,7 +194,10 @@ export default function Page() {
 
           {documentState && (
             <>
-              <Button onClick={downloadDocument} disabled={isLoading}>
+              <Button
+                onClick={() => setDownloadDialogOpen(true)}
+                disabled={isLoading || isDownloading}
+              >
                 <Download className="h-4 w-4 mr-2" />
                 Scarica
               </Button>
@@ -190,20 +217,12 @@ export default function Page() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Info banner per immagini */}
-        {documentState && (
-          <div className="bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800 px-6 py-2">
-            <p className="text-xs text-amber-700 dark:text-amber-400 text-center">
-              <span className="font-medium">Nota:</span> Le immagini e la
-              formattazione complessa non sono visibili nell'anteprima, ma
-              vengono <strong>preservate</strong> nel documento scaricato.
-            </p>
-          </div>
-        )}
+        {/* Banner informativo migliorato */}
+        {documentState && <PreviewInfoBanner />}
 
         <div className="flex-1 flex overflow-hidden">
           {/* Editor Area - 70% */}
-          <div className="flex-7 overflow-hidden">
+          <div className="flex-[7] overflow-hidden">
             {!documentState && !isLoading && !error && (
               <EmptyState
                 backendStatus={backendStatus}
@@ -231,7 +250,7 @@ export default function Page() {
           </div>
 
           {/* Vault Sidebar - 30% */}
-          <div className="flex-3 overflow-hidden">
+          <div className="flex-[3] overflow-hidden">
             <VaultSidebar
               categories={vaultData}
               onValueClick={handleVaultValueClick}
@@ -242,6 +261,17 @@ export default function Page() {
           </div>
         </div>
       </div>
+
+      {/* Download Dialog */}
+      {documentState && (
+        <DownloadDialog
+          open={downloadDialogOpen}
+          onOpenChange={setDownloadDialogOpen}
+          defaultFileName={documentState.metadata.file_name}
+          onDownload={handleDownload}
+          isLoading={isDownloading}
+        />
+      )}
     </div>
   );
 }

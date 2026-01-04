@@ -10,6 +10,10 @@ import {
 import type { DocumentState } from "@/lib/document-types";
 import { convertToTipTap } from "@/lib/content-converter";
 
+// ============================================================================
+// TYPES
+// ============================================================================
+
 /**
  * Modifica checkbox (per indice)
  */
@@ -29,11 +33,21 @@ export interface TextReplacement {
 }
 
 /**
+ * Formato download supportato
+ */
+export type DownloadFormat = "docx" | "pdf";
+
+// ============================================================================
+// HOOK
+// ============================================================================
+
+/**
  * Hook per la gestione del documento con TipTap
  *
- * VERSIONE 4:
+ * VERSIONE 5:
  * - Testo: tracking esplicito delle sostituzioni
  * - Checkbox: identificate per INDICE (0, 1, 2, ...), non per matching testuale
+ * - Download: supporto DOCX e PDF con nome file personalizzato
  */
 export function useDocument() {
   const [documentState, setDocumentState] = useState<DocumentState | null>(
@@ -119,9 +133,6 @@ export function useDocument() {
         );
         return [...filtered, replacement];
       });
-
-      // Aggiorna UI counter
-      updateModificationsCount();
     },
     []
   );
@@ -140,39 +151,9 @@ export function useDocument() {
         next.set(checkboxIndex, newChecked);
         return next;
       });
-
-      // Aggiorna UI counter
-      updateModificationsCount();
     },
     []
   );
-
-  /**
-   * Aggiorna il contatore modifiche per la UI
-   */
-  const updateModificationsCount = useCallback(() => {
-    setDocumentState((prev) => {
-      if (!prev) return prev;
-
-      // Crea un array finto di modifiche solo per il contatore UI
-      const totalMods = textReplacements.length + checkboxModifications.size;
-      const fakeMods: Modification[] = Array(totalMods)
-        .fill(null)
-        .map((_, i) => ({
-          position: {
-            type: "paragraph" as const,
-            paragraph_index: 0,
-            run_index: 0,
-            char_start: 0,
-            char_end: 0,
-          },
-          original_text: `mod_${i}`,
-          new_text: `mod_${i}`,
-        }));
-
-      return { ...prev, modifications: fakeMods };
-    });
-  }, [textReplacements, checkboxModifications]);
 
   /**
    * Aggiorna contenuto TipTap
@@ -183,60 +164,72 @@ export function useDocument() {
 
   /**
    * Scarica il documento con modifiche
+   *
+   * @param fileName - Nome del file (senza estensione)
+   * @param format - Formato: "docx" o "pdf"
    */
-  const downloadDocument = useCallback(async () => {
-    if (!documentState) return;
+  const downloadDocument = useCallback(
+    async (fileName: string, format: DownloadFormat = "docx") => {
+      if (!documentState) return;
 
-    setIsLoading(true);
-    setError(null);
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      // Prepara modifiche testo
-      const textMods: Modification[] = textReplacements.map((r) => ({
-        position: {
-          type: "paragraph" as const,
-          paragraph_index: 0,
-          run_index: 0,
-          char_start: 0,
-          char_end: r.originalText.length,
-        },
-        original_text: r.originalText,
-        new_text: r.newText,
-      }));
+      try {
+        // Prepara modifiche testo
+        const textMods: Modification[] = textReplacements.map((r) => ({
+          position: {
+            type: "paragraph" as const,
+            paragraph_index: 0,
+            run_index: 0,
+            char_start: 0,
+            char_end: r.originalText.length,
+          },
+          original_text: r.originalText,
+          new_text: r.newText,
+        }));
 
-      // Prepara modifiche checkbox (per indice!)
-      const checkboxMods: CheckboxModification[] = [];
-      checkboxModifications.forEach((newChecked, checkboxIndex) => {
-        checkboxMods.push({ checkboxIndex, newChecked });
-      });
+        // Prepara modifiche checkbox (per indice!)
+        const checkboxMods: CheckboxModification[] = [];
+        checkboxModifications.forEach((newChecked, checkboxIndex) => {
+          checkboxMods.push({ checkboxIndex, newChecked });
+        });
 
-      console.log("[useDocument] Invio:", {
-        textMods: textMods.length,
-        checkboxMods: checkboxMods.length,
-      });
+        console.log("[useDocument] Invio:", {
+          textMods: textMods.length,
+          checkboxMods: checkboxMods.length,
+          format,
+          fileName,
+        });
 
-      const blob = await generateDocumentWithCheckboxes(
-        documentState.originalFile,
-        textMods,
-        checkboxMods
-      );
+        const blob = await generateDocumentWithFormat(
+          documentState.originalFile,
+          textMods,
+          checkboxMods,
+          format
+        );
 
-      // Trigger download
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = getModifiedFileName(documentState.metadata.file_name);
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("[useDocument] Errore download:", err);
-      setError(err instanceof Error ? err.message : "Errore download");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [documentState, textReplacements, checkboxModifications]);
+        // Trigger download con nome personalizzato
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${fileName}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        console.log(`[useDocument] Download completato: ${fileName}.${format}`);
+      } catch (err) {
+        console.error("[useDocument] Errore download:", err);
+        setError(err instanceof Error ? err.message : "Errore download");
+        throw err; // Re-throw per il dialog
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [documentState, textReplacements, checkboxModifications]
+  );
 
   /**
    * Reset
@@ -277,10 +270,14 @@ export function useDocument() {
 // API HELPER
 // ============================================================================
 
-async function generateDocumentWithCheckboxes(
+/**
+ * Genera documento con supporto per formato DOCX o PDF
+ */
+async function generateDocumentWithFormat(
   file: File,
   textModifications: Modification[],
-  checkboxModifications: CheckboxModification[]
+  checkboxModifications: CheckboxModification[],
+  format: DownloadFormat = "docx"
 ): Promise<Blob> {
   const formData = new FormData();
   formData.append("file", file);
@@ -289,6 +286,7 @@ async function generateDocumentWithCheckboxes(
     "checkbox_modifications",
     JSON.stringify(checkboxModifications)
   );
+  formData.append("output_format", format);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -298,17 +296,20 @@ async function generateDocumentWithCheckboxes(
   });
 
   if (!response.ok) {
-    throw new Error(`Errore generazione: ${response.statusText}`);
+    const errorText = await response.text();
+    let errorMessage = `Errore generazione: ${response.statusText}`;
+
+    try {
+      const errorJson = JSON.parse(errorText);
+      if (errorJson.detail) {
+        errorMessage = errorJson.detail;
+      }
+    } catch {
+      // Ignore JSON parse error
+    }
+
+    throw new Error(errorMessage);
   }
 
   return response.blob();
-}
-
-function getModifiedFileName(originalName: string): string {
-  const lastDot = originalName.lastIndexOf(".");
-  if (lastDot === -1) return `${originalName}_modificato`;
-  return `${originalName.substring(
-    0,
-    lastDot
-  )}_modificato${originalName.substring(lastDot)}`;
 }
