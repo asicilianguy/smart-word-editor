@@ -239,7 +239,7 @@ function StatusBadge({
     return (
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-xs text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/50 px-3 py-2 rounded-md border border-green-300 dark:border-green-700 animate-in fade-in slide-in-from-top-1 duration-200">
-          <Type className="h-4 w-4 flex-shrink-0" />
+          <Type className="h-4 w-4 shrink-0" />
           <span className="font-medium">
             Seleziona un valore per <strong>sostituire</strong>
           </span>
@@ -259,7 +259,7 @@ function StatusBadge({
   if (actionType === "insert") {
     return (
       <div className="flex items-center gap-2 text-xs text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-3 py-2 rounded-md border border-blue-200 dark:border-blue-700">
-        <MousePointer2 className="h-4 w-4 flex-shrink-0" />
+        <MousePointer2 className="h-4 w-4 shrink-0" />
         <span>
           Cursore attivo — clicca per <strong>inserire</strong>
         </span>
@@ -269,7 +269,7 @@ function StatusBadge({
 
   return (
     <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted px-3 py-2 rounded-md">
-      <MousePointer2 className="h-4 w-4 flex-shrink-0" />
+      <MousePointer2 className="h-4 w-4 shrink-0" />
       <span>Seleziona testo nel documento per sostituirlo</span>
     </div>
   );
