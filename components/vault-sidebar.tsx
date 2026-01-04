@@ -15,7 +15,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Accordion,
   AccordionContent,
@@ -93,7 +92,7 @@ export function VaultSidebar({
   return (
     <div
       className={cn(
-        "h-full flex flex-col border-l transition-all duration-300",
+        "h-full flex flex-col border-l transition-all duration-300 overflow-hidden",
         hasSelection
           ? "bg-green-50/50 dark:bg-green-950/20 border-green-300 dark:border-green-800 shadow-[-4px_0_20px_rgba(34,197,94,0.15)]"
           : hasCursor
@@ -102,10 +101,10 @@ export function VaultSidebar({
       )}
       onMouseDown={handleMouseDown}
     >
-      {/* Header */}
+      {/* Header - Fixed */}
       <div
         className={cn(
-          "p-4 border-b transition-colors duration-300",
+          "flex-shrink-0 p-4 border-b transition-colors duration-300",
           hasSelection
             ? "bg-green-100/80 dark:bg-green-900/30 border-green-200 dark:border-green-800"
             : hasCursor
@@ -139,8 +138,8 @@ export function VaultSidebar({
         </div>
       </div>
 
-      {/* Categories List */}
-      <ScrollArea className="flex-1">
+      {/* Categories List - Scrollable con overflow nativo */}
+      <div className="flex-1 overflow-y-auto min-h-0">
         <div className="p-4">
           <Accordion
             type="multiple"
@@ -204,12 +203,12 @@ export function VaultSidebar({
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
-      {/* Footer */}
+      {/* Footer - Fixed */}
       <div
         className={cn(
-          "p-4 border-t transition-colors",
+          "flex-shrink-0 p-4 border-t transition-colors",
           hasSelection
             ? "bg-green-100/50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
             : "bg-card border-border"
@@ -239,7 +238,7 @@ function StatusBadge({
     return (
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-xs text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/50 px-3 py-2 rounded-md border border-green-300 dark:border-green-700 animate-in fade-in slide-in-from-top-1 duration-200">
-          <Type className="h-4 w-4 shrink-0" />
+          <Type className="h-4 w-4 flex-shrink-0" />
           <span className="font-medium">
             Seleziona un valore per <strong>sostituire</strong>
           </span>
@@ -259,7 +258,7 @@ function StatusBadge({
   if (actionType === "insert") {
     return (
       <div className="flex items-center gap-2 text-xs text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-3 py-2 rounded-md border border-blue-200 dark:border-blue-700">
-        <MousePointer2 className="h-4 w-4 shrink-0" />
+        <MousePointer2 className="h-4 w-4 flex-shrink-0" />
         <span>
           Cursore attivo — clicca per <strong>inserire</strong>
         </span>
@@ -269,7 +268,7 @@ function StatusBadge({
 
   return (
     <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted px-3 py-2 rounded-md">
-      <MousePointer2 className="h-4 w-4 shrink-0" />
+      <MousePointer2 className="h-4 w-4 flex-shrink-0" />
       <span>Seleziona testo nel documento per sostituirlo</span>
     </div>
   );

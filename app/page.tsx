@@ -29,12 +29,17 @@ import type { VaultValue } from "@/lib/document-types";
 
 /**
  * Smart Word Editor - Pagina principale con TipTap
+ *
+ * VERSIONE 6 - FULL DIFF TRACKING:
+ * - Tutte le modifiche nell'editor vengono tracciate AUTOMATICAMENTE
+ * - NON serve più chiamare registerTextReplacement
+ * - Il sistema confronta contenuto originale vs attuale al download
  */
 export default function Page() {
   // Ref all'editor TipTap
   const editorRef = useRef<TipTapEditorHandle>(null);
 
-  // Stato documento
+  // Stato documento - NOTA: registerTextReplacement è stato RIMOSSO
   const {
     document: documentState,
     tiptapContent,
@@ -43,7 +48,6 @@ export default function Page() {
     error,
     uploadDocument,
     handleTiptapChange,
-    registerTextReplacement,
     registerCheckboxModification,
     downloadDocument,
     resetDocument,
@@ -97,35 +101,36 @@ export default function Page() {
 
   /**
    * Gestisce il click su un valore del vault
+   *
+   * NOTA: NON serve più registrare le sostituzioni!
+   * Il sistema traccia automaticamente tutte le modifiche via diff.
    */
   const handleVaultValueClick = useCallback(
     (value: VaultValue) => {
       if (!editorRef.current) return;
 
       if (hasSelection && selectedText) {
-        // C'è una selezione → sostituisci e registra
+        // C'è una selezione → sostituisci
         editorRef.current.replaceSelection(value.value);
-
-        // IMPORTANTE: Registra la sostituzione per il backend
-        registerTextReplacement(selectedText, value.value);
+        // Il diff automatico traccerà questa modifica!
       } else if (hasCursor) {
-        // Solo cursore → inserisci (nessuna registrazione necessaria)
+        // Solo cursore → inserisci
         editorRef.current.insertText(value.value);
+        // Anche le inserzioni vengono tracciate automaticamente!
       }
 
       // Rimetti il focus sull'editor
       editorRef.current.focus();
     },
-    [hasSelection, hasCursor, selectedText, registerTextReplacement]
+    [hasSelection, hasCursor, selectedText]
   );
 
   /**
    * Gestisce il toggle di una checkbox
-   * Riceve l'indice della checkbox e il nuovo stato
+   * Le checkbox sono identificate per INDICE (0, 1, 2, ...)
    */
   const handleCheckboxToggle = useCallback(
     (checkboxIndex: number, newChecked: boolean) => {
-      // Registra la modifica con l'indice
       registerCheckboxModification(checkboxIndex, newChecked);
       console.log(
         `[Page] Checkbox #${checkboxIndex} → ${newChecked ? "☑" : "☐"}`
@@ -135,13 +140,16 @@ export default function Page() {
   );
 
   /**
-   * Gestisce il download con nome e formato
+   * Gestisce il download con dialog
    */
   const handleDownload = useCallback(
     async (fileName: string, format: DownloadFormat) => {
       setIsDownloading(true);
       try {
         await downloadDocument(fileName, format);
+        setDownloadDialogOpen(false);
+      } catch (err) {
+        console.error("Download error:", err);
       } finally {
         setIsDownloading(false);
       }
@@ -152,7 +160,7 @@ export default function Page() {
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="h-16 border-b border-border bg-card flex items-center justify-between px-6 shrink-0">
+      <header className="h-16 border-b border-border bg-card flex items-center justify-between px-6 flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
             <FileText className="h-5 w-5 text-primary-foreground" />
@@ -196,7 +204,7 @@ export default function Page() {
             <>
               <Button
                 onClick={() => setDownloadDialogOpen(true)}
-                disabled={isLoading || isDownloading}
+                disabled={isLoading}
               >
                 <Download className="h-4 w-4 mr-2" />
                 Scarica
@@ -217,7 +225,7 @@ export default function Page() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Banner informativo migliorato */}
+        {/* Info banner */}
         {documentState && <PreviewInfoBanner />}
 
         <div className="flex-1 flex overflow-hidden">
@@ -329,7 +337,8 @@ function EmptyState({
         <h2 className="text-2xl font-semibold mb-2">Nessun documento</h2>
         <p className="text-muted-foreground mb-6">
           Carica un documento per iniziare. Potrai modificare il testo
-          direttamente come in un editor di testo, o inserire valori dal vault.
+          direttamente nell'editor e tutte le modifiche verranno
+          <strong> automaticamente</strong> applicate al download.
         </p>
 
         {backendStatus === "offline" && (
@@ -364,9 +373,9 @@ function EmptyState({
         <p className="text-xs text-muted-foreground mt-4">
           Formati supportati: DOC, DOCX, ODT, RTF, TXT
         </p>
-        <p className="text-xs text-muted-foreground">
-          💡 Clicca nel documento per posizionare il cursore, seleziona per
-          sostituire
+        <p className="text-xs text-muted-foreground mt-2">
+          💡 <strong>Novità:</strong> Ogni modifica (testo libero, vault,
+          checkbox) viene tracciata automaticamente!
         </p>
       </div>
     </div>
