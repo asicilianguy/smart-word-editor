@@ -9,14 +9,25 @@ import {
   type Modification,
 } from "@/lib/api-client";
 import type { DocumentState } from "@/lib/document-types";
-import {
-  convertToTipTap,
-  generateModificationsFromTipTap,
-  updateDocumentContentFromTipTap,
-} from "@/lib/content-converter";
+import { convertToTipTap } from "@/lib/content-converter";
+
+/**
+ * Rappresenta una sostituzione esplicita fatta dall'utente
+ */
+export interface ExplicitReplacement {
+  id: string;
+  originalText: string;
+  newText: string;
+  timestamp: number;
+}
 
 /**
  * Hook per la gestione del documento con TipTap
+ *
+ * IMPORTANTE: Le sostituzioni vengono tracciate esplicitamente quando
+ * l'utente seleziona testo e lo sostituisce con un valore dal vault.
+ * Questo approccio è molto più affidabile rispetto al confronto
+ * tra contenuto TipTap e originale.
  */
 export function useDocument() {
   const [documentState, setDocumentState] = useState<DocumentState | null>(
@@ -26,7 +37,10 @@ export function useDocument() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Contenuto originale per calcolo modifiche
+  // Traccia le sostituzioni esplicite fatte dall'utente
+  const [replacements, setReplacements] = useState<ExplicitReplacement[]>([]);
+
+  // Contenuto originale
   const originalContent = useRef<DocumentContent | null>(null);
 
   /**
@@ -35,15 +49,11 @@ export function useDocument() {
   const uploadDocument = useCallback(async (file: File) => {
     setIsLoading(true);
     setError(null);
+    setReplacements([]); // Reset sostituzioni
 
     try {
       console.log("[useDocument] Inizio upload file:", file.name);
       const response = await parseDocument(file);
-      console.log("[useDocument] Risposta backend:", response);
-      console.log(
-        "[useDocument] Elementi:",
-        response.content?.elements?.length
-      );
 
       if (!response.success) {
         throw new Error("Errore durante il parsing del documento");
@@ -53,11 +63,7 @@ export function useDocument() {
       originalContent.current = JSON.parse(JSON.stringify(response.content));
 
       // Converti in formato TipTap
-      console.log("[useDocument] Converto in TipTap...");
       const tiptap = convertToTipTap(response.content);
-      console.log("[useDocument] TipTap content:", tiptap);
-      console.log("[useDocument] TipTap nodi:", tiptap.content?.length);
-
       setTiptapContent(tiptap);
 
       // Imposta lo stato del documento
@@ -82,37 +88,70 @@ export function useDocument() {
   }, []);
 
   /**
-   * Aggiorna il contenuto quando TipTap cambia
+   * Registra una sostituzione esplicita
+   *
+   * Questa funzione viene chiamata quando l'utente seleziona testo
+   * e lo sostituisce con un valore dal vault o testo libero.
    */
-  const handleTiptapChange = useCallback(
-    (newTiptapContent: JSONContent) => {
-      if (!documentState || !originalContent.current) return;
+  const registerReplacement = useCallback(
+    (originalText: string, newText: string) => {
+      if (!originalText || originalText === newText) return;
 
-      setTiptapContent(newTiptapContent);
+      const replacement: ExplicitReplacement = {
+        id: crypto.randomUUID(),
+        originalText: originalText.trim(),
+        newText: newText,
+        timestamp: Date.now(),
+      };
 
-      // Genera le modifiche confrontando con l'originale
-      const modifications = generateModificationsFromTipTap(
-        originalContent.current,
-        newTiptapContent
-      );
+      console.log("[useDocument] Registrata sostituzione:", replacement);
 
-      // Aggiorna il DocumentContent per mantenerlo sincronizzato
-      const updatedContent = updateDocumentContentFromTipTap(
-        originalContent.current,
-        newTiptapContent
-      );
+      setReplacements((prev) => {
+        // Rimuovi eventuali sostituzioni precedenti con lo stesso testo originale
+        const filtered = prev.filter(
+          (r) => r.originalText !== replacement.originalText
+        );
+        return [...filtered, replacement];
+      });
 
+      // Aggiorna anche le modifications nel documentState per il contatore UI
       setDocumentState((prev) => {
         if (!prev) return prev;
+
+        const modification: Modification = {
+          position: {
+            type: "paragraph",
+            paragraph_index: 0,
+            run_index: 0,
+            char_start: 0,
+            char_end: originalText.length,
+          },
+          original_text: originalText.trim(),
+          new_text: newText,
+        };
+
+        // Rimuovi modifiche precedenti con lo stesso testo originale
+        const existingMods = prev.modifications.filter(
+          (m) => m.original_text !== originalText.trim()
+        );
+
         return {
           ...prev,
-          content: updatedContent,
-          modifications,
+          modifications: [...existingMods, modification],
         };
       });
     },
-    [documentState]
+    []
   );
+
+  /**
+   * Aggiorna il contenuto TipTap (per sincronizzazione UI)
+   * NON genera più modifications - queste vengono tracciate esplicitamente
+   */
+  const handleTiptapChange = useCallback((newTiptapContent: JSONContent) => {
+    setTiptapContent(newTiptapContent);
+    // Non facciamo più il confronto qui - le modifiche sono tracciate esplicitamente
+  }, []);
 
   /**
    * Scarica il documento DOCX con le modifiche applicate
@@ -124,14 +163,20 @@ export function useDocument() {
     setError(null);
 
     try {
-      // Genera le modifiche finali dal contenuto TipTap corrente
-      const modifications =
-        tiptapContent && originalContent.current
-          ? generateModificationsFromTipTap(
-              originalContent.current,
-              tiptapContent
-            )
-          : documentState.modifications;
+      // Converti le sostituzioni esplicite in Modifications per il backend
+      const modifications: Modification[] = replacements.map((r) => ({
+        position: {
+          type: "paragraph" as const,
+          paragraph_index: 0, // Non usato - il backend cerca per testo
+          run_index: 0,
+          char_start: 0,
+          char_end: r.originalText.length,
+        },
+        original_text: r.originalText,
+        new_text: r.newText,
+      }));
+
+      console.log("[useDocument] Invio modifiche al backend:", modifications);
 
       const blob = await generateDocument(
         documentState.originalFile,
@@ -157,7 +202,30 @@ export function useDocument() {
     } finally {
       setIsLoading(false);
     }
-  }, [documentState, tiptapContent]);
+  }, [documentState, replacements]);
+
+  /**
+   * Annulla una sostituzione specifica
+   */
+  const undoReplacement = useCallback(
+    (id: string) => {
+      setReplacements((prev) => prev.filter((r) => r.id !== id));
+
+      setDocumentState((prev) => {
+        if (!prev) return prev;
+        const replacement = replacements.find((r) => r.id === id);
+        if (!replacement) return prev;
+
+        return {
+          ...prev,
+          modifications: prev.modifications.filter(
+            (m) => m.original_text !== replacement.originalText
+          ),
+        };
+      });
+    },
+    [replacements]
+  );
 
   /**
    * Resetta lo stato
@@ -165,6 +233,7 @@ export function useDocument() {
   const resetDocument = useCallback(() => {
     setDocumentState(null);
     setTiptapContent(null);
+    setReplacements([]);
     originalContent.current = null;
     setError(null);
   }, []);
@@ -175,6 +244,7 @@ export function useDocument() {
     content: documentState?.content ?? null,
     metadata: documentState?.metadata ?? null,
     modifications: documentState?.modifications ?? [],
+    replacements,
     tiptapContent,
     isLoading,
     error,
@@ -182,6 +252,8 @@ export function useDocument() {
     // Azioni
     uploadDocument,
     handleTiptapChange,
+    registerReplacement,
+    undoReplacement,
     downloadDocument,
     resetDocument,
   };

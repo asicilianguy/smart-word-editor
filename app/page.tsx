@@ -38,6 +38,7 @@ export default function Page() {
     error,
     uploadDocument,
     handleTiptapChange,
+    registerReplacement,
     downloadDocument,
     resetDocument,
   } = useDocument();
@@ -91,18 +92,21 @@ export default function Page() {
     (value: VaultValue) => {
       if (!editorRef.current) return;
 
-      if (hasSelection) {
-        // C'è una selezione → sostituisci
+      if (hasSelection && selectedText) {
+        // C'è una selezione → sostituisci e registra
         editorRef.current.replaceSelection(value.value);
+
+        // IMPORTANTE: Registra la sostituzione per il backend
+        registerReplacement(selectedText, value.value);
       } else if (hasCursor) {
-        // Solo cursore → inserisci
+        // Solo cursore → inserisci (nessuna registrazione necessaria)
         editorRef.current.insertText(value.value);
       }
 
       // Rimetti il focus sull'editor
       editorRef.current.focus();
     },
-    [hasSelection, hasCursor]
+    [hasSelection, hasCursor, selectedText, registerReplacement]
   );
 
   return (
@@ -169,43 +173,56 @@ export default function Page() {
       </header>
 
       {/* Main content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Editor Area - 70% */}
-        <div className="flex-[7] overflow-hidden">
-          {!documentState && !isLoading && !error && (
-            <EmptyState
-              backendStatus={backendStatus}
-              onRetryBackend={() => setBackendStatus("checking")}
-              onFileUpload={handleFileUpload}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Info banner per immagini */}
+        {documentState && (
+          <div className="bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800 px-6 py-2">
+            <p className="text-xs text-amber-700 dark:text-amber-400 text-center">
+              <span className="font-medium">Nota:</span> Le immagini e la
+              formattazione complessa non sono visibili nell'anteprima, ma
+              vengono <strong>preservate</strong> nel documento scaricato.
+            </p>
+          </div>
+        )}
+
+        <div className="flex-1 flex overflow-hidden">
+          {/* Editor Area - 70% */}
+          <div className="flex-[7] overflow-hidden">
+            {!documentState && !isLoading && !error && (
+              <EmptyState
+                backendStatus={backendStatus}
+                onRetryBackend={() => setBackendStatus("checking")}
+                onFileUpload={handleFileUpload}
+              />
+            )}
+
+            {isLoading && <LoadingState />}
+
+            {error && !isLoading && (
+              <ErrorState error={error} onRetry={resetDocument} />
+            )}
+
+            {documentState && tiptapContent && (
+              <TipTapEditor
+                key={documentState.metadata.file_name}
+                ref={editorRef}
+                initialContent={tiptapContent}
+                onContentChange={handleTiptapChange}
+                onSelectionChange={handleSelectionChange}
+              />
+            )}
+          </div>
+
+          {/* Vault Sidebar - 30% */}
+          <div className="flex-[3] overflow-hidden">
+            <VaultSidebar
+              categories={vaultData}
+              onValueClick={handleVaultValueClick}
+              hasSelection={hasSelection}
+              hasCursor={hasCursor}
+              selectedText={selectedText}
             />
-          )}
-
-          {isLoading && <LoadingState />}
-
-          {error && !isLoading && (
-            <ErrorState error={error} onRetry={resetDocument} />
-          )}
-
-          {documentState && tiptapContent && (
-            <TipTapEditor
-              key={documentState.metadata.file_name}
-              ref={editorRef}
-              initialContent={tiptapContent}
-              onContentChange={handleTiptapChange}
-              onSelectionChange={handleSelectionChange}
-            />
-          )}
-        </div>
-
-        {/* Vault Sidebar - 30% */}
-        <div className="flex-[3] overflow-hidden">
-          <VaultSidebar
-            categories={vaultData}
-            onValueClick={handleVaultValueClick}
-            hasSelection={hasSelection}
-            hasCursor={hasCursor}
-            selectedText={selectedText}
-          />
+          </div>
         </div>
       </div>
     </div>
