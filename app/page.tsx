@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Upload,
   Download,
@@ -9,44 +9,43 @@ import {
   RotateCcw,
   AlertCircle,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DocumentPreview } from "@/components/document-preview";
+import {
+  TipTapEditor,
+  type TipTapEditorHandle,
+} from "@/components/tiptap-editor";
 import { VaultSidebar } from "@/components/vault-sidebar";
-import { ReplacePopover } from "@/components/replace-popover";
 import { useDocument } from "@/hooks/use-document";
 import { vaultData } from "@/lib/vault-data";
 import { healthCheck } from "@/lib/api-client";
-import type { VaultValue, SelectionRef } from "@/lib/document-types";
+import type { VaultValue } from "@/lib/document-types";
 
 /**
- * Smart Word Editor - Pagina principale
- *
- * Workflow:
- * 1. Upload DOCX
- * 2. Visualizza preview
- * 3. Seleziona testo → sostituisci con vault o testo libero
- * 4. Preview si aggiorna immediatamente
- * 5. Download quando soddisfatto
+ * Smart Word Editor - Pagina principale con TipTap
  */
 export default function Page() {
+  // Ref all'editor TipTap
+  const editorRef = useRef<TipTapEditorHandle>(null);
+
   // Stato documento
   const {
     document: documentState,
-    content,
-    metadata,
+    tiptapContent,
     modifications,
     isLoading,
     error,
     uploadDocument,
-    replaceText,
+    handleTiptapChange,
     downloadDocument,
     resetDocument,
   } = useDocument();
 
   // Stato UI
-  const [selection, setSelection] = useState<SelectionRef | null>(null);
-  const [suggestedValue, setSuggestedValue] = useState<string | undefined>();
+  const [hasSelection, setHasSelection] = useState(false);
+  const [hasCursor, setHasCursor] = useState(false);
+  const [selectedText, setSelectedText] = useState<string | undefined>();
   const [backendStatus, setBackendStatus] = useState<
     "checking" | "online" | "offline"
   >("checking");
@@ -58,8 +57,6 @@ export default function Page() {
       setBackendStatus(isOnline ? "online" : "offline");
     };
     checkBackend();
-
-    // Ricontrolla ogni 30 secondi
     const interval = setInterval(checkBackend, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -70,58 +67,43 @@ export default function Page() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Reset selezione e suggerimento
-      setSelection(null);
-      setSuggestedValue(undefined);
       uploadDocument(file);
     }
-    // Reset input per permettere re-upload stesso file
     e.target.value = "";
   };
 
   /**
-   * Gestisce la selezione del testo nel documento
+   * Gestisce il cambio di stato della selezione nell'editor
    */
-  const handleTextSelect = (sel: SelectionRef) => {
-    setSelection(sel);
-    // Non resettare il suggestedValue qui, potrebbe essere già stato impostato dal vault
-  };
+  const handleSelectionChange = useCallback(
+    (selection: boolean, cursor: boolean, text?: string) => {
+      setHasSelection(selection);
+      setHasCursor(cursor);
+      setSelectedText(text);
+    },
+    []
+  );
 
   /**
    * Gestisce il click su un valore del vault
    */
-  const handleVaultValueClick = (value: VaultValue) => {
-    if (selection) {
-      // Se c'è una selezione attiva, applica subito
-      replaceText(selection.position, selection.selectedText, value.value);
-      setSelection(null);
-      setSuggestedValue(undefined);
-      window.getSelection()?.removeAllRanges();
-    } else {
-      // Altrimenti, salva come suggerimento per la prossima selezione
-      setSuggestedValue(value.value);
-    }
-  };
+  const handleVaultValueClick = useCallback(
+    (value: VaultValue) => {
+      if (!editorRef.current) return;
 
-  /**
-   * Gestisce la sostituzione dal popover
-   */
-  const handleReplace = (newText: string) => {
-    if (selection) {
-      replaceText(selection.position, selection.selectedText, newText);
-      setSelection(null);
-      setSuggestedValue(undefined);
-      window.getSelection()?.removeAllRanges();
-    }
-  };
+      if (hasSelection) {
+        // C'è una selezione → sostituisci
+        editorRef.current.replaceSelection(value.value);
+      } else if (hasCursor) {
+        // Solo cursore → inserisci
+        editorRef.current.insertText(value.value);
+      }
 
-  /**
-   * Chiude il popover
-   */
-  const handleClosePopover = () => {
-    setSelection(null);
-    window.getSelection()?.removeAllRanges();
-  };
+      // Rimetti il focus sull'editor
+      editorRef.current.focus();
+    },
+    [hasSelection, hasCursor]
+  );
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -140,10 +122,8 @@ export default function Page() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Status backend */}
           <BackendStatus status={backendStatus} />
 
-          {/* Contatore modifiche */}
           {documentState && modifications.length > 0 && (
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground bg-muted px-3 py-1.5 rounded-md">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -154,89 +134,65 @@ export default function Page() {
             </div>
           )}
 
-          {/* Pulsanti azione */}
-          {!documentState && (
-            <>
-              <input
-                type="file"
-                accept=".docx"
-                onChange={handleFileUpload}
-                className="hidden"
-                id="file-upload"
-                disabled={isLoading || backendStatus === "offline"}
-              />
-              <label htmlFor="file-upload">
-                <Button
-                  asChild
-                  disabled={isLoading || backendStatus === "offline"}
-                >
-                  <span>
-                    <Upload className="h-4 w-4 mr-2" />
-                    {isLoading ? "Caricamento..." : "Carica DOCX"}
-                  </span>
-                </Button>
-              </label>
-            </>
-          )}
+          <div className="relative">
+            <input
+              type="file"
+              accept=".doc,.docx,.odt,.rtf,.txt"
+              onChange={handleFileUpload}
+              className="absolute inset-0 opacity-0 cursor-pointer"
+              disabled={isLoading}
+            />
+            <Button variant="outline" disabled={isLoading}>
+              <Upload className="h-4 w-4 mr-2" />
+              {documentState ? "Cambia file" : "Carica documento"}
+            </Button>
+          </div>
 
           {documentState && (
             <>
-              <Button
-                variant="outline"
-                onClick={downloadDocument}
-                disabled={isLoading}
-              >
+              <Button onClick={downloadDocument} disabled={isLoading}>
                 <Download className="h-4 w-4 mr-2" />
                 Scarica
               </Button>
-
               <Button
-                variant="outline"
+                variant="ghost"
+                size="icon"
                 onClick={resetDocument}
                 disabled={isLoading}
+                title="Nuovo documento"
               >
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Nuovo
+                <RotateCcw className="h-4 w-4" />
               </Button>
-
-              <input
-                type="file"
-                accept=".docx"
-                onChange={handleFileUpload}
-                className="hidden"
-                id="file-upload-replace"
-                disabled={isLoading}
-              />
             </>
           )}
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Document Preview - 70% */}
+        {/* Editor Area - 70% */}
         <div className="flex-[7] overflow-hidden">
-          {/* Stato: Nessun documento */}
           {!documentState && !isLoading && !error && (
             <EmptyState
               backendStatus={backendStatus}
               onRetryBackend={() => setBackendStatus("checking")}
+              onFileUpload={handleFileUpload}
             />
           )}
 
-          {/* Stato: Caricamento */}
           {isLoading && <LoadingState />}
 
-          {/* Stato: Errore */}
           {error && !isLoading && (
             <ErrorState error={error} onRetry={resetDocument} />
           )}
 
-          {/* Stato: Documento caricato */}
-          {documentState && content && (
-            <DocumentPreview
-              content={content}
-              onTextSelect={handleTextSelect}
+          {documentState && tiptapContent && (
+            <TipTapEditor
+              key={documentState.metadata.file_name}
+              ref={editorRef}
+              initialContent={tiptapContent}
+              onContentChange={handleTiptapChange}
+              onSelectionChange={handleSelectionChange}
             />
           )}
         </div>
@@ -246,20 +202,12 @@ export default function Page() {
           <VaultSidebar
             categories={vaultData}
             onValueClick={handleVaultValueClick}
-            hasActiveSelection={selection !== null}
+            hasSelection={hasSelection}
+            hasCursor={hasCursor}
+            selectedText={selectedText}
           />
         </div>
       </div>
-
-      {/* Replace Popover */}
-      {selection && (
-        <ReplacePopover
-          selection={selection}
-          onReplace={handleReplace}
-          onClose={handleClosePopover}
-          suggestedValue={suggestedValue}
-        />
-      )}
     </div>
   );
 }
@@ -268,9 +216,6 @@ export default function Page() {
 // SUB-COMPONENTS
 // ============================================================================
 
-/**
- * Indicatore stato backend
- */
 function BackendStatus({
   status,
 }: {
@@ -302,15 +247,14 @@ function BackendStatus({
   );
 }
 
-/**
- * Stato vuoto (nessun documento)
- */
 function EmptyState({
   backendStatus,
   onRetryBackend,
+  onFileUpload,
 }: {
   backendStatus: "checking" | "online" | "offline";
   onRetryBackend: () => void;
+  onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
     <div className="h-full flex items-center justify-center">
@@ -320,61 +264,62 @@ function EmptyState({
         </div>
         <h2 className="text-2xl font-semibold mb-2">Nessun documento</h2>
         <p className="text-muted-foreground mb-6">
-          Carica un file DOCX per iniziare. Potrai selezionare il testo e
-          sostituirlo con valori dal vault o testo personalizzato.
+          Carica un documento per iniziare. Potrai modificare il testo
+          direttamente come in un editor di testo, o inserire valori dal vault.
         </p>
 
-        {backendStatus === "offline" ? (
-          <div className="space-y-4">
-            <div className="flex items-center justify-center gap-2 text-destructive">
-              <AlertCircle className="h-5 w-5" />
-              <span>Il server backend non è raggiungibile</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Assicurati che il server FastAPI sia in esecuzione su{" "}
-              <code className="bg-muted px-1 py-0.5 rounded">
-                localhost:8000
-              </code>
-            </p>
-            <Button variant="outline" onClick={onRetryBackend}>
-              Riprova connessione
+        {backendStatus === "offline" && (
+          <div className="bg-destructive/10 text-destructive text-sm p-4 rounded-lg mb-4">
+            <AlertCircle className="h-4 w-4 inline mr-2" />
+            Backend non raggiungibile.
+            <Button
+              variant="link"
+              size="sm"
+              className="text-destructive p-0 h-auto ml-2"
+              onClick={onRetryBackend}
+            >
+              Riprova
             </Button>
           </div>
-        ) : (
-          <label htmlFor="file-upload">
-            <Button size="lg" asChild disabled={backendStatus === "checking"}>
-              <span>
-                <Upload className="h-5 w-5 mr-2" />
-                Carica file DOCX
-              </span>
-            </Button>
-          </label>
         )}
+
+        <div className="relative inline-block">
+          <input
+            type="file"
+            accept=".doc,.docx,.odt,.rtf,.txt"
+            className="absolute inset-0 opacity-0 cursor-pointer"
+            onChange={onFileUpload}
+            disabled={backendStatus === "offline"}
+          />
+          <Button size="lg" disabled={backendStatus === "offline"}>
+            <Upload className="h-5 w-5 mr-2" />
+            Carica documento
+          </Button>
+        </div>
+
+        <p className="text-xs text-muted-foreground mt-4">
+          Formati supportati: DOC, DOCX, ODT, RTF, TXT
+        </p>
+        <p className="text-xs text-muted-foreground">
+          💡 Clicca nel documento per posizionare il cursore, seleziona per
+          sostituire
+        </p>
       </div>
     </div>
   );
 }
 
-/**
- * Stato caricamento
- */
 function LoadingState() {
   return (
     <div className="h-full flex items-center justify-center">
       <div className="text-center">
-        <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
         <p className="text-muted-foreground">Caricamento documento...</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Parsing e analisi della struttura in corso
-        </p>
       </div>
     </div>
   );
 }
 
-/**
- * Stato errore
- */
 function ErrorState({
   error,
   onRetry,
@@ -390,16 +335,10 @@ function ErrorState({
         </div>
         <h2 className="text-2xl font-semibold mb-2">Errore</h2>
         <p className="text-muted-foreground mb-6">{error}</p>
-        <div className="space-x-2">
-          <Button variant="outline" onClick={onRetry}>
-            Riprova
-          </Button>
-          <label htmlFor="file-upload">
-            <Button asChild>
-              <span>Carica altro file</span>
-            </Button>
-          </label>
-        </div>
+        <Button onClick={onRetry}>
+          <RotateCcw className="h-4 w-4 mr-2" />
+          Riprova
+        </Button>
       </div>
     </div>
   );

@@ -1,11 +1,9 @@
 "use client";
 
-import type React from "react";
-import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import {
-  X,
-  Clipboard,
   Search,
+  Clipboard,
   Building2,
   Users,
   MapPin,
@@ -15,22 +13,21 @@ import {
   ChevronRight,
   Type,
   Database,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import type {
-  SelectionRef,
-  VaultCategory,
-  VaultValue,
-} from "@/lib/document-types";
+import type { VaultCategory, VaultValue } from "@/lib/document-types";
 
-interface ReplacePopoverProps {
-  selection: SelectionRef;
-  onReplace: (newText: string) => void;
-  onClose: () => void;
+interface EditorBubbleMenuProps {
+  x: number;
+  y: number;
+  selectedText: string;
   vaultCategories: VaultCategory[];
+  onReplace: (text: string) => void;
+  onClose: () => void;
 }
 
 type TabType = "text" | "vault";
@@ -47,61 +44,52 @@ const categoryIcons: Record<
   banking: Landmark,
 };
 
-export function ReplacePopover({
-  selection,
+export function EditorBubbleMenu({
+  x,
+  y,
+  selectedText,
+  vaultCategories,
   onReplace,
   onClose,
-  vaultCategories,
-}: ReplacePopoverProps) {
+}: EditorBubbleMenuProps) {
   const [activeTab, setActiveTab] = useState<TabType>("text");
   const [customText, setCustomText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
 
-  const popoverRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Calcola la posizione corretta del popover
+  // Calcola la posizione corretta
   useLayoutEffect(() => {
-    if (!popoverRef.current) return;
+    if (!menuRef.current) return;
 
-    const popoverRect = popoverRef.current.getBoundingClientRect();
+    const menuRect = menuRef.current.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    let x = selection.x;
-    let y = selection.y;
-
-    // Calcola la posizione centrata sopra la selezione
-    x = x - popoverRect.width / 2;
-    y = y - popoverRect.height - 10;
+    let newX = x - menuRect.width / 2;
+    let newY = y - menuRect.height - 10;
 
     // Aggiusta se esce a sinistra
-    if (x < 10) {
-      x = 10;
-    }
-
+    if (newX < 10) newX = 10;
     // Aggiusta se esce a destra
-    if (x + popoverRect.width > viewportWidth - 10) {
-      x = viewportWidth - popoverRect.width - 10;
+    if (newX + menuRect.width > viewportWidth - 10) {
+      newX = viewportWidth - menuRect.width - 10;
+    }
+    // Se esce sopra, mostra sotto
+    if (newY < 10) newY = y + 30;
+    // Se esce sotto
+    if (newY + menuRect.height > viewportHeight - 10) {
+      newY = viewportHeight - menuRect.height - 10;
     }
 
-    // Se esce sopra, mostra sotto la selezione
-    if (y < 10) {
-      y = selection.y + 30;
-    }
+    setPosition({ x: newX, y: newY });
+  }, [x, y]);
 
-    // Se esce sotto, limita
-    if (y + popoverRect.height > viewportHeight - 10) {
-      y = viewportHeight - popoverRect.height - 10;
-    }
-
-    setPosition({ x, y });
-  }, [selection.x, selection.y]);
-
-  // Focus sull'input
+  // Focus sull'input quando cambia tab
   useEffect(() => {
     const timer = setTimeout(() => {
       if (activeTab === "text") {
@@ -109,19 +97,23 @@ export function ReplacePopover({
       } else {
         searchInputRef.current?.focus();
       }
-    }, 100);
+    }, 50);
     return () => clearTimeout(timer);
   }, [activeTab]);
 
   const handleReplace = (text: string) => {
     if (text) {
       onReplace(text);
+      setCustomText("");
+      setSearchQuery("");
+      setSelectedCategory(null);
     }
   };
 
   const handleTextKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && customText.trim()) {
       e.preventDefault();
+      e.stopPropagation();
       handleReplace(customText);
     } else if (e.key === "Escape") {
       e.preventDefault();
@@ -152,6 +144,7 @@ export function ReplacePopover({
     }
   };
 
+  // Filtra le categorie
   const filteredCategories = vaultCategories
     .map((category) => ({
       ...category,
@@ -171,35 +164,27 @@ export function ReplacePopover({
 
   return (
     <>
-      {/* Overlay per chiudere */}
-      <div
-        className="fixed inset-0 z-40"
-        onClick={onClose}
-        onMouseDown={(e) => e.preventDefault()} // Previene la perdita della selezione
-      />
+      {/* Overlay per chiudere quando si clicca fuori */}
+      <div className="fixed inset-0 z-40" onClick={onClose} />
 
-      {/* Popover */}
+      {/* Menu */}
       <div
-        ref={popoverRef}
-        role="dialog"
-        aria-label="Sostituisci testo"
-        className={cn(
-          "fixed z-50 bg-popover border border-border rounded-lg shadow-xl",
-          "animate-in fade-in-0 zoom-in-95"
-        )}
+        ref={menuRef}
+        className="fixed z-50 bg-popover border border-border rounded-lg shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95"
         style={{
           left: position.x,
           top: position.y,
         }}
+        onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="w-[400px]">
+        <div className="w-[380px]">
           {/* Header con testo selezionato */}
           <div className="flex items-start justify-between p-3 border-b border-border bg-muted/30">
             <div className="flex-1 min-w-0 pr-2">
               <p className="text-xs text-muted-foreground mb-1">Sostituisci:</p>
               <p className="text-sm font-medium bg-yellow-100 dark:bg-yellow-900/30 px-2 py-1 rounded border border-yellow-300 dark:border-yellow-700 line-clamp-2">
-                "{selection.selectedText}"
+                "{selectedText}"
               </p>
             </div>
             <Button
@@ -207,6 +192,7 @@ export function ReplacePopover({
               size="icon"
               className="h-7 w-7 flex-shrink-0"
               onClick={onClose}
+              type="button"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -223,9 +209,10 @@ export function ReplacePopover({
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               )}
               onClick={() => setActiveTab("text")}
+              type="button"
             >
               <Type className="h-4 w-4" />
-              Testo libero
+              Testo
             </button>
             <button
               className={cn(
@@ -236,6 +223,7 @@ export function ReplacePopover({
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               )}
               onClick={() => setActiveTab("vault")}
+              type="button"
             >
               <Database className="h-4 w-4" />
               Vault
@@ -243,56 +231,54 @@ export function ReplacePopover({
           </div>
 
           {/* Content */}
-          <div className="p-4">
+          <div className="p-3">
             {activeTab === "text" ? (
               <div className="space-y-3">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-medium text-muted-foreground">
-                      Nuovo testo
-                    </p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 text-xs"
-                      onClick={handlePasteFromClipboard}
-                    >
-                      <Clipboard className="h-3 w-3 mr-1" />
-                      Incolla
-                    </Button>
-                  </div>
-                  <div className="flex gap-2">
-                    <Input
-                      ref={inputRef}
-                      placeholder="Inserisci nuovo testo..."
-                      value={customText}
-                      onChange={(e) => setCustomText(e.target.value)}
-                      onKeyDown={handleTextKeyDown}
-                      className="flex-1"
-                    />
-                    <Button
-                      onClick={() => handleReplace(customText)}
-                      disabled={!customText.trim()}
-                    >
-                      Sostituisci
-                    </Button>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Nuovo testo
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs"
+                    onClick={handlePasteFromClipboard}
+                    type="button"
+                  >
+                    <Clipboard className="h-3 w-3 mr-1" />
+                    Incolla
+                  </Button>
                 </div>
-                <p className="text-xs text-muted-foreground text-center">
-                  <kbd className="px-1 py-0.5 bg-muted rounded text-[10px]">
-                    Invio
-                  </kbd>{" "}
+                <div className="flex gap-2">
+                  <Input
+                    ref={inputRef}
+                    placeholder="Inserisci nuovo testo..."
+                    value={customText}
+                    onChange={(e) => setCustomText(e.target.value)}
+                    onKeyDown={handleTextKeyDown}
+                    className="flex-1 h-9"
+                  />
+                  <Button
+                    onClick={() => handleReplace(customText)}
+                    disabled={!customText.trim()}
+                    size="sm"
+                    type="button"
+                  >
+                    Sostituisci
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground text-center">
+                  <kbd className="px-1 py-0.5 bg-muted rounded">Invio</kbd>{" "}
                   conferma ·{" "}
-                  <kbd className="px-1 py-0.5 bg-muted rounded text-[10px]">
-                    Esc
-                  </kbd>{" "}
+                  <kbd className="px-1 py-0.5 bg-muted rounded">Esc</kbd>{" "}
                   annulla
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
+                {/* Search */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     ref={searchInputRef}
                     placeholder="Cerca nel vault..."
@@ -302,19 +288,21 @@ export function ReplacePopover({
                       setSelectedCategory(null);
                     }}
                     onKeyDown={handleSearchKeyDown}
-                    className="pl-9"
+                    className="pl-8 h-9"
                   />
                 </div>
 
+                {/* Breadcrumb */}
                 {selectedCategory && !searchQuery && (
-                  <div className="flex items-center gap-1 text-sm">
+                  <div className="flex items-center gap-1 text-xs">
                     <button
                       className="text-muted-foreground hover:text-foreground"
                       onClick={() => setSelectedCategory(null)}
+                      type="button"
                     >
                       Categorie
                     </button>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    <ChevronRight className="h-3 w-3 text-muted-foreground" />
                     <span className="font-medium">
                       {
                         vaultCategories.find((c) => c.id === selectedCategory)
@@ -324,22 +312,23 @@ export function ReplacePopover({
                   </div>
                 )}
 
-                <ScrollArea className="h-[200px]">
+                {/* List */}
+                <ScrollArea className="h-[180px]">
                   {!selectedCategory && !searchQuery ? (
+                    // Category list
                     <div className="space-y-1">
                       {vaultCategories.map((category) => {
                         const Icon = categoryIcons[category.id] || Database;
                         return (
                           <button
                             key={category.id}
-                            className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-accent text-left"
+                            className="w-full flex items-center gap-2 p-2 rounded-md hover:bg-accent text-left text-sm"
                             onClick={() => setSelectedCategory(category.id)}
+                            type="button"
                           >
-                            <Icon className="h-4 w-4 text-muted-foreground" />
-                            <div className="flex-1">
-                              <p className="font-medium text-sm">
-                                {category.name}
-                              </p>
+                            <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium">{category.name}</p>
                               <p className="text-xs text-muted-foreground">
                                 {category.values.length} valori
                               </p>
@@ -350,6 +339,7 @@ export function ReplacePopover({
                       })}
                     </div>
                   ) : (
+                    // Values list
                     <div className="space-y-1">
                       {(searchQuery
                         ? filteredCategories.flatMap((c) =>
@@ -365,8 +355,9 @@ export function ReplacePopover({
                       ).map((value) => (
                         <button
                           key={value.id}
-                          className="w-full flex flex-col gap-0.5 p-2.5 rounded-md hover:bg-accent text-left"
+                          className="w-full flex flex-col gap-0.5 p-2 rounded-md hover:bg-accent text-left"
                           onClick={() => handleReplace(value.value)}
+                          type="button"
                         >
                           <div className="flex items-center gap-2 w-full">
                             <span className="font-medium text-sm flex-1">
@@ -385,7 +376,7 @@ export function ReplacePopover({
                       ))}
 
                       {searchQuery && filteredCategories.length === 0 && (
-                        <div className="text-center py-6">
+                        <div className="text-center py-4">
                           <p className="text-sm text-muted-foreground">
                             Nessun risultato
                           </p>

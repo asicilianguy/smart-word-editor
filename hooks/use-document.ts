@@ -1,31 +1,33 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
+import type { JSONContent } from "@tiptap/react";
 import {
   parseDocument,
   generateDocument,
-  type Modification,
-  type SelectionPosition,
   type DocumentContent,
-  type DocumentMetadata,
+  type Modification,
 } from "@/lib/api-client";
 import type { DocumentState } from "@/lib/document-types";
+import {
+  convertToTipTap,
+  generateModificationsFromTipTap,
+  updateDocumentContentFromTipTap,
+} from "@/lib/content-converter";
 
 /**
- * Hook per la gestione del documento
- *
- * Responsabilità:
- * - Upload e parsing del DOCX via backend FastAPI
- * - Mantenimento dello stato del documento
- * - Gestione delle modifiche (con tracking)
- * - Download del DOCX modificato via backend FastAPI
+ * Hook per la gestione del documento con TipTap
  */
 export function useDocument() {
   const [documentState, setDocumentState] = useState<DocumentState | null>(
     null
   );
+  const [tiptapContent, setTiptapContent] = useState<JSONContent | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Contenuto originale per calcolo modifiche
+  const originalContent = useRef<DocumentContent | null>(null);
 
   /**
    * Carica e parsa un documento DOCX
@@ -35,24 +37,38 @@ export function useDocument() {
     setError(null);
 
     try {
-      // Chiama il backend FastAPI per il parsing
+      console.log("[useDocument] Inizio upload file:", file.name);
       const response = await parseDocument(file);
+      console.log("[useDocument] Risposta backend:", response);
+      console.log(
+        "[useDocument] Elementi:",
+        response.content?.elements?.length
+      );
 
       if (!response.success) {
-        throw new Error(
-          "Il backend ha restituito un errore durante il parsing"
-        );
+        throw new Error("Errore durante il parsing del documento");
       }
 
-      // Crea lo stato del documento
-      const newState: DocumentState = {
+      // Salva l'originale
+      originalContent.current = JSON.parse(JSON.stringify(response.content));
+
+      // Converti in formato TipTap
+      console.log("[useDocument] Converto in TipTap...");
+      const tiptap = convertToTipTap(response.content);
+      console.log("[useDocument] TipTap content:", tiptap);
+      console.log("[useDocument] TipTap nodi:", tiptap.content?.length);
+
+      setTiptapContent(tiptap);
+
+      // Imposta lo stato del documento
+      setDocumentState({
         originalFile: file,
         content: response.content,
         metadata: response.metadata,
         modifications: [],
-      };
+      });
 
-      setDocumentState(newState);
+      console.log("[useDocument] Upload completato con successo");
     } catch (err) {
       console.error("[useDocument] Errore upload:", err);
       setError(
@@ -66,119 +82,40 @@ export function useDocument() {
   }, []);
 
   /**
-   * Sostituisce il testo in una posizione specifica
-   * Aggiorna immediatamente la preview (stato locale)
+   * Aggiorna il contenuto quando TipTap cambia
    */
-  const replaceText = useCallback(
-    (position: SelectionPosition, originalText: string, newText: string) => {
-      if (!documentState) return;
+  const handleTiptapChange = useCallback(
+    (newTiptapContent: JSONContent) => {
+      if (!documentState || !originalContent.current) return;
 
-      setDocumentState((prevState) => {
-        if (!prevState) return prevState;
+      setTiptapContent(newTiptapContent);
 
-        // Clona lo stato
-        const newState: DocumentState = {
-          ...prevState,
-          content: JSON.parse(
-            JSON.stringify(prevState.content)
-          ) as DocumentContent,
-          modifications: [...prevState.modifications],
+      // Genera le modifiche confrontando con l'originale
+      const modifications = generateModificationsFromTipTap(
+        originalContent.current,
+        newTiptapContent
+      );
+
+      // Aggiorna il DocumentContent per mantenerlo sincronizzato
+      const updatedContent = updateDocumentContentFromTipTap(
+        originalContent.current,
+        newTiptapContent
+      );
+
+      setDocumentState((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          content: updatedContent,
+          modifications,
         };
-
-        // Trova e modifica l'elemento
-        const element = findElement(newState.content, position);
-        if (!element) {
-          console.error("[useDocument] Elemento non trovato:", position);
-          return prevState;
-        }
-
-        // Modifica il testo nel run
-        if (
-          position.type === "paragraph" &&
-          position.paragraph_index !== undefined
-        ) {
-          const paragraph = newState.content.elements[position.paragraph_index];
-          if (paragraph && paragraph.type === "paragraph") {
-            const run = paragraph.runs[position.run_index];
-            if (run) {
-              // Gestisci selezione singola o cross-run
-              if (
-                position.end_run_index !== undefined &&
-                position.end_run_index !== position.run_index
-              ) {
-                // Cross-run: modifica il primo run, svuota gli altri
-                applyModificationCrossRun(paragraph.runs, position, newText);
-              } else {
-                // Singolo run
-                const before = run.text.substring(0, position.char_start);
-                const after = run.text.substring(position.char_end);
-                run.text = before + newText + after;
-              }
-            }
-          }
-        } else if (
-          position.type === "table" &&
-          position.table_index !== undefined
-        ) {
-          // Trova la tabella e applica la modifica
-          const table = newState.content.elements[position.table_index];
-          if (table && table.type === "table") {
-            const row = table.rows[position.row_index!];
-            const cell = row?.cells[position.cell_index!];
-            const paragraph = cell?.paragraphs[position.cell_paragraph_index!];
-            if (paragraph) {
-              const run = paragraph.runs[position.run_index];
-              if (run) {
-                const before = run.text.substring(0, position.char_start);
-                const after = run.text.substring(position.char_end);
-                run.text = before + newText + after;
-              }
-            }
-          }
-        }
-
-        // Registra la modifica per il backend
-        const modification: Modification = {
-          position,
-          original_text: originalText,
-          new_text: newText,
-        };
-        newState.modifications.push(modification);
-
-        return newState;
       });
     },
     [documentState]
   );
 
   /**
-   * Annulla l'ultima modifica
-   */
-  const undo = useCallback(() => {
-    if (!documentState || documentState.modifications.length === 0) return;
-
-    setDocumentState((prevState) => {
-      if (!prevState || prevState.modifications.length === 0) return prevState;
-
-      // Per semplicità, ri-parsiamo il documento originale e riapplichiamo tutte le modifiche tranne l'ultima
-      // In produzione si potrebbe ottimizzare con un sistema di snapshot
-
-      // Clona lo stato
-      const newState: DocumentState = {
-        ...prevState,
-        modifications: prevState.modifications.slice(0, -1),
-      };
-
-      // Nota: per un undo corretto dovremmo ri-parsare e riapplicare
-      // Per ora rimuoviamo solo la modifica dalla lista
-      // TODO: implementare undo completo
-
-      return newState;
-    });
-  }, [documentState]);
-
-  /**
-   * Scarica il documento DOCX con tutte le modifiche applicate
+   * Scarica il documento DOCX con le modifiche applicate
    */
   const downloadDocument = useCallback(async () => {
     if (!documentState) return;
@@ -187,13 +124,21 @@ export function useDocument() {
     setError(null);
 
     try {
-      // Chiama il backend FastAPI per generare il DOCX
+      // Genera le modifiche finali dal contenuto TipTap corrente
+      const modifications =
+        tiptapContent && originalContent.current
+          ? generateModificationsFromTipTap(
+              originalContent.current,
+              tiptapContent
+            )
+          : documentState.modifications;
+
       const blob = await generateDocument(
         documentState.originalFile,
-        documentState.modifications
+        modifications
       );
 
-      // Crea il download
+      // Trigger download
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -212,13 +157,15 @@ export function useDocument() {
     } finally {
       setIsLoading(false);
     }
-  }, [documentState]);
+  }, [documentState, tiptapContent]);
 
   /**
-   * Resetta lo stato (per caricare un nuovo documento)
+   * Resetta lo stato
    */
   const resetDocument = useCallback(() => {
     setDocumentState(null);
+    setTiptapContent(null);
+    originalContent.current = null;
     setError(null);
   }, []);
 
@@ -228,78 +175,27 @@ export function useDocument() {
     content: documentState?.content ?? null,
     metadata: documentState?.metadata ?? null,
     modifications: documentState?.modifications ?? [],
+    tiptapContent,
     isLoading,
     error,
 
     // Azioni
     uploadDocument,
-    replaceText,
-    undo,
+    handleTiptapChange,
     downloadDocument,
     resetDocument,
   };
 }
 
 // ============================================================================
-// HELPER FUNCTIONS
+// HELPERS
 // ============================================================================
 
-/**
- * Trova un elemento nel contenuto del documento
- */
-function findElement(content: DocumentContent, position: SelectionPosition) {
-  if (position.type === "paragraph" && position.paragraph_index !== undefined) {
-    return content.elements[position.paragraph_index];
-  }
-
-  if (position.type === "table" && position.table_index !== undefined) {
-    return content.elements[position.table_index];
-  }
-
-  return null;
-}
-
-/**
- * Applica una modifica cross-run
- * Modifica il primo run con il nuovo testo, svuota gli altri
- */
-function applyModificationCrossRun(
-  runs: { index: number; text: string; style: unknown }[],
-  position: SelectionPosition,
-  newText: string
-) {
-  const startRunIndex = position.run_index;
-  const endRunIndex = position.end_run_index!;
-  const charStartInFirst =
-    position.char_start_in_first_run ?? position.char_start;
-  const charEndInLast = position.char_end_in_last_run ?? position.char_end;
-
-  // Primo run: testo prima + nuovo testo
-  const firstRun = runs[startRunIndex];
-  const before = firstRun.text.substring(0, charStartInFirst);
-
-  // Ultimo run: testo dopo
-  const lastRun = runs[endRunIndex];
-  const after = lastRun.text.substring(charEndInLast);
-
-  // Modifica il primo run
-  firstRun.text = before + newText + after;
-
-  // Svuota i run intermedi e l'ultimo
-  for (let i = startRunIndex + 1; i <= endRunIndex; i++) {
-    runs[i].text = "";
-  }
-}
-
-/**
- * Genera il nome del file modificato
- */
 function getModifiedFileName(originalName: string): string {
   const lastDot = originalName.lastIndexOf(".");
   if (lastDot === -1) {
     return `${originalName}_modificato`;
   }
-
   const baseName = originalName.substring(0, lastDot);
   const extension = originalName.substring(lastDot);
   return `${baseName}_modificato${extension}`;

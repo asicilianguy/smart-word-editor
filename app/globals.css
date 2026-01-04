@@ -123,3 +123,50 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ============================================
+   TipTap Editor Styles
+   ============================================ */
+
+/* Rimuove l'outline di default */
+.ProseMirror {
+  outline: none;
+}
+
+/* Placeholder per editor vuoto */
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Selezione testo evidenziata */
+.ProseMirror ::selection {
+  background-color: rgba(59, 130, 246, 0.3);
+}
+
+/* Stili base paragafo */
+.ProseMirror p {
+  margin-bottom: 1rem;
+  min-height: 1.5em;
+}
+
+/* Bold, Italic, Underline */
+.ProseMirror strong {
+  font-weight: 700;
+}
+
+.ProseMirror em {
+  font-style: italic;
+}
+
+.ProseMirror u {
+  text-decoration: underline;
+}
+
+/* Cursore visibile */
+.ProseMirror-focused {
+  caret-color: hsl(var(--primary));
+}
