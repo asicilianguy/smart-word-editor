@@ -10,6 +10,8 @@ import {
   AlertCircle,
   CheckCircle2,
   Loader2,
+  Eye,
+  GitCompare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +24,7 @@ import {
   DownloadDialog,
   type DownloadFormat,
 } from "@/components/download-dialog";
+import { CompareView } from "@/components/compare-view";
 import { useDocument } from "@/hooks/use-document";
 import { vaultData } from "@/lib/vault-data";
 import { healthCheck } from "@/lib/api-client";
@@ -30,20 +33,22 @@ import type { VaultValue } from "@/lib/document-types";
 /**
  * Smart Word Editor - Pagina principale con TipTap
  *
- * VERSIONE 6 - FULL DIFF TRACKING:
- * - Tutte le modifiche nell'editor vengono tracciate AUTOMATICAMENTE
- * - NON serve più chiamare registerTextReplacement
- * - Il sistema confronta contenuto originale vs attuale al download
+ * VERSIONE 7 - COMPARE VIEW:
+ * - Nuova funzionalità Compare View per confronto side-by-side
+ * - Preview PDF realistiche con evidenziazione modifiche
+ * - Tutte le modifiche tracciate automaticamente via diff
  */
 export default function Page() {
   // Ref all'editor TipTap
   const editorRef = useRef<TipTapEditorHandle>(null);
 
-  // Stato documento - NOTA: registerTextReplacement è stato RIMOSSO
+  // Stato documento
   const {
     document: documentState,
     tiptapContent,
     totalModifications,
+    currentTextModifications,
+    currentCheckboxModifications,
     isLoading,
     error,
     uploadDocument,
@@ -61,9 +66,10 @@ export default function Page() {
     "checking" | "online" | "offline"
   >("checking");
 
-  // Stato download dialog
+  // Stato dialogs
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [compareViewOpen, setCompareViewOpen] = useState(false);
 
   // Verifica connessione backend all'avvio
   useEffect(() => {
@@ -101,25 +107,17 @@ export default function Page() {
 
   /**
    * Gestisce il click su un valore del vault
-   *
-   * NOTA: NON serve più registrare le sostituzioni!
-   * Il sistema traccia automaticamente tutte le modifiche via diff.
    */
   const handleVaultValueClick = useCallback(
     (value: VaultValue) => {
       if (!editorRef.current) return;
 
       if (hasSelection && selectedText) {
-        // C'è una selezione → sostituisci
         editorRef.current.replaceSelection(value.value);
-        // Il diff automatico traccerà questa modifica!
       } else if (hasCursor) {
-        // Solo cursore → inserisci
         editorRef.current.insertText(value.value);
-        // Anche le inserzioni vengono tracciate automaticamente!
       }
 
-      // Rimetti il focus sull'editor
       editorRef.current.focus();
     },
     [hasSelection, hasCursor, selectedText]
@@ -127,7 +125,6 @@ export default function Page() {
 
   /**
    * Gestisce il toggle di una checkbox
-   * Le checkbox sono identificate per INDICE (0, 1, 2, ...)
    */
   const handleCheckboxToggle = useCallback(
     (checkboxIndex: number, newChecked: boolean) => {
@@ -202,6 +199,21 @@ export default function Page() {
 
           {documentState && (
             <>
+              {/* NUOVO: Bottone Confronta Modifiche */}
+              <Button
+                variant="outline"
+                onClick={() => setCompareViewOpen(true)}
+                disabled={isLoading || totalModifications === 0}
+                title={
+                  totalModifications === 0
+                    ? "Nessuna modifica da confrontare"
+                    : "Confronta documento originale e modificato"
+                }
+              >
+                <GitCompare className="h-4 w-4 mr-2" />
+                Confronta
+              </Button>
+
               <Button
                 onClick={() => setDownloadDialogOpen(true)}
                 disabled={isLoading}
@@ -278,6 +290,17 @@ export default function Page() {
           defaultFileName={documentState.metadata.file_name}
           onDownload={handleDownload}
           isLoading={isDownloading}
+        />
+      )}
+
+      {/* NUOVO: Compare View Dialog */}
+      {documentState && (
+        <CompareView
+          open={compareViewOpen}
+          onOpenChange={setCompareViewOpen}
+          originalFile={documentState.originalFile}
+          modifications={currentTextModifications}
+          checkboxModifications={currentCheckboxModifications}
         />
       )}
     </div>
@@ -374,8 +397,8 @@ function EmptyState({
           Formati supportati: DOC, DOCX, ODT, RTF, TXT
         </p>
         <p className="text-xs text-muted-foreground mt-2">
-          💡 <strong>Novità:</strong> Ogni modifica (testo libero, vault,
-          checkbox) viene tracciata automaticamente!
+          💡 <strong>Novità:</strong> Usa il pulsante "Confronta" per vedere
+          un'anteprima side-by-side delle modifiche!
         </p>
       </div>
     </div>

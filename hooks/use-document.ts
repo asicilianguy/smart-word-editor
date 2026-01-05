@@ -107,34 +107,30 @@ const PARAGRAPH_LIKE_TYPES = [
   "horizontalRule",
 ];
 
-/**
- * Verifica se un nodo è un tipo "paragrafo-like" (conta come paragrafo in python-docx)
- */
 function isParagraphLike(node: JSONContent): boolean {
   return PARAGRAPH_LIKE_TYPES.includes(node.type || "");
 }
 
 /**
  * Estrae tutti i segmenti di testo dal contenuto TipTap.
+ * Ogni segmento ha un path che identifica la sua posizione.
  *
- * IMPORTANTE: Gli indici devono corrispondere a quelli di python-docx:
- * - doc.paragraphs[] per i paragrafi a livello body
- * - doc.tables[].rows[].cells[].paragraphs[] per le celle
- *
- * Gestisce anche liste (bulletList, orderedList) che contengono listItem
- * che a loro volta contengono paragrafi.
+ * I path seguono il formato:
+ * - "p{index}" per paragrafi nel body
+ * - "t{tableIdx}r{rowIdx}c{cellIdx}p{paraIdx}" per celle tabella
  */
 function extractTextSegments(content: JSONContent): TextSegment[] {
   const segments: TextSegment[] = [];
-  if (!content?.content) return segments;
+
+  if (!content || !content.content) {
+    return segments;
+  }
 
   let paragraphIndex = 0;
   let tableIndex = 0;
 
   const processNode = (node: JSONContent) => {
-    if (!node) return;
-
-    // Paragrafo diretto o tipo simile
+    // Paragrafo o nodo simile a paragrafo
     if (isParagraphLike(node)) {
       const text = extractTextFromNode(node);
       segments.push({
@@ -147,18 +143,21 @@ function extractTextSegments(content: JSONContent): TextSegment[] {
 
     // Tabella
     if (node.type === "table" && node.content) {
-      node.content.forEach((row, rowIndex) => {
+      const currentTableIndex = tableIndex;
+      tableIndex++;
+
+      node.content.forEach((row, rowIdx) => {
         if (row.type === "tableRow" && row.content) {
-          row.content.forEach((cell, cellIndex) => {
+          row.content.forEach((cell, cellIdx) => {
             if (
               (cell.type === "tableCell" || cell.type === "tableHeader") &&
               cell.content
             ) {
-              cell.content.forEach((para, paraIndex) => {
-                if (para.type === "paragraph") {
-                  const text = extractTextFromNode(para);
+              cell.content.forEach((cellPara, paraIdx) => {
+                if (cellPara.type === "paragraph") {
+                  const text = extractTextFromNode(cellPara);
                   segments.push({
-                    path: `t${tableIndex}r${rowIndex}c${cellIndex}p${paraIndex}`,
+                    path: `t${currentTableIndex}r${rowIdx}c${cellIdx}p${paraIdx}`,
                     text: text,
                   });
                 }
@@ -167,11 +166,10 @@ function extractTextSegments(content: JSONContent): TextSegment[] {
           });
         }
       });
-      tableIndex++;
       return;
     }
 
-    // Liste (bulletList, orderedList) - ogni listItem può contenere paragrafi
+    // Liste (bulletList, orderedList) possono contenere paragrafi
     // In python-docx questi sono paragrafi normali con stile lista
     if (
       (node.type === "bulletList" || node.type === "orderedList") &&
@@ -387,17 +385,27 @@ export function useDocument() {
     setTiptapContent(newTiptapContent);
   }, []);
 
-  const textModificationsCount = useMemo(() => {
+  // Calcola le modifiche testo correnti (per counter e compare view)
+  const currentTextModifications = useMemo(() => {
     if (!tiptapContent || originalTextSegments.current.length === 0) {
-      return 0;
+      return [];
     }
-    const diffs = generateDiffModifications(
+    return generateDiffModifications(
       originalTextSegments.current,
       tiptapContent
     );
-    return diffs.length;
   }, [tiptapContent]);
 
+  // Calcola le modifiche checkbox correnti (per compare view)
+  const currentCheckboxModifications = useMemo(() => {
+    const mods: CheckboxModification[] = [];
+    checkboxModifications.forEach((newChecked, checkboxIndex) => {
+      mods.push({ checkboxIndex, newChecked });
+    });
+    return mods;
+  }, [checkboxModifications]);
+
+  const textModificationsCount = currentTextModifications.length;
   const totalModifications =
     textModificationsCount + checkboxModifications.size;
 
@@ -488,6 +496,10 @@ export function useDocument() {
     isLoading,
     error,
     totalModifications,
+
+    // NUOVO: Espone le modifiche per la Compare View
+    currentTextModifications,
+    currentCheckboxModifications,
 
     uploadDocument,
     handleTiptapChange,
