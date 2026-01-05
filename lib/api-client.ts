@@ -2,9 +2,6 @@
  * API Client per comunicazione con il backend FastAPI
  *
  * Il backend gira su http://localhost:8000
- * Endpoints:
- * - POST /api/documents/parse - parsing DOCX
- * - POST /api/documents/generate - generazione DOCX modificato
  */
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -23,9 +20,12 @@ export class ApiError extends Error {
   }
 }
 
+// ============================================================================
+// DOCUMENT ENDPOINTS
+// ============================================================================
+
 /**
  * Parsing di un documento DOCX
- * Invia il file al backend e riceve la struttura parsata
  */
 export async function parseDocument(
   file: File
@@ -52,7 +52,6 @@ export async function parseDocument(
 
 /**
  * Generazione di un documento DOCX modificato
- * Invia il file originale + le modifiche e riceve il DOCX generato
  */
 export async function generateDocument(
   file: File,
@@ -80,6 +79,85 @@ export async function generateDocument(
 }
 
 /**
+ * Validazione documenti per onboarding
+ */
+export async function validateDocuments(
+  files: File[]
+): Promise<PageCountResponse> {
+  const formData = new FormData();
+  files.forEach((file) => {
+    formData.append("files", file);
+  });
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/documents/validate-documents`,
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new ApiError(
+      error.detail || "Errore durante la validazione dei documenti",
+      response.status,
+      error
+    );
+  }
+
+  return response.json();
+}
+
+// ============================================================================
+// VAULT ENDPOINTS
+// ============================================================================
+
+/**
+ * Estrae dati riutilizzabili dai documenti per il vault
+ *
+ * NOTA: Questa funzione non lancia eccezioni per errori di business logic.
+ * Il backend restituisce sempre 200 OK con success=false in caso di errore.
+ * Gli errori sono gestiti tramite i campi `success`, `error`, `error_code`.
+ */
+export async function extractVaultData(
+  files: File[],
+  usePremium: boolean = false
+): Promise<ExtractionResponse> {
+  const formData = new FormData();
+  files.forEach((file) => {
+    formData.append("files", file);
+  });
+
+  const url = new URL(`${API_BASE_URL}/api/vault/extract`);
+  if (usePremium) {
+    url.searchParams.set("use_premium", "true");
+  }
+
+  const response = await fetch(url.toString(), {
+    method: "POST",
+    body: formData,
+  });
+
+  // Il backend ora restituisce sempre 200 OK, anche in caso di errore
+  // Gli errori sono nel body della risposta con success=false
+  if (!response.ok) {
+    // Errore HTTP inaspettato (500, 503, ecc.)
+    return {
+      success: false,
+      entries: [],
+      model_used: "",
+      tokens_used: 0,
+      documents_processed: 0,
+      error: "Errore di comunicazione con il server. Riprova più tardi.",
+      error_code: "HTTP_ERROR",
+    };
+  }
+
+  return response.json();
+}
+
+/**
  * Health check del backend
  */
 export async function healthCheck(): Promise<boolean> {
@@ -92,13 +170,9 @@ export async function healthCheck(): Promise<boolean> {
 }
 
 // ============================================================================
-// TIPI - Allineati ai modelli Pydantic del backend
+// TIPI - Document
 // ============================================================================
 
-/**
- * Stile di un run (grassetto, corsivo, etc.)
- * Corrisponde a RunStyle in backend/src/models/document.py
- */
 export interface RunStyle {
   bold: boolean;
   italic: boolean;
@@ -108,20 +182,12 @@ export interface RunStyle {
   color: string | null;
 }
 
-/**
- * Singolo run di testo con stile
- * Corrisponde a Run in backend/src/models/document.py
- */
 export interface Run {
   index: number;
   text: string;
   style: RunStyle;
 }
 
-/**
- * Paragrafo contenente run
- * Corrisponde a ParagraphElement in backend/src/models/document.py
- */
 export interface ParagraphElement {
   type: "paragraph";
   index: number;
@@ -129,109 +195,102 @@ export interface ParagraphElement {
   alignment: string | null;
 }
 
-/**
- * Cella di tabella
- * Corrisponde a TableCell in backend/src/models/document.py
- */
 export interface TableCell {
   index: number;
   paragraphs: ParagraphElement[];
 }
 
-/**
- * Riga di tabella
- * Corrisponde a TableRow in backend/src/models/document.py
- */
 export interface TableRow {
   index: number;
   cells: TableCell[];
 }
 
-/**
- * Tabella
- * Corrisponde a TableElement in backend/src/models/document.py
- */
 export interface TableElement {
   type: "table";
   index: number;
   rows: TableRow[];
 }
 
-/**
- * Elemento del documento (paragrafo o tabella)
- */
 export type DocumentElement = ParagraphElement | TableElement;
 
-/**
- * Contenuto del documento parsato
- * Corrisponde a DocumentContent in backend/src/models/document.py
- */
 export interface DocumentContent {
   elements: DocumentElement[];
 }
 
-/**
- * Metadati del documento
- * Corrisponde a DocumentMetadata in backend/src/models/document.py
- */
 export interface DocumentMetadata {
   file_name: string;
   paragraph_count: number;
   table_count: number;
 }
 
-/**
- * Risposta del parsing
- * Corrisponde a ParsedDocumentResponse in backend/src/models/document.py
- */
 export interface ParseDocumentResponse {
   success: boolean;
   content: DocumentContent;
   metadata: DocumentMetadata;
 }
 
-/**
- * Posizione di una selezione nel documento
- * Corrisponde a SelectionPosition in backend/src/models/document.py
- */
 export interface SelectionPosition {
   type: "paragraph" | "table";
-
-  // Per paragrafo diretto
   paragraph_index?: number;
-
-  // Per tabella
   table_index?: number;
   row_index?: number;
   cell_index?: number;
   cell_paragraph_index?: number;
-
-  // Posizione nel testo
   run_index: number;
   char_start: number;
   char_end: number;
-
-  // Per cross-run (se la selezione attraversa più run)
   end_run_index?: number;
   char_start_in_first_run?: number;
   char_end_in_last_run?: number;
 }
 
-/**
- * Modifica da applicare al documento
- * Corrisponde a Modification in backend/src/models/document.py
- */
 export interface Modification {
   position: SelectionPosition;
   original_text: string;
   new_text: string;
 }
 
-/**
- * Risposta della generazione
- * Corrisponde a GenerateResponse in backend/src/models/document.py
- */
 export interface GenerateResponse {
   success: boolean;
   modifications_applied: number;
+}
+
+// ============================================================================
+// TIPI - Page Counter
+// ============================================================================
+
+export interface FilePageCount {
+  filename: string;
+  pages: number;
+  error?: string | null;
+}
+
+export interface PageCountResponse {
+  files: FilePageCount[];
+  total_pages: number;
+  is_valid: boolean;
+  max_files: number;
+  max_pages: number;
+  error?: string | null;
+}
+
+// ============================================================================
+// TIPI - Vault Extraction
+// ============================================================================
+
+export interface ExtractedEntry {
+  valueData: string;
+  nameLabel?: string | null;
+  nameGroup?: string | null;
+  confidence?: number | null;
+}
+
+export interface ExtractionResponse {
+  success: boolean;
+  entries: ExtractedEntry[];
+  model_used: string;
+  tokens_used: number;
+  documents_processed: number;
+  error?: string | null;
+  error_code?: string | null;
 }
