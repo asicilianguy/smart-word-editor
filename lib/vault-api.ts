@@ -1,11 +1,9 @@
 /**
  * Vault API Client
  *
- * Funzioni per interagire con le API vault del backend.
- * Da aggiungere a lib/api-client.ts
+ * Client per le operazioni CRUD sul vault.
+ * Comunica con il backend FastAPI.
  */
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 // ============================================================================
 // TYPES
@@ -14,22 +12,10 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 export interface VaultEntryBackend {
   id: string;
   valueData: string;
-  nameLabel?: string | null;
-  nameGroup?: string | null;
-  confidence?: number | null;
+  nameLabel?: string;
+  nameGroup?: string;
+  confidence?: number;
   source?: "manual" | "extracted";
-}
-
-export interface VaultResponse {
-  success: boolean;
-  entries: VaultEntryBackend[];
-  error?: string;
-}
-
-export interface SingleEntryResponse {
-  success: boolean;
-  entry?: VaultEntryBackend;
-  error?: string;
 }
 
 export interface VaultEntryCreate {
@@ -45,78 +31,69 @@ export interface VaultEntryUpdate {
   nameGroup?: string;
 }
 
+export interface VaultResponse {
+  success: boolean;
+  entries: VaultEntryBackend[];
+  error?: string;
+}
+
+export interface SingleEntryResponse {
+  success: boolean;
+  entry?: VaultEntryBackend;
+  error?: string;
+}
+
 // ============================================================================
-// HELPER
+// CONSTANTS
 // ============================================================================
 
-/**
- * Token key - MUST match auth-service.ts
- */
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = `${API_BASE_URL}/api/auth`;
 const TOKEN_KEY = "smart_word_editor_token";
+
+// ============================================================================
+// HELPERS
+// ============================================================================
 
 function getAuthHeaders(): HeadersInit {
   const token =
     typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
+
   return {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
 
+async function handleResponse<T>(response: Response): Promise<T> {
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
 // ============================================================================
-// VAULT API FUNCTIONS
+// API FUNCTIONS
 // ============================================================================
 
 /**
- * Get all vault entries for the current user
+ * Get all vault entries
  */
 export async function getVaultEntries(): Promise<VaultResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/vault`, {
+    const response = await fetch(`${API_BASE}/vault`, {
       method: "GET",
       headers: getAuthHeaders(),
     });
-
-    if (response.status === 401) {
-      return { success: false, entries: [], error: "Not authenticated" };
-    }
-
-    if (!response.ok) {
-      return { success: false, entries: [], error: "Failed to fetch vault" };
-    }
-
-    return response.json();
+    return handleResponse<VaultResponse>(response);
   } catch (error) {
-    console.error("[Vault API] Get entries failed:", error);
-    return { success: false, entries: [], error: "Network error" };
-  }
-}
-
-/**
- * Add new entries to the vault (batch)
- */
-export async function addVaultEntries(
-  entries: VaultEntryCreate[]
-): Promise<VaultResponse> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/vault/add`, {
-      method: "POST",
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ entries }),
-    });
-
-    if (response.status === 401) {
-      return { success: false, entries: [], error: "Not authenticated" };
-    }
-
-    if (!response.ok) {
-      return { success: false, entries: [], error: "Failed to add entries" };
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error("[Vault API] Add entries failed:", error);
-    return { success: false, entries: [], error: "Network error" };
+    console.error("[vault-api] getVaultEntries failed:", error);
+    return {
+      success: false,
+      entries: [],
+      error: error instanceof Error ? error.message : "Network error",
+    };
   }
 }
 
@@ -127,24 +104,18 @@ export async function createVaultEntry(
   entry: VaultEntryCreate
 ): Promise<SingleEntryResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/vault/entry`, {
+    const response = await fetch(`${API_BASE}/vault/entry`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify(entry),
     });
-
-    if (response.status === 401) {
-      return { success: false, error: "Not authenticated" };
-    }
-
-    if (!response.ok) {
-      return { success: false, error: "Failed to create entry" };
-    }
-
-    return response.json();
+    return handleResponse<SingleEntryResponse>(response);
   } catch (error) {
-    console.error("[Vault API] Create entry failed:", error);
-    return { success: false, error: "Network error" };
+    console.error("[vault-api] createVaultEntry failed:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Network error",
+    };
   }
 }
 
@@ -156,24 +127,24 @@ export async function updateVaultEntry(
   updates: VaultEntryUpdate
 ): Promise<SingleEntryResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/vault/${entryId}`, {
+    console.log(`[vault-api] Updating entry ${entryId}:`, updates);
+
+    const response = await fetch(`${API_BASE}/vault/${entryId}`, {
       method: "PATCH",
       headers: getAuthHeaders(),
       body: JSON.stringify(updates),
     });
 
-    if (response.status === 401) {
-      return { success: false, error: "Not authenticated" };
-    }
+    const result = await handleResponse<SingleEntryResponse>(response);
+    console.log(`[vault-api] Update response:`, result);
 
-    if (!response.ok) {
-      return { success: false, error: "Failed to update entry" };
-    }
-
-    return response.json();
+    return result;
   } catch (error) {
-    console.error("[Vault API] Update entry failed:", error);
-    return { success: false, error: "Network error" };
+    console.error("[vault-api] updateVaultEntry failed:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Network error",
+    };
   }
 }
 
@@ -184,23 +155,17 @@ export async function deleteVaultEntry(
   entryId: string
 ): Promise<SingleEntryResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/vault/${entryId}`, {
+    const response = await fetch(`${API_BASE}/vault/${entryId}`, {
       method: "DELETE",
       headers: getAuthHeaders(),
     });
-
-    if (response.status === 401) {
-      return { success: false, error: "Not authenticated" };
-    }
-
-    if (!response.ok) {
-      return { success: false, error: "Failed to delete entry" };
-    }
-
-    return response.json();
+    return handleResponse<SingleEntryResponse>(response);
   } catch (error) {
-    console.error("[Vault API] Delete entry failed:", error);
-    return { success: false, error: "Network error" };
+    console.error("[vault-api] deleteVaultEntry failed:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Network error",
+    };
   }
 }
 
@@ -211,24 +176,42 @@ export async function replaceVaultEntries(
   entries: VaultEntryCreate[]
 ): Promise<VaultResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/vault`, {
+    const response = await fetch(`${API_BASE}/vault`, {
       method: "PUT",
       headers: getAuthHeaders(),
       body: JSON.stringify({ entries }),
     });
-
-    if (response.status === 401) {
-      return { success: false, entries: [], error: "Not authenticated" };
-    }
-
-    if (!response.ok) {
-      return { success: false, entries: [], error: "Failed to update vault" };
-    }
-
-    return response.json();
+    return handleResponse<VaultResponse>(response);
   } catch (error) {
-    console.error("[Vault API] Replace entries failed:", error);
-    return { success: false, entries: [], error: "Network error" };
+    console.error("[vault-api] replaceVaultEntries failed:", error);
+    return {
+      success: false,
+      entries: [],
+      error: error instanceof Error ? error.message : "Network error",
+    };
+  }
+}
+
+/**
+ * Add multiple entries to vault
+ */
+export async function addVaultEntries(
+  entries: VaultEntryCreate[]
+): Promise<VaultResponse> {
+  try {
+    const response = await fetch(`${API_BASE}/vault/add`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ entries }),
+    });
+    return handleResponse<VaultResponse>(response);
+  } catch (error) {
+    console.error("[vault-api] addVaultEntries failed:", error);
+    return {
+      success: false,
+      entries: [],
+      error: error instanceof Error ? error.message : "Network error",
+    };
   }
 }
 
@@ -237,22 +220,17 @@ export async function replaceVaultEntries(
  */
 export async function clearVault(): Promise<VaultResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/vault`, {
+    const response = await fetch(`${API_BASE}/vault`, {
       method: "DELETE",
       headers: getAuthHeaders(),
     });
-
-    if (response.status === 401) {
-      return { success: false, entries: [], error: "Not authenticated" };
-    }
-
-    if (!response.ok) {
-      return { success: false, entries: [], error: "Failed to clear vault" };
-    }
-
-    return response.json();
+    return handleResponse<VaultResponse>(response);
   } catch (error) {
-    console.error("[Vault API] Clear vault failed:", error);
-    return { success: false, entries: [], error: "Network error" };
+    console.error("[vault-api] clearVault failed:", error);
+    return {
+      success: false,
+      entries: [],
+      error: error instanceof Error ? error.message : "Network error",
+    };
   }
 }

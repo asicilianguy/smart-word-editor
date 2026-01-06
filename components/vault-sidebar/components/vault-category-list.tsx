@@ -12,7 +12,6 @@ import { VaultValueButton } from "./vault-value-button";
 import { categoryIcons } from "../constants";
 import type { VaultCategory, VaultValue } from "@/lib/document-types";
 import type { ActionType } from "../types";
-import { cn } from "@/lib/utils";
 
 interface VaultCategoryListProps {
   categories: VaultCategory[];
@@ -52,30 +51,18 @@ export function VaultCategoryList({
               <AccordionItem
                 key={category.id}
                 value={category.id}
-                className={cn(
-                  "border rounded-lg transition-all duration-200",
-                  hasSelection
-                    ? "bg-white dark:bg-card border-green-200 dark:border-green-800 shadow-sm"
-                    : "bg-card"
-                )}
+                className="border border-border rounded-md bg-card"
               >
-                <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                <AccordionTrigger className="px-3 py-2 hover:no-underline">
                   <div className="flex items-center gap-2">
-                    <Icon
-                      className={cn(
-                        "h-4 w-4",
-                        hasSelection
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-muted-foreground"
-                      )}
-                    />
+                    <Icon className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">{category.name}</span>
                     <span className="text-xs text-muted-foreground ml-auto mr-2">
                       ({category.values.length})
                     </span>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-4 pb-3">
+                <AccordionContent className="px-3 pb-2">
                   <div className="space-y-1">
                     {category.values.map((value) => (
                       <VaultValueButton
@@ -104,7 +91,7 @@ export function VaultCategoryList({
 
       {/* CTA per gestire vault */}
       {onManageClick && (
-        <div className="p-3 border-t">
+        <div className="p-3 border-t border-border">
           <Button
             variant="ghost"
             onClick={onManageClick}

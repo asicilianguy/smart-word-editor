@@ -8,9 +8,7 @@
  * - Se utente autenticato ma vault vuoto: mostra vault vuoto (NON dati mock)
  * - Se utente non autenticato: mostra vault vuoto con flag isAuthenticated=false
  *
- * NOTA: I dati mock NON vengono più usati automaticamente.
- * L'applicazione richiede autenticazione per l'editing, quindi non ha senso
- * mostrare dati finti a utenti non autenticati.
+ * UPDATED: Usa la risposta del server per gli update invece di merge manuali
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -122,7 +120,7 @@ function transformToCategories(entries: VaultEntryBackend[]): VaultCategory[] {
     }
   }
 
-  // Poi aggiungi eventuali gruppi non previsti
+  // Poi aggiungi eventuali gruppi non previsti (custom groups)
   for (const [groupName, groupEntries] of Object.entries(grouped)) {
     categories.push({
       id: groupName.toLowerCase().replace(/\s+/g, "-"),
@@ -223,7 +221,7 @@ export function useVaultData(): UseVaultDataResult {
           return false;
         }
 
-        // Aggiorna lo stato locale aggiungendo la nuova entry
+        // Usa l'entry dalla risposta del server
         if (response.entry) {
           setRawEntries((prev) => [...prev, response.entry!]);
         }
@@ -240,6 +238,7 @@ export function useVaultData(): UseVaultDataResult {
 
   /**
    * Aggiorna un'entry esistente
+   * IMPORTANT: Usa la risposta del server per garantire consistenza
    */
   const updateEntryFn = useCallback(
     async (entryId: string, updates: VaultEntryUpdate): Promise<boolean> => {
@@ -249,19 +248,40 @@ export function useVaultData(): UseVaultDataResult {
       }
 
       try {
+        console.log(`[useVaultData] Updating entry ${entryId}:`, updates);
+
         const response = await updateVaultEntry(entryId, updates);
 
         if (!response.success) {
+          console.error(`[useVaultData] Update failed:`, response.error);
           setError(response.error || "Errore nell'aggiornamento");
           return false;
         }
 
-        // Aggiorna lo stato locale
-        setRawEntries((prev) =>
-          prev.map((entry) =>
-            entry.id === entryId ? { ...entry, ...updates } : entry
-          )
-        );
+        // IMPORTANTE: Usa l'entry dalla risposta del server
+        // Questo garantisce che lo stato locale sia sincronizzato col DB
+        if (response.entry) {
+          console.log(
+            `[useVaultData] Update successful, new entry:`,
+            response.entry
+          );
+          setRawEntries((prev) =>
+            prev.map((entry) =>
+              entry.id === entryId ? response.entry! : entry
+            )
+          );
+        } else {
+          // Fallback: se il server non ritorna l'entry, fai merge manuale
+          console.warn(
+            `[useVaultData] Server did not return entry, using manual merge`
+          );
+          setRawEntries((prev) =>
+            prev.map((entry) =>
+              entry.id === entryId ? { ...entry, ...updates } : entry
+            )
+          );
+        }
+
         setError(null);
         return true;
       } catch (err) {

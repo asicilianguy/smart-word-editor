@@ -4,16 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  Phone,
-  Lock,
-  Eye,
-  EyeOff,
-  ArrowRight,
-  Check,
-  X,
-  Shield,
-} from "lucide-react";
+import { Phone, Lock, Eye, EyeOff, Check, X, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +15,12 @@ import type { RegistrationStep1 } from "@/lib/auth-types";
 // VALIDATION SCHEMA
 // ============================================================================
 
-const registrationStep1Schema = z
+/**
+ * Schema interno per il form (include confirmPassword)
+ * Il tipo RegistrationStep1 da auth-types non include confirmPassword,
+ * quindi usiamo un tipo locale esteso solo per la validazione del form
+ */
+const registrationFormSchema = z
   .object({
     phone: z
       .string()
@@ -46,6 +42,9 @@ const registrationStep1Schema = z
     path: ["confirmPassword"],
   });
 
+/** Tipo interno per il form (estende RegistrationStep1 con confirmPassword) */
+type RegistrationFormData = z.infer<typeof registrationFormSchema>;
+
 // ============================================================================
 // PASSWORD REQUIREMENTS
 // ============================================================================
@@ -57,8 +56,8 @@ interface PasswordRequirement {
 
 const passwordRequirements: PasswordRequirement[] = [
   { label: "Minimo 8 caratteri", regex: /.{8,}/ },
-  { label: "Una lettera maiuscola", regex: /[A-Z]/ },
-  { label: "Una lettera minuscola", regex: /[a-z]/ },
+  { label: "Una maiuscola", regex: /[A-Z]/ },
+  { label: "Una minuscola", regex: /[a-z]/ },
   { label: "Un numero", regex: /[0-9]/ },
 ];
 
@@ -83,26 +82,30 @@ export function RegistrationStep1Form({
     handleSubmit,
     watch,
     formState: { errors, isValid },
-  } = useForm<RegistrationStep1>({
-    resolver: zodResolver(registrationStep1Schema),
+  } = useForm<RegistrationFormData>({
+    resolver: zodResolver(registrationFormSchema),
     mode: "onChange",
     defaultValues: {
       phone: initialData?.phone || "",
       password: initialData?.password || "",
-      confirmPassword: initialData?.confirmPassword || "",
+      confirmPassword: "",
     },
   });
 
   const password = watch("password", "");
 
-  const handleFormSubmit = (data: RegistrationStep1) => {
-    onSubmit(data);
+  const handleFormSubmit = (data: RegistrationFormData) => {
+    // Passa solo phone e password (senza confirmPassword) al parent
+    onSubmit({
+      phone: data.phone,
+      password: data.password,
+    });
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
       {/* Phone Field */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label htmlFor="phone" className="text-sm font-medium">
           Numero di telefono
         </Label>
@@ -113,7 +116,7 @@ export function RegistrationStep1Form({
             type="tel"
             placeholder="+39 333 123 4567"
             className={cn(
-              "pl-10 h-12 text-base",
+              "pl-10 h-10",
               errors.phone &&
                 "border-destructive focus-visible:ring-destructive"
             )}
@@ -121,15 +124,15 @@ export function RegistrationStep1Form({
           />
         </div>
         {errors.phone && (
-          <p className="text-sm text-destructive">{errors.phone.message}</p>
+          <p className="text-xs text-destructive">{errors.phone.message}</p>
         )}
         <p className="text-xs text-muted-foreground">
-          Useremo questo numero per accedere al tuo account
+          Questo numero sarà usato per accedere
         </p>
       </div>
 
       {/* Password Field */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label htmlFor="password" className="text-sm font-medium">
           Password
         </Label>
@@ -138,9 +141,9 @@ export function RegistrationStep1Form({
           <Input
             id="password"
             type={showPassword ? "text" : "password"}
-            placeholder="Crea una password sicura"
+            placeholder="Crea una password"
             className={cn(
-              "pl-10 pr-10 h-12 text-base",
+              "pl-10 pr-10 h-10",
               errors.password &&
                 "border-destructive focus-visible:ring-destructive"
             )}
@@ -162,18 +165,18 @@ export function RegistrationStep1Form({
         </div>
 
         {/* Password Requirements */}
-        <div className="grid grid-cols-2 gap-2 mt-3">
+        <div className="grid grid-cols-2 gap-1.5 mt-2">
           {passwordRequirements.map((req) => {
-            const isValid = req.regex.test(password);
+            const isValidReq = req.regex.test(password);
             return (
               <div
                 key={req.label}
                 className={cn(
-                  "flex items-center gap-1.5 text-xs transition-colors",
-                  isValid ? "text-green-600" : "text-muted-foreground"
+                  "flex items-center gap-1.5 text-xs",
+                  isValidReq ? "text-green-600" : "text-muted-foreground"
                 )}
               >
-                {isValid ? (
+                {isValidReq ? (
                   <Check className="h-3 w-3" />
                 ) : (
                   <X className="h-3 w-3" />
@@ -186,7 +189,7 @@ export function RegistrationStep1Form({
       </div>
 
       {/* Confirm Password Field */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label htmlFor="confirmPassword" className="text-sm font-medium">
           Conferma password
         </Label>
@@ -197,7 +200,7 @@ export function RegistrationStep1Form({
             type={showConfirmPassword ? "text" : "password"}
             placeholder="Ripeti la password"
             className={cn(
-              "pl-10 pr-10 h-12 text-base",
+              "pl-10 pr-10 h-10",
               errors.confirmPassword &&
                 "border-destructive focus-visible:ring-destructive"
             )}
@@ -218,21 +221,15 @@ export function RegistrationStep1Form({
           </Button>
         </div>
         {errors.confirmPassword && (
-          <p className="text-sm text-destructive">
+          <p className="text-xs text-destructive">
             {errors.confirmPassword.message}
           </p>
         )}
       </div>
 
       {/* Submit Button */}
-      <Button
-        type="submit"
-        size="lg"
-        className="w-full h-12"
-        disabled={!isValid}
-      >
+      <Button type="submit" className="w-full h-10" disabled={!isValid}>
         Continua
-        <ArrowRight className="h-4 w-4 ml-2" />
       </Button>
     </form>
   );

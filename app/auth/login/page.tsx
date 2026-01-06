@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { AuthLayout, LoginForm } from "@/components/auth";
 import { useAuth } from "@/lib/auth-context";
 
@@ -49,16 +50,19 @@ export default function LoginPage() {
   // Show loading while checking auth
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Caricamento...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <AuthLayout
-      title="Bentornato"
-      subtitle="Accedi al tuo account per continuare"
+      title="Accedi"
+      subtitle="Inserisci le tue credenziali per continuare"
     >
       <LoginForm onSubmit={handleLogin} isLoading={isLoading} error={error} />
     </AuthLayout>

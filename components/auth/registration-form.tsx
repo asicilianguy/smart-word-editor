@@ -32,20 +32,11 @@ interface RegistrationFormProps {
 interface Step {
   id: number;
   title: string;
-  description: string;
 }
 
 const steps: Step[] = [
-  {
-    id: 1,
-    title: "Credenziali",
-    description: "Numero e password",
-  },
-  {
-    id: 2,
-    title: "Vault",
-    description: "Configura i tuoi dati",
-  },
+  { id: 1, title: "Credenziali" },
+  { id: 2, title: "Vault" },
 ];
 
 // ============================================================================
@@ -89,82 +80,64 @@ export function RegistrationForm({
     <div className="space-y-6">
       {/* Error Alert */}
       {error && (
-        <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm animate-in slide-in-from-top-2 duration-200">
+        <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-sm">
           {error}
         </div>
       )}
 
-      {/* Step Indicator */}
-      <div className="relative">
-        <div className="flex items-center justify-between">
-          {steps.map((step, index) => {
-            const isCompleted = currentStep > step.id;
-            const isCurrent = currentStep === step.id;
+      {/* Step Indicator - sobrio e funzionale */}
+      <div className="flex items-center gap-3">
+        {steps.map((step, index) => {
+          const isCompleted = currentStep > step.id;
+          const isCurrent = currentStep === step.id;
 
-            return (
+          return (
+            <div key={step.id} className="flex items-center gap-3 flex-1">
+              {/* Step Circle */}
               <div
-                key={step.id}
-                className={cn("flex-1", index < steps.length - 1 && "pr-4")}
+                className={cn(
+                  "h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-sm font-medium border",
+                  isCompleted
+                    ? "bg-primary border-primary text-primary-foreground"
+                    : isCurrent
+                    ? "bg-primary border-primary text-primary-foreground"
+                    : "bg-muted border-border text-muted-foreground"
+                )}
               >
-                <div className="flex items-center">
-                  {/* Step Circle */}
-                  <div
-                    className={cn(
-                      "h-10 w-10 rounded-full flex items-center justify-center shrink-0 text-sm font-medium transition-all",
-                      isCompleted
-                        ? "bg-primary text-primary-foreground"
-                        : isCurrent
-                          ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
-                          : "bg-muted text-muted-foreground"
-                    )}
-                  >
-                    {isCompleted ? (
-                      <Check className="h-5 w-5" />
-                    ) : (
-                      step.id
-                    )}
-                  </div>
-
-                  {/* Connector Line */}
-                  {index < steps.length - 1 && (
-                    <div
-                      className={cn(
-                        "flex-1 h-1 mx-3 rounded-full transition-colors",
-                        isCompleted ? "bg-primary" : "bg-muted"
-                      )}
-                    />
-                  )}
-                </div>
-
-                {/* Step Label */}
-                <div className="mt-2">
-                  <p
-                    className={cn(
-                      "text-sm font-medium",
-                      isCurrent
-                        ? "text-foreground"
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    {step.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground hidden sm:block">
-                    {step.description}
-                  </p>
-                </div>
+                {isCompleted ? <Check className="h-4 w-4" /> : step.id}
               </div>
-            );
-          })}
-        </div>
+
+              {/* Step Title */}
+              <span
+                className={cn(
+                  "text-sm font-medium",
+                  isCurrent ? "text-foreground" : "text-muted-foreground"
+                )}
+              >
+                {step.title}
+              </span>
+
+              {/* Connector Line */}
+              {index < steps.length - 1 && (
+                <div
+                  className={cn(
+                    "flex-1 h-px",
+                    isCompleted ? "bg-primary" : "bg-border"
+                  )}
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Loading Overlay */}
       {isLoading && (
-        <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-10 rounded-lg">
+        <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-10 rounded-md">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              Creazione account in corso...
+              Creazione account...
             </p>
           </div>
         </div>
@@ -190,17 +163,15 @@ export function RegistrationForm({
 
       {/* Login Link - Solo nel primo step */}
       {currentStep === 1 && (
-        <div className="text-center pt-4">
-          <p className="text-sm text-muted-foreground">
-            Hai già un account?{" "}
-            <Link
-              href="/auth/login"
-              className="text-primary font-medium hover:underline"
-            >
-              Accedi
-            </Link>
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground text-center pt-2">
+          Hai già un account?{" "}
+          <Link
+            href="/auth/login"
+            className="text-primary font-medium hover:underline"
+          >
+            Accedi
+          </Link>
+        </p>
       )}
     </div>
   );

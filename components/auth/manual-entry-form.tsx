@@ -148,15 +148,12 @@ export function ManualEntryForm({
   };
 
   // Raggruppa entries per nameGroup
-  const groupedEntries = entries.reduce(
-    (acc, entry) => {
-      const group = entry.nameGroup || "Senza gruppo";
-      if (!acc[group]) acc[group] = [];
-      acc[group].push(entry);
-      return acc;
-    },
-    {} as Record<string, VaultEntry[]>
-  );
+  const groupedEntries = entries.reduce((acc, entry) => {
+    const group = entry.nameGroup || "Senza gruppo";
+    if (!acc[group]) acc[group] = [];
+    acc[group].push(entry);
+    return acc;
+  }, {} as Record<string, VaultEntry[]>);
 
   return (
     <div className="space-y-6">
@@ -170,10 +167,10 @@ export function ManualEntryForm({
       </div>
 
       {/* Entry Form */}
-      <div className="p-4 rounded-xl border bg-card space-y-4">
+      <div className="p-4 rounded-md border bg-card space-y-4">
         {/* Value Data (Required) */}
         <div className="space-y-2">
-          <Label htmlFor="valueData" className="text-sm font-medium">
+          <Label htmlFor="valueData">
             Valore <span className="text-destructive">*</span>
           </Label>
           <Input
@@ -183,7 +180,7 @@ export function ManualEntryForm({
             onChange={(e) => setValueData(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="es. IT60X0542811101000000123456"
-            className="h-11"
+            className="h-10"
             disabled={isLoading}
           />
           <p className="text-xs text-muted-foreground">
@@ -195,15 +192,14 @@ export function ManualEntryForm({
         <button
           type="button"
           onClick={() => setShowOptionalFields(!showOptionalFields)}
-          className="flex items-center gap-2 text-sm text-primary hover:underline"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ChevronDown
-            className={cn(
-              "h-4 w-4 transition-transform",
-              showOptionalFields && "rotate-180"
-            )}
+            className={cn("h-4 w-4", showOptionalFields && "rotate-180")}
           />
-          {showOptionalFields ? "Nascondi opzioni" : "Aggiungi etichetta o gruppo"}
+          {showOptionalFields
+            ? "Nascondi opzioni"
+            : "Aggiungi etichetta o gruppo"}
         </button>
 
         {/* Optional Fields */}
@@ -211,10 +207,7 @@ export function ManualEntryForm({
           <div className="space-y-4 pt-2 border-t">
             {/* Name Label */}
             <div className="space-y-2">
-              <Label
-                htmlFor="nameLabel"
-                className="text-sm font-medium flex items-center gap-2"
-              >
+              <Label htmlFor="nameLabel" className="flex items-center gap-2">
                 <Tag className="h-3.5 w-3.5" />
                 Etichetta
                 <span className="text-xs text-muted-foreground font-normal">
@@ -237,10 +230,7 @@ export function ManualEntryForm({
 
             {/* Name Group */}
             <div className="space-y-2">
-              <Label
-                htmlFor="nameGroup"
-                className="text-sm font-medium flex items-center gap-2"
-              >
+              <Label htmlFor="nameGroup" className="flex items-center gap-2">
                 <FolderOpen className="h-3.5 w-3.5" />
                 Gruppo
                 <span className="text-xs text-muted-foreground font-normal">
@@ -260,7 +250,11 @@ export function ManualEntryForm({
                 {existingGroups.length > 0 && (
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" size="icon" className="h-10 w-10">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-10 w-10"
+                      >
                         <ChevronDown className="h-4 w-4" />
                       </Button>
                     </PopoverTrigger>
@@ -351,7 +345,7 @@ export function ManualEntryForm({
                       <div
                         key={entry.id}
                         className={cn(
-                          "flex items-center gap-2 p-2.5 rounded-lg border bg-background group",
+                          "flex items-center gap-2 p-2.5 rounded-md border bg-background group",
                           editingId === entry.id && "ring-2 ring-primary"
                         )}
                       >
@@ -365,7 +359,7 @@ export function ManualEntryForm({
                             </p>
                           )}
                         </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
                           <Button
                             type="button"
                             variant="ghost"

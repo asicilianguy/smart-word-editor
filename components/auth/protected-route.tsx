@@ -33,8 +33,8 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
     return (
       fallback || (
         <div className="min-h-screen flex items-center justify-center bg-background">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             <p className="text-sm text-muted-foreground">Caricamento...</p>
           </div>
         </div>
@@ -47,8 +47,8 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
     return (
       fallback || (
         <div className="min-h-screen flex items-center justify-center bg-background">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             <p className="text-sm text-muted-foreground">Reindirizzamento...</p>
           </div>
         </div>

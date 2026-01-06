@@ -188,12 +188,10 @@ export function DocumentUploader({
       </div>
 
       {/* Coming Soon Banner */}
-      <div className="flex items-start gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
-        <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+      <div className="flex items-start gap-3 p-4 rounded-md bg-muted/50 border border-border">
+        <Sparkles className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-medium text-primary">
-            Estrazione automatica in arrivo
-          </p>
+          <p className="text-sm font-medium">Estrazione automatica in arrivo</p>
           <p className="text-xs text-muted-foreground mt-1">
             Presto estrarremo automaticamente i dati dai tuoi documenti usando
             l'intelligenza artificiale. Per ora, i documenti vengono salvati per
@@ -209,7 +207,7 @@ export function DocumentUploader({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={cn(
-          "relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all",
+          "relative border-2 border-dashed rounded-md p-8 text-center cursor-pointer",
           isDragOver
             ? "border-primary bg-primary/5"
             : "border-muted-foreground/25 hover:border-primary/50 hover:bg-accent/50",
@@ -228,7 +226,7 @@ export function DocumentUploader({
         <div className="flex flex-col items-center gap-3">
           <div
             className={cn(
-              "h-14 w-14 rounded-full flex items-center justify-center",
+              "h-12 w-12 rounded-md flex items-center justify-center",
               isDragOver ? "bg-primary/10" : "bg-muted"
             )}
           >
@@ -258,7 +256,7 @@ export function DocumentUploader({
 
       {/* Error Message */}
       {uploadError && (
-        <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+        <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
           <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
           <p>{uploadError}</p>
         </div>
@@ -275,7 +273,7 @@ export function DocumentUploader({
             {documents.map((doc) => (
               <div
                 key={doc.id}
-                className="flex items-center gap-3 p-3 rounded-lg border bg-card group"
+                className="flex items-center gap-3 p-3 rounded-md border bg-card group"
               >
                 {/* File Icon */}
                 <div className="shrink-0">{getFileIcon(doc.fileType)}</div>
@@ -295,7 +293,7 @@ export function DocumentUploader({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100"
                   onClick={() => handleRemoveDocument(doc.id)}
                   disabled={isLoading}
                 >
@@ -347,11 +345,7 @@ export function DocumentUploader({
 // STATUS BADGE
 // ============================================================================
 
-function StatusBadge({
-  status,
-}: {
-  status: UploadedDocument["status"];
-}) {
+function StatusBadge({ status }: { status: UploadedDocument["status"] }) {
   const config = {
     pending: {
       label: "In attesa",

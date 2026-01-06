@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import {
   AuthLayout,
   RegistrationStep1Form,
@@ -19,10 +20,8 @@ import type {
  * Pagina di Registrazione
  *
  * Workflow a 2 step:
- * 1. Credenziali: numero di telefono + password (layout split)
- * 2. Vault Onboarding: fullscreen, guidato, rassicurante
- *
- * Dopo la registrazione, salva automaticamente le vault entries nel backend.
+ * 1. Credenziali: numero di telefono + password
+ * 2. Vault Onboarding: configurazione dati
  */
 export default function RegisterPage() {
   const router = useRouter();
@@ -82,19 +81,7 @@ export default function RegisterPage() {
 
         if (!vaultResponse.success) {
           console.warn("[Register] Vault save failed:", vaultResponse.error);
-          // Non blocchiamo la registrazione se il vault non viene salvato
-          // L'utente può aggiungerlo dopo
         }
-      }
-
-      // Log per debug (solo in development)
-      if (process.env.NODE_ENV === "development") {
-        console.log("[Register] Complete:", {
-          phone: step1Data.phone,
-          vaultMethod: vaultData.method,
-          entriesCount: vaultData.entries.length,
-          documentsCount: vaultData.documents.length,
-        });
       }
 
       // Registrazione riuscita - redirect alla home
@@ -104,7 +91,6 @@ export default function RegisterPage() {
       setError(
         err instanceof Error ? err.message : "Errore durante la registrazione"
       );
-      // In caso di errore, torna allo step 1
       setCurrentStep(1);
     } finally {
       setIsLoading(false);
@@ -119,22 +105,25 @@ export default function RegisterPage() {
   // Show loading while checking auth
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Caricamento...</p>
+        </div>
       </div>
     );
   }
 
-  // Step 1: Layout split-screen
+  // Step 1: Layout centrato
   if (currentStep === 1) {
     return (
       <AuthLayout
-        title="Crea il tuo account"
-        subtitle="Inizia a gestire i tuoi documenti in modo intelligente"
+        title="Crea un account"
+        subtitle="Inserisci i dati per registrarti"
       >
-        <div className="space-y-6">
+        <div className="space-y-5">
           {error && (
-            <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+            <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-sm">
               {error}
             </div>
           )}
@@ -144,17 +133,15 @@ export default function RegisterPage() {
             initialData={step1Data || undefined}
           />
 
-          <div className="text-center pt-4">
-            <p className="text-sm text-muted-foreground">
-              Hai già un account?{" "}
-              <a
-                href="/auth/login"
-                className="text-primary font-medium hover:underline"
-              >
-                Accedi
-              </a>
-            </p>
-          </div>
+          <p className="text-sm text-muted-foreground text-center pt-2">
+            Hai già un account?{" "}
+            <a
+              href="/auth/login"
+              className="text-primary font-medium hover:underline"
+            >
+              Accedi
+            </a>
+          </p>
         </div>
       </AuthLayout>
     );

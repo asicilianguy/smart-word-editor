@@ -123,10 +123,10 @@ export function AddEntryDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-5 py-4">
+          <div className="grid gap-4 py-4">
             {/* Valore (obbligatorio) */}
             <div className="space-y-2">
-              <Label htmlFor="valueData" className="text-sm font-medium">
+              <Label htmlFor="valueData">
                 Valore <span className="text-destructive">*</span>
               </Label>
               <Input
@@ -149,7 +149,7 @@ export function AddEntryDialog({
 
             {/* Etichetta (opzionale) */}
             <div className="space-y-2">
-              <Label htmlFor="nameLabel" className="text-sm font-medium">
+              <Label htmlFor="nameLabel">
                 Etichetta{" "}
                 <span className="text-muted-foreground font-normal">
                   (opzionale)
@@ -174,8 +174,8 @@ export function AddEntryDialog({
             </div>
 
             {/* Categoria (opzionale) */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">
+            <div className="space-y-2">
+              <Label>
                 Categoria{" "}
                 <span className="text-muted-foreground font-normal">
                   (opzionale)
@@ -205,7 +205,7 @@ export function AddEntryDialog({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-auto p-0 text-xs text-primary hover:text-primary/80"
+                    className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
                     onClick={() => setUseCustomGroup(true)}
                   >
                     <Plus className="h-3 w-3 mr-1" />

@@ -57,12 +57,7 @@ const CATEGORIES: Category[] = [
     icon: Building2,
     description: "Ragione sociale, P.IVA, codice fiscale...",
     examples: ["Ragione sociale", "Partita IVA", "Codice Fiscale", "REA"],
-    placeholders: [
-      "Rossi S.r.l.",
-      "IT01234567890",
-      "01234567890",
-      "MI-123456",
-    ],
+    placeholders: ["Rossi S.r.l.", "IT01234567890", "01234567890", "MI-123456"],
   },
   {
     id: "addresses",
@@ -188,8 +183,7 @@ export function GuidedEntryWizard({
 
   const currentEntries = categoryEntries[currentCategory.id] || [];
   const totalEntriesCount = Object.values(categoryEntries).flat().length;
-  const progress =
-    ((currentCategoryIndex + 1) / CATEGORIES.length) * 100;
+  const progress = ((currentCategoryIndex + 1) / CATEGORIES.length) * 100;
 
   return (
     <div className="space-y-6">
@@ -209,14 +203,14 @@ export function GuidedEntryWizard({
                 key={cat.id}
                 onClick={() => setCurrentCategoryIndex(index)}
                 className={cn(
-                  "h-2 rounded-full transition-all",
+                  "h-2 rounded-full",
                   isCurrent
                     ? "w-8 bg-primary"
                     : hasEntries
-                      ? "w-2 bg-green-500"
-                      : isPast
-                        ? "w-2 bg-muted-foreground/50"
-                        : "w-2 bg-muted"
+                    ? "w-2 bg-green-500"
+                    : isPast
+                    ? "w-2 bg-muted-foreground/50"
+                    : "w-2 bg-muted"
                 )}
               />
             );
@@ -231,13 +225,8 @@ export function GuidedEntryWizard({
 
       {/* Category Header */}
       <div className="text-center space-y-3">
-        <div
-          className={cn(
-            "h-16 w-16 rounded-2xl flex items-center justify-center mx-auto",
-            "bg-primary/10 text-primary"
-          )}
-        >
-          <currentCategory.icon className="h-8 w-8" />
+        <div className="h-12 w-12 rounded-md bg-muted border border-border flex items-center justify-center mx-auto">
+          <currentCategory.icon className="h-6 w-6 text-muted-foreground" />
         </div>
         <h2 className="text-2xl font-bold">{currentCategory.name}</h2>
         <p className="text-muted-foreground max-w-md mx-auto">
@@ -371,7 +360,9 @@ function CategoryEntryForm({
   };
 
   const randomPlaceholder =
-    category.placeholders[Math.floor(Math.random() * category.placeholders.length)];
+    category.placeholders[
+      Math.floor(Math.random() * category.placeholders.length)
+    ];
 
   return (
     <div className="space-y-6 max-w-lg mx-auto">
@@ -396,7 +387,7 @@ function CategoryEntryForm({
           <button
             type="button"
             onClick={() => setShowLabelField(true)}
-            className="text-sm text-primary hover:underline"
+            className="text-sm text-muted-foreground hover:text-foreground"
           >
             + Aggiungi un nome (es. "{category.examples[0]}")
           </button>
@@ -417,11 +408,7 @@ function CategoryEntryForm({
 
         {/* Submit */}
         <div className="flex gap-2">
-          <Button
-            type="submit"
-            disabled={!value.trim()}
-            className="flex-1"
-          >
+          <Button type="submit" disabled={!value.trim()} className="flex-1">
             {editingId ? (
               <>
                 <Check className="h-4 w-4 mr-2" />
@@ -453,19 +440,21 @@ function CategoryEntryForm({
               <div
                 key={entry.id}
                 className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg border bg-card group",
+                  "flex items-center gap-3 p-3 rounded-md border bg-card group",
                   editingId === entry.id && "ring-2 ring-primary"
                 )}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="font-mono text-sm truncate">{entry.valueData}</p>
+                  <p className="font-mono text-sm truncate">
+                    {entry.valueData}
+                  </p>
                   {entry.nameLabel && (
                     <p className="text-xs text-muted-foreground">
                       {entry.nameLabel}
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
                   <Button
                     type="button"
                     variant="ghost"
@@ -493,7 +482,7 @@ function CategoryEntryForm({
 
       {/* Suggestions */}
       {entries.length === 0 && (
-        <div className="text-center py-6 border-2 border-dashed rounded-xl">
+        <div className="text-center py-6 border-2 border-dashed rounded-md">
           <p className="text-sm text-muted-foreground mb-3">
             Suggerimenti per questa categoria:
           </p>
@@ -507,7 +496,7 @@ function CategoryEntryForm({
                   setShowLabelField(true);
                   inputRef.current?.focus();
                 }}
-                className="px-3 py-1.5 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
+                className="px-3 py-1.5 text-sm bg-muted hover:bg-accent rounded-md"
               >
                 {example}
               </button>

@@ -335,8 +335,8 @@ export function FriendlyDocumentUploader({
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center space-y-3">
-        <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
-          <FolderOpen className="h-8 w-8 text-primary" />
+        <div className="h-12 w-12 rounded-md bg-muted border border-border flex items-center justify-center mx-auto">
+          <FolderOpen className="h-6 w-6 text-muted-foreground" />
         </div>
         <h2 className="text-2xl font-bold">I tuoi documenti</h2>
         <p className="text-muted-foreground max-w-md mx-auto">
@@ -355,9 +355,9 @@ export function FriendlyDocumentUploader({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           className={cn(
-            "relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all",
+            "relative border-2 border-dashed rounded-md p-8 text-center cursor-pointer",
             isDragOver
-              ? "border-primary bg-primary/5 scale-[1.02]"
+              ? "border-primary bg-primary/5"
               : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50"
           )}
         >
@@ -373,16 +373,14 @@ export function FriendlyDocumentUploader({
           <div className="flex flex-col items-center gap-3">
             <div
               className={cn(
-                "h-14 w-14 rounded-full flex items-center justify-center transition-colors",
+                "h-12 w-12 rounded-md flex items-center justify-center",
                 isDragOver ? "bg-primary/20" : "bg-muted"
               )}
             >
               <Upload
                 className={cn(
-                  "h-7 w-7 transition-transform",
-                  isDragOver
-                    ? "text-primary scale-110"
-                    : "text-muted-foreground"
+                  "h-6 w-6",
+                  isDragOver ? "text-primary" : "text-muted-foreground"
                 )}
               />
             </div>
@@ -408,7 +406,7 @@ export function FriendlyDocumentUploader({
 
       {/* Upload Error */}
       {uploadError && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+        <div className="flex items-center gap-2 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
           <FileWarning className="h-4 w-4 shrink-0" />
           {uploadError}
         </div>
@@ -426,11 +424,11 @@ export function FriendlyDocumentUploader({
               <div
                 key={doc.id}
                 className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg border bg-card group",
+                  "flex items-center gap-3 p-3 rounded-md border bg-card group",
                   doc.status === "error" && "border-destructive/50"
                 )}
               >
-                <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center shrink-0">
                   {doc.fileType.includes("pdf") ? (
                     <File className="h-5 w-5 text-red-500" />
                   ) : (
@@ -452,7 +450,7 @@ export function FriendlyDocumentUploader({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100"
                     onClick={() => handleRemove(doc.id)}
                   >
                     <X className="h-4 w-4" />
@@ -476,9 +474,9 @@ export function FriendlyDocumentUploader({
           workflowStep === "extracted") && (
           <div
             className={cn(
-              "p-4 rounded-lg border",
+              "p-4 rounded-md border",
               validationResult.is_valid
-                ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+                ? "bg-green-50 border-green-200"
                 : "bg-destructive/10 border-destructive/30"
             )}
           >
@@ -499,11 +497,11 @@ export function FriendlyDocumentUploader({
 
       {/* Extraction Error */}
       {extractionError && workflowStep === "error" && (
-        <div className="p-4 rounded-lg border bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
+        <div className="p-4 rounded-md border bg-amber-50 border-amber-200">
           <div className="flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-medium text-amber-800 dark:text-amber-200">
+              <p className="font-medium text-amber-800">
                 {extractionError.message}
               </p>
               <div className="flex gap-2 mt-3">
@@ -528,9 +526,9 @@ export function FriendlyDocumentUploader({
 
       {/* Extraction Result */}
       {extractionResult && workflowStep === "extracted" && (
-        <div className="p-4 rounded-lg border bg-primary/5 border-primary/20">
+        <div className="p-4 rounded-md border bg-muted/50 border-border">
           <div className="flex items-center gap-3 mb-4">
-            <Database className="h-5 w-5 text-primary" />
+            <Database className="h-5 w-5 text-muted-foreground" />
             <div>
               <p className="font-medium">
                 Estratti {extractionResult.entries.length} dati riutilizzabili
@@ -585,7 +583,7 @@ export function FriendlyDocumentUploader({
                       {grouped[groupName].map((entry, i) => (
                         <div
                           key={i}
-                          className="flex items-start gap-3 text-sm p-2.5 rounded-lg bg-background border"
+                          className="flex items-start gap-3 text-sm p-2.5 rounded-md bg-background border"
                         >
                           <span className="text-muted-foreground text-xs min-w-[100px] pt-0.5">
                             {entry.nameLabel || "Valore"}

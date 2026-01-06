@@ -299,7 +299,7 @@ function TokenStatusBanner({ tokenInfo }: { tokenInfo: TokenInfo }) {
 
   if (tokenInfo.error) {
     return (
-      <div className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 rounded-md border border-amber-200 dark:border-amber-800">
+      <div className="flex items-center gap-2 text-sm text-amber-800 bg-amber-50 px-3 py-2 rounded-md border border-amber-200">
         <AlertTriangle className="h-4 w-4 flex-shrink-0" />
         <span>{tokenInfo.error}</span>
       </div>
@@ -321,7 +321,7 @@ function TokenStatusBanner({ tokenInfo }: { tokenInfo: TokenInfo }) {
   }
 
   return (
-    <div className="flex items-center justify-between gap-2 text-sm bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 px-3 py-2 rounded-md border border-green-200 dark:border-green-800">
+    <div className="flex items-center justify-between gap-2 text-sm bg-green-50 text-green-700 px-3 py-2 rounded-md border border-green-200">
       <div className="flex items-center gap-2">
         <Coins className="h-4 w-4 flex-shrink-0" />
         <span>
@@ -329,9 +329,7 @@ function TokenStatusBanner({ tokenInfo }: { tokenInfo: TokenInfo }) {
           {tokenInfo.available === 1 ? "e" : "i"}
         </span>
       </div>
-      <span className="text-xs text-green-600 dark:text-green-500">
-        -1 per download
-      </span>
+      <span className="text-xs text-green-600">-1 per download</span>
     </div>
   );
 }
@@ -364,11 +362,11 @@ function FormatButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left",
+        "flex items-center gap-3 p-3 rounded-md border-2 text-left",
         "hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed",
         selected
           ? "border-primary bg-primary/5"
-          : "border-muted hover:border-muted-foreground/30"
+          : "border-border hover:border-muted-foreground/30"
       )}
     >
       {icon}

@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useState } from "react";
-import { Search, Sparkles, Plus, Loader2 } from "lucide-react";
+import { Search, Plus, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { VaultValue } from "@/lib/document-types";
@@ -16,7 +16,6 @@ import {
   AddEntryDialog,
   VaultCategoryList,
 } from "./components";
-import { cn } from "@/lib/utils";
 
 export function VaultSidebar({
   categories,
@@ -105,33 +104,14 @@ export function VaultSidebar({
   return (
     <>
       <div
-        className={cn(
-          "h-full flex flex-col border-l transition-all duration-300 overflow-hidden",
-          hasSelection && isAuthenticated
-            ? "bg-green-50/50 dark:bg-green-950/20 border-green-300 dark:border-green-800 shadow-[-4px_0_20px_rgba(34,197,94,0.15)]"
-            : hasCursor && isAuthenticated
-            ? "bg-blue-50/30 dark:bg-blue-950/10 border-blue-200 dark:border-blue-900"
-            : "bg-muted/30 border-border"
-        )}
+        className="h-full flex flex-col border-l border-border bg-muted/30 overflow-hidden"
         onMouseDown={handleMouseDown}
       >
         {/* Header - Fixed */}
-        <div
-          className={cn(
-            "flex-shrink-0 p-4 border-b transition-colors duration-300",
-            hasSelection && isAuthenticated
-              ? "bg-green-100/80 dark:bg-green-900/30 border-green-200 dark:border-green-800"
-              : hasCursor && isAuthenticated
-              ? "bg-blue-100/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
-              : "bg-card border-border"
-          )}
-        >
+        <div className="flex-shrink-0 p-4 border-b border-border bg-card">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold">Vault</h2>
-              {hasSelection && isAuthenticated && (
-                <Sparkles className="h-4 w-4 text-green-600 dark:text-green-400 animate-pulse" />
-              )}
               {isLoading && (
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               )}
@@ -164,7 +144,11 @@ export function VaultSidebar({
 
           {/* Status Badge per onboarding (senza salva) */}
           {showOnboarding && (
-            <StatusBadge actionType={actionType} selectedText={selectedText} isDemo />
+            <StatusBadge
+              actionType={actionType}
+              selectedText={selectedText}
+              isDemo
+            />
           )}
 
           {/* Search - solo se autenticato e ha dati reali */}
@@ -175,11 +159,7 @@ export function VaultSidebar({
                 placeholder="Cerca valori..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={cn(
-                  "pl-9 transition-colors",
-                  hasSelection &&
-                    "border-green-300 dark:border-green-700 focus:ring-green-500"
-                )}
+                className="pl-9"
               />
             </div>
           )}
@@ -226,14 +206,7 @@ export function VaultSidebar({
 
         {/* Footer - Fixed (solo per dati reali) */}
         {showRealData && (
-          <div
-            className={cn(
-              "flex-shrink-0 p-4 border-t transition-colors",
-              hasSelection
-                ? "bg-green-100/50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
-                : "bg-card border-border"
-            )}
-          >
+          <div className="flex-shrink-0 p-4 border-t border-border bg-card">
             <p className="text-xs text-muted-foreground text-center">
               {categories.reduce((acc, cat) => acc + cat.values.length, 0)}{" "}
               valori in {categories.length} categorie

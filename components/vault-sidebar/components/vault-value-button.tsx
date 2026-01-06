@@ -26,13 +26,11 @@ export function VaultValueButton({
     <Button
       variant="ghost"
       className={cn(
-        "w-full justify-start text-left h-auto py-2.5 px-3 transition-all duration-150",
+        "w-full justify-start text-left h-auto py-2 px-3",
         canInteract
-          ? isReplace
-            ? "hover:bg-green-100 dark:hover:bg-green-900/40 hover:text-green-900 dark:hover:text-green-100 hover:border-green-300 dark:hover:border-green-700 border border-transparent cursor-pointer"
-            : "hover:bg-accent hover:text-accent-foreground cursor-pointer"
-          : "opacity-40 cursor-not-allowed",
-        isDemo && "border border-dashed border-muted-foreground/30"
+          ? "hover:bg-accent hover:text-accent-foreground cursor-pointer"
+          : "opacity-50 cursor-not-allowed",
+        isDemo && "border border-dashed border-border"
       )}
       onClick={canInteract ? onClick : undefined}
       disabled={!canInteract}
@@ -46,14 +44,10 @@ export function VaultValueButton({
           : "Seleziona testo nel documento per attivare"
       }
     >
-      <div className="flex flex-col items-start gap-1 w-full">
+      <div className="flex flex-col items-start gap-0.5 w-full">
         <div className="flex items-center gap-2 w-full">
           <span
-            className={cn(
-              "text-sm font-medium flex-1",
-              isReplace && canInteract && "text-green-800 dark:text-green-300",
-              isDemo && "italic"
-            )}
+            className={cn("text-sm font-medium flex-1", isDemo && "italic")}
           >
             {value.label}
           </span>

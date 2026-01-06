@@ -1,17 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Zap,
-  Clock,
-  Shield,
-  ArrowRight,
-  MousePointerClick,
-  FileText,
-  CheckCircle,
-} from "lucide-react";
+import { ArrowRight, FileText, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 interface VaultWelcomeProps {
   onContinue: () => void;
@@ -21,139 +11,88 @@ interface VaultWelcomeProps {
 /**
  * Schermata di benvenuto per il Vault
  *
- * Obiettivo: Spiegare il beneficio senza spaventare
- * - Linguaggio semplice e diretto
- * - Focus sul risparmio di tempo
- * - Nessun termine tecnico o intimidatorio
+ * Design sobrio: spiegazione funzionale senza linguaggio entusiasta
  */
-export function VaultWelcome({ onContinue, userName }: VaultWelcomeProps) {
-  const [isAnimating, setIsAnimating] = useState(false);
-
-  const handleContinue = () => {
-    setIsAnimating(true);
-    setTimeout(onContinue, 300);
-  };
-
+export function VaultWelcome({ onContinue }: VaultWelcomeProps) {
   return (
-    <div
-      className={cn(
-        "space-y-10 transition-all duration-300",
-        isAnimating && "opacity-0 translate-y-4"
-      )}
-    >
-      {/* Hero Section */}
-      <div className="text-center space-y-4">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
-          <Zap className="h-4 w-4" />
-          Ultimo passaggio
+    <div className="space-y-8 max-w-lg mx-auto">
+      {/* Header */}
+      <div className="space-y-3">
+        <div className="h-12 w-12 rounded-md bg-muted border border-border flex items-center justify-center">
+          <Database className="h-6 w-6 text-foreground" />
         </div>
 
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
-          {userName ? `${userName}, creiamo` : "Creiamo"} la tua
-          <br />
-          <span className="text-primary">libreria personale</span>
-        </h1>
+        <h1 className="text-2xl font-semibold">Configura il Vault</h1>
 
-        <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-          Salva i dati che usi più spesso nei tuoi documenti.
-          <br />
-          La prossima volta, li inserisci con un click.
+        <p className="text-muted-foreground">
+          Il Vault è lo spazio dove salvare i dati che usi frequentemente nei
+          documenti: ragione sociale, P.IVA, indirizzi, coordinate bancarie.
         </p>
       </div>
 
-      {/* Visual Demo */}
-      <div className="relative bg-card rounded-2xl border shadow-sm p-8 max-w-lg mx-auto">
-        {/* Mini documento simulato */}
-        <div className="bg-background rounded-lg border p-6 space-y-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <FileText className="h-4 w-4" />
-            <span>Esempio documento</span>
-          </div>
+      {/* Come funziona */}
+      <div className="bg-card border border-border rounded-md p-5 space-y-4">
+        <h2 className="text-sm font-medium">Come funziona</h2>
 
-          <div className="space-y-3 text-sm">
-            <p>
-              La società{" "}
-              <span className="bg-primary/20 text-primary px-1.5 py-0.5 rounded font-medium">
-                Rossi S.r.l.
-              </span>{" "}
-              con sede in{" "}
-              <span className="bg-primary/20 text-primary px-1.5 py-0.5 rounded font-medium">
-                Via Roma 123, Milano
-              </span>
-            </p>
-            <p>
-              P.IVA{" "}
-              <span className="bg-primary/20 text-primary px-1.5 py-0.5 rounded font-medium">
-                IT01234567890
-              </span>
+        <div className="space-y-3">
+          <div className="flex gap-3">
+            <div className="h-6 w-6 rounded-full bg-muted border border-border flex items-center justify-center shrink-0 text-xs font-medium">
+              1
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Inserisci i dati una sola volta nel Vault
             </p>
           </div>
-        </div>
 
-        {/* Freccia e click indicator */}
-        <div className="absolute -right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-          <div className="h-px w-8 bg-border" />
-          <div className="bg-primary text-primary-foreground rounded-full p-2 shadow-lg">
-            <MousePointerClick className="h-4 w-4" />
+          <div className="flex gap-3">
+            <div className="h-6 w-6 rounded-full bg-muted border border-border flex items-center justify-center shrink-0 text-xs font-medium">
+              2
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Quando modifichi un documento, seleziona il testo da sostituire
+            </p>
           </div>
-        </div>
 
-        {/* Badge "1 click" */}
-        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-medium px-3 py-1 rounded-full shadow-lg">
-          Inseriti in 1 click!
+          <div className="flex gap-3">
+            <div className="h-6 w-6 rounded-full bg-muted border border-border flex items-center justify-center shrink-0 text-xs font-medium">
+              3
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Scegli il valore dal Vault per inserirlo nel documento
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Benefits - semplici e diretti */}
-      <div className="grid sm:grid-cols-3 gap-6 max-w-2xl mx-auto">
-        <BenefitCard
-          icon={Clock}
-          title="Risparmi tempo"
-          description="Non cerchi più i dati ogni volta"
-        />
-        <BenefitCard
-          icon={CheckCircle}
-          title="Zero errori"
-          description="Sempre i dati giusti, sempre uguali"
-        />
-        <BenefitCard
-          icon={Shield}
-          title="Solo per te"
-          description="Salvati sul tuo dispositivo"
-        />
+      {/* Esempio visivo semplice */}
+      <div className="bg-muted/50 border border-border rounded-md p-4">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+          <FileText className="h-3.5 w-3.5" />
+          Esempio
+        </div>
+        <div className="text-sm space-y-1">
+          <p>
+            La società{" "}
+            <span className="bg-primary/20 text-primary px-1 rounded">
+              Rossi S.r.l.
+            </span>{" "}
+            con sede in{" "}
+            <span className="bg-primary/20 text-primary px-1 rounded">
+              Via Roma 1, Milano
+            </span>
+            ...
+          </p>
+        </div>
+        <p className="text-xs text-muted-foreground mt-3">
+          I valori evidenziati vengono inseriti dal Vault
+        </p>
       </div>
 
       {/* CTA */}
-      <div className="text-center space-y-4">
-        <Button size="lg" className="h-14 px-8 text-base" onClick={handleContinue}>
-          Iniziamo
-          <ArrowRight className="h-5 w-5 ml-2" />
-        </Button>
-
-        <p className="text-sm text-muted-foreground">
-          Ci vogliono 2 minuti • Puoi sempre aggiungerne altri dopo
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function BenefitCard({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="text-center space-y-2">
-      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-        <Icon className="h-5 w-5 text-primary" />
-      </div>
-      <h3 className="font-medium">{title}</h3>
-      <p className="text-sm text-muted-foreground">{description}</p>
+      <Button onClick={onContinue} className="w-full">
+        Continua
+        <ArrowRight className="h-4 w-4 ml-2" />
+      </Button>
     </div>
   );
 }
