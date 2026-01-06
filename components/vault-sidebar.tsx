@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
   Building2,
@@ -138,6 +138,9 @@ export function VaultSidebar({
 }: VaultSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [initialValueForDialog, setInitialValueForDialog] = useState<
+    string | undefined
+  >();
 
   // Determina lo stato e l'azione
   const canInteract = isAuthenticated && (hasSelection || hasCursor);
@@ -174,10 +177,23 @@ export function VaultSidebar({
       const success = await onAddEntry(entry);
       if (success) {
         setAddDialogOpen(false);
+        setInitialValueForDialog(undefined);
       }
       return success;
     }
     return false;
+  };
+
+  const handleOpenAddDialog = (initialValue?: string) => {
+    setInitialValueForDialog(initialValue);
+    setAddDialogOpen(true);
+  };
+
+  const handleCloseAddDialog = (open: boolean) => {
+    setAddDialogOpen(open);
+    if (!open) {
+      setInitialValueForDialog(undefined);
+    }
   };
 
   return (
@@ -219,7 +235,7 @@ export function VaultSidebar({
                 variant="outline"
                 size="sm"
                 className="h-8 gap-1"
-                onClick={() => setAddDialogOpen(true)}
+                onClick={() => handleOpenAddDialog()}
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Aggiungi</span>
@@ -229,7 +245,15 @@ export function VaultSidebar({
 
           {/* Status Badge - solo se autenticato */}
           {isAuthenticated && (
-            <StatusBadge actionType={actionType} selectedText={selectedText} />
+            <StatusBadge
+              actionType={actionType}
+              selectedText={selectedText}
+              onSaveSelected={
+                onAddEntry && selectedText
+                  ? () => handleOpenAddDialog(selectedText)
+                  : undefined
+              }
+            />
           )}
 
           {/* Search - solo se autenticato e ha dati */}
@@ -264,7 +288,7 @@ export function VaultSidebar({
 
           {/* Autenticato ma vault vuoto */}
           {isAuthenticated && !error && isEmpty && (
-            <EmptyVaultState onAddClick={() => setAddDialogOpen(true)} />
+            <EmptyVaultState onAddClick={() => handleOpenAddDialog()} />
           )}
 
           {/* Autenticato con dati */}
@@ -357,8 +381,9 @@ export function VaultSidebar({
       {/* Add Entry Dialog */}
       <AddEntryDialog
         open={addDialogOpen}
-        onOpenChange={setAddDialogOpen}
+        onOpenChange={handleCloseAddDialog}
         onAdd={handleAddEntry}
+        initialValue={initialValueForDialog}
       />
     </>
   );
@@ -450,9 +475,11 @@ function EmptyVaultState({ onAddClick }: { onAddClick: () => void }) {
 function StatusBadge({
   actionType,
   selectedText,
+  onSaveSelected,
 }: {
   actionType: "replace" | "insert" | "none";
   selectedText?: string;
+  onSaveSelected?: () => void;
 }) {
   if (actionType === "replace") {
     return (
@@ -460,15 +487,35 @@ function StatusBadge({
         <div className="flex items-center gap-2 text-xs text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/50 px-3 py-2 rounded-md border border-green-300 dark:border-green-700 animate-in fade-in slide-in-from-top-1 duration-200">
           <Type className="h-4 w-4 flex-shrink-0" />
           <span className="font-medium">
-            Seleziona un valore per <strong>sostituire</strong>
+            Clicca un valore per <strong>sostituire</strong>
           </span>
         </div>
         {selectedText && (
           <div className="text-xs bg-white dark:bg-card px-3 py-2 rounded border border-green-200 dark:border-green-800">
-            <span className="text-muted-foreground">Testo selezionato: </span>
-            <span className="font-medium text-green-700 dark:text-green-400 line-clamp-1">
-              &quot;{selectedText}&quot;
-            </span>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <span className="text-muted-foreground">Selezionato: </span>
+                <span className="font-medium text-green-700 dark:text-green-400 line-clamp-1">
+                  &quot;{selectedText}&quot;
+                </span>
+              </div>
+              {onSaveSelected && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs shrink-0 text-primary hover:text-primary/80 hover:bg-primary/10"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onSaveSelected();
+                  }}
+                  title="Salva questo testo nel vault"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Salva
+                </Button>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -559,9 +606,16 @@ interface AddEntryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAdd: (entry: VaultEntryCreate) => Promise<boolean>;
+  /** Valore iniziale pre-compilato (es. da testo selezionato) */
+  initialValue?: string;
 }
 
-function AddEntryDialog({ open, onOpenChange, onAdd }: AddEntryDialogProps) {
+function AddEntryDialog({
+  open,
+  onOpenChange,
+  onAdd,
+  initialValue,
+}: AddEntryDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     valueData: "",
@@ -572,6 +626,13 @@ function AddEntryDialog({ open, onOpenChange, onAdd }: AddEntryDialogProps) {
   const [useCustomGroup, setUseCustomGroup] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Aggiorna valueData quando initialValue cambia
+  useEffect(() => {
+    if (open && initialValue) {
+      setFormData((prev) => ({ ...prev, valueData: initialValue }));
+    }
+  }, [open, initialValue]);
+
   const resetForm = () => {
     setFormData({
       valueData: "",
@@ -581,6 +642,13 @@ function AddEntryDialog({ open, onOpenChange, onAdd }: AddEntryDialogProps) {
     });
     setUseCustomGroup(false);
     setError(null);
+  };
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      resetForm();
+    }
+    onOpenChange(newOpen);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -608,8 +676,7 @@ function AddEntryDialog({ open, onOpenChange, onAdd }: AddEntryDialogProps) {
       });
 
       if (success) {
-        resetForm();
-        onOpenChange(false);
+        handleOpenChange(false);
       } else {
         setError("Impossibile aggiungere il valore. Riprova.");
       }
@@ -621,13 +688,16 @@ function AddEntryDialog({ open, onOpenChange, onAdd }: AddEntryDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Aggiungi nuovo valore</DialogTitle>
+          <DialogTitle>
+            {initialValue ? "Salva nel vault" : "Aggiungi nuovo valore"}
+          </DialogTitle>
           <DialogDescription>
-            Inserisci un dato da salvare nel vault. Potrai usarlo per compilare
-            rapidamente i tuoi documenti.
+            {initialValue
+              ? "Salva il testo selezionato nel vault per riutilizzarlo in futuro."
+              : "Inserisci un dato da salvare nel vault. Potrai usarlo per compilare rapidamente i tuoi documenti."}
           </DialogDescription>
         </DialogHeader>
 
@@ -767,10 +837,7 @@ function AddEntryDialog({ open, onOpenChange, onAdd }: AddEntryDialogProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => {
-                resetForm();
-                onOpenChange(false);
-              }}
+              onClick={() => handleOpenChange(false)}
             >
               Annulla
             </Button>
@@ -783,7 +850,7 @@ function AddEntryDialog({ open, onOpenChange, onAdd }: AddEntryDialogProps) {
               ) : (
                 <>
                   <Plus className="h-4 w-4 mr-2" />
-                  Aggiungi
+                  {initialValue ? "Salva" : "Aggiungi"}
                 </>
               )}
             </Button>

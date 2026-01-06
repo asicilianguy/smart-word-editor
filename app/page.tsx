@@ -15,6 +15,7 @@ import {
   GitCompare,
   LogOut,
   User,
+  FolderOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -306,6 +307,10 @@ function EditorPage() {
                 <span className="text-sm">
                   Valori nel vault: <strong>{vaultTotalEntries}</strong>
                 </span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/vault")}>
+                <FolderOpen className="h-4 w-4 mr-2" />
+                Gestisci Vault
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout} className="text-destructive">
