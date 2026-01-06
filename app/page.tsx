@@ -2,6 +2,7 @@
 
 import type React from "react";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
   Upload,
   Download,
@@ -29,8 +30,8 @@ import {
 import { CompareView } from "@/components/compare-view";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { useDocument } from "@/hooks/use-document";
+import { useVaultData } from "@/hooks/use-vault-data";
 import { useAuth } from "@/lib/auth-context";
-import { vaultData } from "@/lib/vault-data";
 import { healthCheck } from "@/lib/api-client";
 import type { VaultValue } from "@/lib/document-types";
 import {
@@ -45,10 +46,10 @@ import {
 /**
  * Smart Word Editor - Pagina principale con TipTap
  *
- * VERSIONE 8 - WITH AUTHENTICATION:
- * - Protezione route con ProtectedRoute
- * - Menu utente con logout
- * - Tutte le funzionalità precedenti (Compare View, etc.)
+ * VERSIONE 9 - VAULT DINAMICO:
+ * - Integrazione con useVaultData hook
+ * - Caricamento dati vault dall'API
+ * - CRUD entries dalla sidebar
  */
 export default function Page() {
   return (
@@ -59,6 +60,8 @@ export default function Page() {
 }
 
 function EditorPage() {
+  const router = useRouter();
+
   // Auth context
   const { user, logout } = useAuth();
 
@@ -80,6 +83,20 @@ function EditorPage() {
     downloadDocument,
     resetDocument,
   } = useDocument();
+
+  // Vault data hook
+  const {
+    categories: vaultCategories,
+    isAuthenticated: isVaultAuthenticated,
+    isEmpty: isVaultEmpty,
+    isLoading: isVaultLoading,
+    error: vaultError,
+    totalEntries: vaultTotalEntries,
+    refresh: refreshVault,
+    addEntry: addVaultEntry,
+    updateEntry: updateVaultEntry,
+    deleteEntry: deleteVaultEntry,
+  } = useVaultData();
 
   // Stato UI
   const [hasSelection, setHasSelection] = useState(false);
@@ -177,6 +194,13 @@ function EditorPage() {
     [downloadDocument]
   );
 
+  /**
+   * Naviga al login
+   */
+  const handleLoginClick = useCallback(() => {
+    router.push("/auth/login");
+  }, [router]);
+
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
@@ -222,7 +246,7 @@ function EditorPage() {
 
           {documentState && (
             <>
-              {/* NUOVO: Bottone Confronta Modifiche */}
+              {/* Bottone Confronta Modifiche */}
               <Button
                 variant="outline"
                 onClick={() => setCompareViewOpen(true)}
@@ -278,6 +302,11 @@ function EditorPage() {
                   Token disponibili: <strong>{user?.tokens || 0}</strong>
                 </span>
               </DropdownMenuItem>
+              <DropdownMenuItem>
+                <span className="text-sm">
+                  Valori nel vault: <strong>{vaultTotalEntries}</strong>
+                </span>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout} className="text-destructive">
                 <LogOut className="h-4 w-4 mr-2" />
@@ -325,11 +354,18 @@ function EditorPage() {
           {/* Vault Sidebar - 30% */}
           <div className="flex-[3] overflow-hidden">
             <VaultSidebar
-              categories={vaultData}
+              categories={vaultCategories}
               onValueClick={handleVaultValueClick}
               hasSelection={hasSelection}
               hasCursor={hasCursor}
               selectedText={selectedText}
+              isAuthenticated={isVaultAuthenticated}
+              isEmpty={isVaultEmpty}
+              isLoading={isVaultLoading}
+              error={vaultError}
+              onAddEntry={addVaultEntry}
+              onRefresh={refreshVault}
+              onLoginClick={handleLoginClick}
             />
           </div>
         </div>
@@ -346,7 +382,7 @@ function EditorPage() {
         />
       )}
 
-      {/* NUOVO: Compare View Dialog */}
+      {/* Compare View Dialog */}
       {documentState && (
         <CompareView
           open={compareViewOpen}
@@ -413,7 +449,7 @@ function EmptyState({
         <h2 className="text-2xl font-semibold mb-2">Nessun documento</h2>
         <p className="text-muted-foreground mb-6">
           Carica un documento per iniziare. Potrai modificare il testo
-          direttamente nell'editor e tutte le modifiche verranno
+          direttamente nell&apos;editor e tutte le modifiche verranno
           <strong> automaticamente</strong> applicate al download.
         </p>
 
@@ -450,8 +486,8 @@ function EmptyState({
           Formati supportati: DOC, DOCX, ODT, RTF, TXT
         </p>
         <p className="text-xs text-muted-foreground mt-2">
-          💡 <strong>Novità:</strong> Usa il pulsante "Confronta" per vedere
-          un'anteprima side-by-side delle modifiche!
+          💡 <strong>Novità:</strong> Usa il pulsante &quot;Confronta&quot; per
+          vedere un&apos;anteprima side-by-side delle modifiche!
         </p>
       </div>
     </div>
