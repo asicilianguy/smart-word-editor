@@ -28,6 +28,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { getAuthHeaders, removeToken } from "@/lib/auth";
 
 // ============================================================================
 // TYPES
@@ -128,7 +129,7 @@ export function CompareView({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, onOpenChange]);
 
-  // Fetch preview from backend
+  // Fetch preview from backend - WITH AUTH HEADERS
   const fetchPreview = async () => {
     setIsLoading(true);
     setError(null);
@@ -146,8 +147,20 @@ export function CompareView({
         process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const response = await fetch(`${API_BASE}/api/documents/preview`, {
         method: "POST",
+        headers: {
+          ...getAuthHeaders(),
+        },
         body: formData,
       });
+
+      // Handle 401 - redirect to login
+      if (response.status === 401) {
+        removeToken();
+        if (typeof window !== "undefined") {
+          window.location.href = "/auth/login";
+        }
+        return;
+      }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

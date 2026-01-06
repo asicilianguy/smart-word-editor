@@ -12,6 +12,8 @@ import {
   Loader2,
   Eye,
   GitCompare,
+  LogOut,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,20 +27,41 @@ import {
   type DownloadFormat,
 } from "@/components/download-dialog";
 import { CompareView } from "@/components/compare-view";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 import { useDocument } from "@/hooks/use-document";
+import { useAuth } from "@/lib/auth-context";
 import { vaultData } from "@/lib/vault-data";
 import { healthCheck } from "@/lib/api-client";
 import type { VaultValue } from "@/lib/document-types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 /**
  * Smart Word Editor - Pagina principale con TipTap
  *
- * VERSIONE 7 - COMPARE VIEW:
- * - Nuova funzionalità Compare View per confronto side-by-side
- * - Preview PDF realistiche con evidenziazione modifiche
- * - Tutte le modifiche tracciate automaticamente via diff
+ * VERSIONE 8 - WITH AUTHENTICATION:
+ * - Protezione route con ProtectedRoute
+ * - Menu utente con logout
+ * - Tutte le funzionalità precedenti (Compare View, etc.)
  */
 export default function Page() {
+  return (
+    <ProtectedRoute>
+      <EditorPage />
+    </ProtectedRoute>
+  );
+}
+
+function EditorPage() {
+  // Auth context
+  const { user, logout } = useAuth();
+
   // Ref all'editor TipTap
   const editorRef = useRef<TipTapEditorHandle>(null);
 
@@ -232,6 +255,36 @@ export default function Page() {
               </Button>
             </>
           )}
+
+          {/* User Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="ml-2">
+                <User className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <div className="flex flex-col">
+                  <span className="font-medium">Account</span>
+                  <span className="text-xs text-muted-foreground font-normal">
+                    {user?.phone_number || "Utente"}
+                  </span>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <span className="text-sm">
+                  Token disponibili: <strong>{user?.tokens || 0}</strong>
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={logout} className="text-destructive">
+                <LogOut className="h-4 w-4 mr-2" />
+                Esci
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 

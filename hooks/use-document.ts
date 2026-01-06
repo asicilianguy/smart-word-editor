@@ -10,6 +10,7 @@ import {
 } from "@/lib/api-client";
 import type { DocumentState } from "@/lib/document-types";
 import { convertToTipTap } from "@/lib/content-converter";
+import { getAuthHeaders, removeToken } from "@/lib/auth";
 
 // ============================================================================
 // TYPES
@@ -510,7 +511,7 @@ export function useDocument() {
 }
 
 // ============================================================================
-// API HELPER
+// API HELPER - Con auth headers
 // ============================================================================
 
 async function generateDocumentWithFormat(
@@ -532,8 +533,20 @@ async function generateDocumentWithFormat(
 
   const response = await fetch(`${API_BASE}/api/documents/generate`, {
     method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+    },
     body: formData,
   });
+
+  // Handle 401 - redirect to login
+  if (response.status === 401) {
+    removeToken();
+    if (typeof window !== "undefined") {
+      window.location.href = "/auth/login";
+    }
+    throw new Error("Sessione scaduta. Effettua nuovamente il login.");
+  }
 
   if (!response.ok) {
     const errorText = await response.text();

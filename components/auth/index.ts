@@ -27,3 +27,6 @@ export { MethodChoice } from "./method-choice";
 export { GuidedEntryWizard } from "./guided-entry-wizard";
 export { FriendlyDocumentUploader } from "./friendly-document-uploader";
 export { OnboardingComplete } from "./onboarding-complete";
+
+// Route Protection
+export { ProtectedRoute } from "./protected-route";

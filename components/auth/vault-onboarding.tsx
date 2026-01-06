@@ -44,12 +44,13 @@ interface VaultOnboardingProps {
  * 1. Welcome - Spiega il concetto
  * 2. Choose Method - Manuale o Upload
  * 3a. Manual Entry - Wizard guidato per categoria
- * 3b. Document Upload - Upload friendly
+ * 3b. Document Upload - Upload friendly con estrazione AI
  * 4. Complete - Celebrazione e riepilogo
  */
 export function VaultOnboarding({ onComplete, onBack }: VaultOnboardingProps) {
   const [step, setStep] = useState<OnboardingStep>("welcome");
-  const [selectedMethod, setSelectedMethod] = useState<VaultPopulationMethod | null>(null);
+  const [selectedMethod, setSelectedMethod] =
+    useState<VaultPopulationMethod | null>(null);
   const [entries, setEntries] = useState<VaultEntry[]>([]);
   const [documents, setDocuments] = useState<UploadedDocument[]>([]);
 
@@ -105,6 +106,19 @@ export function VaultOnboarding({ onComplete, onBack }: VaultOnboardingProps) {
     setStep("welcome");
   };
 
+  /**
+   * Handler per le entries estratte dal documento
+   * Viene chiamato da FriendlyDocumentUploader quando l'AI estrae i dati
+   */
+  const handleEntriesExtracted = (extractedEntries: VaultEntry[]) => {
+    console.log(
+      "[VaultOnboarding] Entries extracted:",
+      extractedEntries.length
+    );
+    // Aggiungi le entries estratte a quelle esistenti
+    setEntries((prev) => [...prev, ...extractedEntries]);
+  };
+
   const handleFinish = () => {
     onComplete({
       method: selectedMethod || "skip",
@@ -143,6 +157,7 @@ export function VaultOnboarding({ onComplete, onBack }: VaultOnboardingProps) {
           <FriendlyDocumentUploader
             documents={documents}
             onDocumentsChange={setDocuments}
+            onEntriesExtracted={handleEntriesExtracted}
             onComplete={handleUploadComplete}
             onBack={handleBackToMethod}
           />

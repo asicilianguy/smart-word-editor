@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   AuthLayout,
   RegistrationStep1Form,
   VaultOnboarding,
 } from "@/components/auth";
+import { useAuth } from "@/lib/auth-context";
 import type {
   RegistrationStep1,
   VaultPopulationMethod,
@@ -15,22 +16,38 @@ import type {
 } from "@/lib/auth-types";
 
 /**
- * Pagina di Registrazione - NUOVA VERSIONE
+ * Pagina di Registrazione
  *
  * Workflow a 2 step:
  * 1. Credenziali: numero di telefono + password (layout split)
  * 2. Vault Onboarding: fullscreen, guidato, rassicurante
+ *
+ * Dopo la registrazione, salva automaticamente le vault entries nel backend.
  */
 export default function RegisterPage() {
   const router = useRouter();
+  const {
+    register,
+    saveVault,
+    isAuthenticated,
+    isLoading: authLoading,
+  } = useAuth();
   const [currentStep, setCurrentStep] = useState<1 | 2>(1);
   const [step1Data, setStep1Data] = useState<RegistrationStep1 | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Redirect se già autenticato
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, authLoading, router]);
+
   // Step 1: Credenziali
   const handleStep1Complete = (data: RegistrationStep1) => {
     setStep1Data(data);
+    setError(null);
     setCurrentStep(2);
   };
 
@@ -46,26 +63,44 @@ export default function RegisterPage() {
     setError(null);
 
     try {
-      // TODO: Implementare la chiamata API per la registrazione
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // 1. Registra l'utente
+      const registerResponse = await register(
+        step1Data.phone,
+        step1Data.password
+      );
 
-      console.log("Registration complete:", {
-        phone: step1Data.phone,
-        password: "[HIDDEN]",
-        vaultMethod: vaultData.method,
-        entriesCount: vaultData.entries.length,
-        documentsCount: vaultData.documents.length,
-      });
+      if (!registerResponse.success) {
+        setError(registerResponse.error || "Errore durante la registrazione");
+        setCurrentStep(1);
+        setIsLoading(false);
+        return;
+      }
 
-      // Log dettagliato (solo in development)
+      // 2. Salva le vault entries (se presenti)
+      if (vaultData.entries.length > 0) {
+        const vaultResponse = await saveVault(vaultData.entries);
+
+        if (!vaultResponse.success) {
+          console.warn("[Register] Vault save failed:", vaultResponse.error);
+          // Non blocchiamo la registrazione se il vault non viene salvato
+          // L'utente può aggiungerlo dopo
+        }
+      }
+
+      // Log per debug (solo in development)
       if (process.env.NODE_ENV === "development") {
-        console.log("Vault entries:", vaultData.entries);
-        console.log("Uploaded documents:", vaultData.documents);
+        console.log("[Register] Complete:", {
+          phone: step1Data.phone,
+          vaultMethod: vaultData.method,
+          entriesCount: vaultData.entries.length,
+          documentsCount: vaultData.documents.length,
+        });
       }
 
       // Registrazione riuscita - redirect alla home
       router.push("/");
     } catch (err) {
+      console.error("[Register] Error:", err);
       setError(
         err instanceof Error ? err.message : "Errore durante la registrazione"
       );
@@ -80,6 +115,15 @@ export default function RegisterPage() {
   const handleBackToStep1 = () => {
     setCurrentStep(1);
   };
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
 
   // Step 1: Layout split-screen
   if (currentStep === 1) {

@@ -2,7 +2,14 @@
  * API Client per comunicazione con il backend FastAPI
  *
  * Il backend gira su http://localhost:8000
+ *
+ * AUTHENTICATION:
+ * - Endpoints protetti richiedono JWT token
+ * - Token salvato in localStorage
+ * - In caso di 401, redirect a login
  */
+
+import { getAuthHeaders, removeToken } from "./auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -20,12 +27,23 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Handle 401 errors - redirect to login
+ */
+function handleUnauthorized(): void {
+  removeToken();
+  if (typeof window !== "undefined") {
+    window.location.href = "/auth/login";
+  }
+}
+
 // ============================================================================
-// DOCUMENT ENDPOINTS
+// DOCUMENT ENDPOINTS (PROTECTED)
 // ============================================================================
 
 /**
  * Parsing di un documento DOCX
+ * PROTECTED: Requires authentication
  */
 export async function parseDocument(
   file: File
@@ -35,8 +53,16 @@ export async function parseDocument(
 
   const response = await fetch(`${API_BASE_URL}/api/documents/parse`, {
     method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+    },
     body: formData,
   });
+
+  if (response.status === 401) {
+    handleUnauthorized();
+    throw new ApiError("Non autorizzato", 401);
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
@@ -52,6 +78,7 @@ export async function parseDocument(
 
 /**
  * Generazione di un documento DOCX modificato
+ * PROTECTED: Requires authentication
  */
 export async function generateDocument(
   file: File,
@@ -63,8 +90,16 @@ export async function generateDocument(
 
   const response = await fetch(`${API_BASE_URL}/api/documents/generate`, {
     method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+    },
     body: formData,
   });
+
+  if (response.status === 401) {
+    handleUnauthorized();
+    throw new ApiError("Non autorizzato", 401);
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
@@ -79,7 +114,128 @@ export async function generateDocument(
 }
 
 /**
+ * Generazione documento con formato specifico
+ * PROTECTED: Requires authentication
+ */
+export async function generateDocumentWithFormat(
+  file: File,
+  textModifications: Modification[],
+  checkboxModifications: CheckboxModification[],
+  format: "docx" | "pdf" = "docx"
+): Promise<Blob> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("modifications", JSON.stringify(textModifications));
+  formData.append(
+    "checkbox_modifications",
+    JSON.stringify(checkboxModifications)
+  );
+  formData.append("output_format", format);
+
+  const response = await fetch(`${API_BASE_URL}/api/documents/generate`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+    },
+    body: formData,
+  });
+
+  if (response.status === 401) {
+    handleUnauthorized();
+    throw new ApiError("Non autorizzato", 401);
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMessage = `Errore generazione: ${response.statusText}`;
+
+    try {
+      const errorJson = JSON.parse(errorText);
+      if (errorJson.detail) {
+        errorMessage = errorJson.detail;
+      }
+    } catch {
+      // Ignore
+    }
+
+    throw new ApiError(errorMessage, response.status);
+  }
+
+  return response.blob();
+}
+
+/**
+ * Preview documento per compare view
+ * PROTECTED: Requires authentication
+ */
+export async function getDocumentPreview(
+  file: File,
+  modifications: Modification[],
+  checkboxModifications: CheckboxModification[]
+): Promise<PreviewResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("modifications", JSON.stringify(modifications));
+  formData.append(
+    "checkbox_modifications",
+    JSON.stringify(checkboxModifications)
+  );
+
+  const response = await fetch(`${API_BASE_URL}/api/documents/preview`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+    },
+    body: formData,
+  });
+
+  if (response.status === 401) {
+    handleUnauthorized();
+    throw new ApiError("Non autorizzato", 401);
+  }
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new ApiError(
+      error.detail || "Errore durante la generazione preview",
+      response.status,
+      error
+    );
+  }
+
+  return response.json();
+}
+
+/**
+ * Lista formati supportati
+ * PROTECTED: Requires authentication
+ */
+export async function getFormats(): Promise<FormatsResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/documents/formats`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (response.status === 401) {
+    handleUnauthorized();
+    throw new ApiError("Non autorizzato", 401);
+  }
+
+  if (!response.ok) {
+    throw new ApiError("Errore nel recupero formati", response.status);
+  }
+
+  return response.json();
+}
+
+// ============================================================================
+// PUBLIC ENDPOINTS (NO AUTH REQUIRED)
+// ============================================================================
+
+/**
  * Validazione documenti per onboarding
+ * PUBLIC: No authentication required
  */
 export async function validateDocuments(
   files: File[]
@@ -109,12 +265,9 @@ export async function validateDocuments(
   return response.json();
 }
 
-// ============================================================================
-// VAULT ENDPOINTS
-// ============================================================================
-
 /**
  * Estrae dati riutilizzabili dai documenti per il vault
+ * PUBLIC: No authentication required
  *
  * NOTA: Questa funzione non lancia eccezioni per errori di business logic.
  * Il backend restituisce sempre 200 OK con success=false in caso di errore.
@@ -159,6 +312,7 @@ export async function extractVaultData(
 
 /**
  * Health check del backend
+ * PUBLIC: No authentication required
  */
 export async function healthCheck(): Promise<boolean> {
   try {
@@ -250,9 +404,51 @@ export interface Modification {
   new_text: string;
 }
 
+export interface CheckboxModification {
+  checkboxIndex: number;
+  newChecked: boolean;
+}
+
 export interface GenerateResponse {
   success: boolean;
   modifications_applied: number;
+}
+
+// ============================================================================
+// TIPI - Preview
+// ============================================================================
+
+export interface ModificationSummaryItem {
+  index: number;
+  type: string;
+  location: string;
+  original: string;
+  new: string;
+  page?: number;
+}
+
+export interface PreviewResponse {
+  original_pdf: string;
+  modified_pdf: string;
+  modifications_summary: ModificationSummaryItem[];
+}
+
+// ============================================================================
+// TIPI - Formats
+// ============================================================================
+
+export interface FormatInfo {
+  available: boolean;
+  description: string;
+  note?: string;
+}
+
+export interface FormatsResponse {
+  input_formats: string[];
+  output_formats: {
+    docx: FormatInfo;
+    pdf: FormatInfo;
+  };
 }
 
 // ============================================================================
