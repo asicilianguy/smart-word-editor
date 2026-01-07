@@ -5,14 +5,13 @@
  *
  * Comportamento:
  * - Se utente autenticato: carica dati dall'API
- * - Se utente autenticato ma vault vuoto: mostra vault vuoto (NON dati mock)
- * - Se utente non autenticato: mostra vault vuoto con flag isAuthenticated=false
+ * - Se utente NON autenticato: mostra dati DEMO interattivi in memoria locale
  *
- * UPDATED: Usa la risposta del server per gli update invece di merge manuali
+ * UPDATED: Supporto completo per demo mode con dati mock modificabili
  */
 
 import { useState, useEffect, useCallback } from "react";
-import type { VaultCategory, VaultValue } from "@/lib/document-types";
+import type { VaultCategory } from "@/lib/document-types";
 import {
   getVaultEntries,
   createVaultEntry,
@@ -32,6 +31,8 @@ interface UseVaultDataResult {
   categories: VaultCategory[];
   /** True se l'utente è autenticato */
   isAuthenticated: boolean;
+  /** True se siamo in modalità demo (non autenticato) */
+  isDemo: boolean;
   /** True se il vault è vuoto (utente autenticato ma senza dati) */
   isEmpty: boolean;
   /** True durante il caricamento */
@@ -40,6 +41,8 @@ interface UseVaultDataResult {
   error: string | null;
   /** Numero totale di entries */
   totalEntries: number;
+  /** Entries demo aggiunte dall'utente (non salvate) */
+  demoEntriesCount: number;
   /** Ricarica i dati dall'API */
   refresh: () => Promise<void>;
   /** Aggiunge una nuova entry */
@@ -49,6 +52,74 @@ interface UseVaultDataResult {
   /** Elimina un'entry */
   deleteEntry: (entryId: string) => Promise<boolean>;
 }
+
+// ============================================================================
+// DEMO DATA
+// Le demo entries usano ID che iniziano con "demo-" per identificarle
+// source è undefined per evitare conflitti di tipo
+// ============================================================================
+
+const DEMO_ENTRIES: VaultEntryBackend[] = [
+  // Dati Identificativi
+  {
+    id: "demo-1",
+    valueData: "Rossi S.r.l.",
+    nameLabel: "Ragione Sociale",
+    nameGroup: "Dati Identificativi",
+  },
+  {
+    id: "demo-2",
+    valueData: "IT01234567890",
+    nameLabel: "Partita IVA",
+    nameGroup: "Dati Identificativi",
+  },
+  {
+    id: "demo-3",
+    valueData: "RSSMRA80A01H501Z",
+    nameLabel: "Codice Fiscale",
+    nameGroup: "Dati Identificativi",
+  },
+  // Persone
+  {
+    id: "demo-4",
+    valueData: "Mario Rossi",
+    nameLabel: "Legale Rappresentante",
+    nameGroup: "Persone",
+  },
+  // Contatti
+  {
+    id: "demo-5",
+    valueData: "info@rossisrl.it",
+    nameLabel: "Email",
+    nameGroup: "Contatti",
+  },
+  {
+    id: "demo-6",
+    valueData: "rossisrl@pec.it",
+    nameLabel: "PEC",
+    nameGroup: "Contatti",
+  },
+  {
+    id: "demo-7",
+    valueData: "+39 02 1234567",
+    nameLabel: "Telefono",
+    nameGroup: "Contatti",
+  },
+  // Indirizzi
+  {
+    id: "demo-8",
+    valueData: "Via Roma 123, 20100 Milano (MI)",
+    nameLabel: "Sede Legale",
+    nameGroup: "Indirizzi",
+  },
+  // Coordinate Bancarie
+  {
+    id: "demo-9",
+    valueData: "IT60X0542811101000000123456",
+    nameLabel: "IBAN",
+    nameGroup: "Coordinate Bancarie",
+  },
+];
 
 // ============================================================================
 // CONSTANTS
@@ -70,10 +141,23 @@ const DEFAULT_GROUPS: Record<string, { name: string; icon: string }> = {
 // ============================================================================
 
 /**
+ * Verifica se un'entry è una demo entry (non dell'utente)
+ */
+function isDemoEntry(id: string): boolean {
+  return id.startsWith("demo-");
+}
+
+/**
+ * Verifica se un'entry è stata aggiunta dall'utente in demo mode
+ */
+function isUserDemoEntry(id: string): boolean {
+  return id.startsWith("user-demo-");
+}
+
+/**
  * Trasforma le entries flat del backend in categorie per la sidebar
  */
 function transformToCategories(entries: VaultEntryBackend[]): VaultCategory[] {
-  // Raggruppa per nameGroup
   const grouped: Record<string, VaultEntryBackend[]> = {};
 
   for (const entry of entries) {
@@ -84,10 +168,8 @@ function transformToCategories(entries: VaultEntryBackend[]): VaultCategory[] {
     grouped[group].push(entry);
   }
 
-  // Converti in categorie
   const categories: VaultCategory[] = [];
 
-  // Ordine preferito
   const preferredOrder = [
     "Dati Identificativi",
     "Persone",
@@ -99,7 +181,6 @@ function transformToCategories(entries: VaultEntryBackend[]): VaultCategory[] {
     "Altri dati",
   ];
 
-  // Prima aggiungi i gruppi nell'ordine preferito
   for (const groupName of preferredOrder) {
     if (grouped[groupName]) {
       const groupInfo = DEFAULT_GROUPS[groupName] || {
@@ -120,7 +201,6 @@ function transformToCategories(entries: VaultEntryBackend[]): VaultCategory[] {
     }
   }
 
-  // Poi aggiungi eventuali gruppi non previsti (custom groups)
   for (const [groupName, groupEntries] of Object.entries(grouped)) {
     categories.push({
       id: groupName.toLowerCase().replace(/\s+/g, "-"),
@@ -137,14 +217,8 @@ function transformToCategories(entries: VaultEntryBackend[]): VaultCategory[] {
   return categories;
 }
 
-/**
- * Token key - MUST match auth-service.ts
- */
 const TOKEN_KEY = "smart_word_editor_token";
 
-/**
- * Verifica se l'utente è autenticato
- */
 function checkAuthenticated(): boolean {
   if (typeof window === "undefined") return false;
   const token = localStorage.getItem(TOKEN_KEY);
@@ -157,12 +231,13 @@ function checkAuthenticated(): boolean {
 
 export function useVaultData(): UseVaultDataResult {
   const [rawEntries, setRawEntries] = useState<VaultEntryBackend[]>([]);
+  const [demoEntries, setDemoEntries] = useState<VaultEntryBackend[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Carica i dati vault dall'API
+   * Carica i dati vault dall'API o inizializza demo
    */
   const loadVaultData = useCallback(async () => {
     setIsLoading(true);
@@ -171,13 +246,16 @@ export function useVaultData(): UseVaultDataResult {
     const authenticated = checkAuthenticated();
     setIsAuthenticated(authenticated);
 
-    // Se non autenticato, non caricare nulla
+    // Se non autenticato, usa dati demo
     if (!authenticated) {
       setRawEntries([]);
+      // Inizializza demo entries solo se vuote
+      setDemoEntries((prev) => (prev.length === 0 ? [...DEMO_ENTRIES] : prev));
       setIsLoading(false);
       return;
     }
 
+    // Se autenticato, carica da API
     try {
       const response = await getVaultEntries();
 
@@ -186,8 +264,9 @@ export function useVaultData(): UseVaultDataResult {
         setRawEntries([]);
         setError(response.error || null);
       } else {
-        // Dati dall'API (può essere vuoto)
         setRawEntries(response.entries);
+        // Pulisci dati demo quando si autentica
+        setDemoEntries([]);
       }
     } catch (err) {
       console.error("[useVaultData] Load failed:", err);
@@ -198,21 +277,33 @@ export function useVaultData(): UseVaultDataResult {
     }
   }, []);
 
-  // Carica i dati all'avvio
   useEffect(() => {
     loadVaultData();
   }, [loadVaultData]);
 
   /**
-   * Aggiunge una nuova entry (usa POST /vault/entry per singola entry)
+   * Aggiunge una nuova entry
+   * - Se autenticato: salva su API
+   * - Se non autenticato: aggiunge in memoria locale (demo)
    */
   const addEntry = useCallback(
     async (entry: VaultEntryCreate): Promise<boolean> => {
-      if (!checkAuthenticated()) {
-        setError("Devi effettuare l'accesso per salvare i dati");
-        return false;
+      const authenticated = checkAuthenticated();
+
+      // DEMO MODE: aggiungi in memoria locale
+      if (!authenticated) {
+        const newEntry: VaultEntryBackend = {
+          id: `user-demo-${Date.now()}`,
+          valueData: entry.valueData,
+          nameLabel: entry.nameLabel,
+          nameGroup: entry.nameGroup,
+          source: "manual",
+        };
+        setDemoEntries((prev) => [...prev, newEntry]);
+        return true;
       }
 
+      // AUTHENTICATED: salva su API
       try {
         const response = await createVaultEntry(entry);
 
@@ -221,7 +312,6 @@ export function useVaultData(): UseVaultDataResult {
           return false;
         }
 
-        // Usa l'entry dalla risposta del server
         if (response.entry) {
           setRawEntries((prev) => [...prev, response.entry!]);
         }
@@ -238,46 +328,34 @@ export function useVaultData(): UseVaultDataResult {
 
   /**
    * Aggiorna un'entry esistente
-   * IMPORTANT: Usa la risposta del server per garantire consistenza
    */
   const updateEntryFn = useCallback(
     async (entryId: string, updates: VaultEntryUpdate): Promise<boolean> => {
-      if (!checkAuthenticated()) {
-        setError("Devi effettuare l'accesso per modificare i dati");
-        return false;
+      const authenticated = checkAuthenticated();
+
+      // DEMO MODE: aggiorna in memoria locale
+      if (!authenticated) {
+        setDemoEntries((prev) =>
+          prev.map((entry) =>
+            entry.id === entryId ? { ...entry, ...updates } : entry
+          )
+        );
+        return true;
       }
 
+      // AUTHENTICATED: aggiorna su API
       try {
-        console.log(`[useVaultData] Updating entry ${entryId}:`, updates);
-
         const response = await updateVaultEntry(entryId, updates);
 
         if (!response.success) {
-          console.error(`[useVaultData] Update failed:`, response.error);
           setError(response.error || "Errore nell'aggiornamento");
           return false;
         }
 
-        // IMPORTANTE: Usa l'entry dalla risposta del server
-        // Questo garantisce che lo stato locale sia sincronizzato col DB
         if (response.entry) {
-          console.log(
-            `[useVaultData] Update successful, new entry:`,
-            response.entry
-          );
           setRawEntries((prev) =>
             prev.map((entry) =>
               entry.id === entryId ? response.entry! : entry
-            )
-          );
-        } else {
-          // Fallback: se il server non ritorna l'entry, fai merge manuale
-          console.warn(
-            `[useVaultData] Server did not return entry, using manual merge`
-          );
-          setRawEntries((prev) =>
-            prev.map((entry) =>
-              entry.id === entryId ? { ...entry, ...updates } : entry
             )
           );
         }
@@ -298,11 +376,15 @@ export function useVaultData(): UseVaultDataResult {
    */
   const deleteEntryFn = useCallback(
     async (entryId: string): Promise<boolean> => {
-      if (!checkAuthenticated()) {
-        setError("Devi effettuare l'accesso per eliminare i dati");
-        return false;
+      const authenticated = checkAuthenticated();
+
+      // DEMO MODE: elimina da memoria locale
+      if (!authenticated) {
+        setDemoEntries((prev) => prev.filter((entry) => entry.id !== entryId));
+        return true;
       }
 
+      // AUTHENTICATED: elimina da API
       try {
         const response = await deleteVaultEntry(entryId);
 
@@ -311,7 +393,6 @@ export function useVaultData(): UseVaultDataResult {
           return false;
         }
 
-        // Aggiorna lo stato locale
         setRawEntries((prev) => prev.filter((entry) => entry.id !== entryId));
         setError(null);
         return true;
@@ -325,20 +406,32 @@ export function useVaultData(): UseVaultDataResult {
   );
 
   // Calcola le categorie da visualizzare
-  const categories = transformToCategories(rawEntries);
-  const totalEntries = rawEntries.length;
+  const isDemo = !isAuthenticated;
+  const activeEntries = isDemo ? demoEntries : rawEntries;
+  const categories = transformToCategories(activeEntries);
+  const totalEntries = activeEntries.length;
   const isEmpty = isAuthenticated && rawEntries.length === 0 && !isLoading;
+
+  // Conta le entries aggiunte dall'utente in demo mode
+  const demoEntriesCount = demoEntries.filter((e) =>
+    isUserDemoEntry(e.id)
+  ).length;
 
   return {
     categories,
     isAuthenticated,
+    isDemo,
     isEmpty,
     isLoading,
     error,
     totalEntries,
+    demoEntriesCount,
     refresh: loadVaultData,
     addEntry,
     updateEntry: updateEntryFn,
     deleteEntry: deleteEntryFn,
   };
 }
+
+// Esporta le funzioni helper per usarle nei componenti
+export { isDemoEntry, isUserDemoEntry };

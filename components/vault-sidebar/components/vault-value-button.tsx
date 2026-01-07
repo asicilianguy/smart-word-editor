@@ -1,9 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { VaultValue } from "@/lib/document-types";
 import type { ActionType } from "../types";
-import { cn } from "@/lib/utils";
 
 interface VaultValueButtonProps {
   value: VaultValue;
@@ -11,6 +10,7 @@ interface VaultValueButtonProps {
   canInteract: boolean;
   actionType: ActionType;
   isDemo?: boolean;
+  isUserAdded?: boolean;
 }
 
 export function VaultValueButton({
@@ -19,48 +19,68 @@ export function VaultValueButton({
   canInteract,
   actionType,
   isDemo = false,
+  isUserAdded = false,
 }: VaultValueButtonProps) {
-  const isReplace = actionType === "replace";
-
   return (
-    <Button
-      variant="ghost"
-      className={cn(
-        "w-full justify-start text-left h-auto py-2 px-3",
-        canInteract
-          ? "hover:bg-accent hover:text-accent-foreground cursor-pointer"
-          : "opacity-50 cursor-not-allowed",
-        isDemo && "border border-dashed border-border"
-      )}
-      onClick={canInteract ? onClick : undefined}
+    <button
+      onClick={onClick}
       disabled={!canInteract}
-      title={
-        isDemo
-          ? "Dato di esempio - Aggiungi i tuoi dati reali!"
-          : actionType === "replace"
-          ? `Sostituisci con: ${value.value}`
-          : actionType === "insert"
-          ? `Inserisci: ${value.value}`
-          : "Seleziona testo nel documento per attivare"
-      }
+      className={cn(
+        "w-full text-left px-3 py-2 rounded-md text-sm transition-all",
+        "border border-transparent",
+        "group relative",
+        canInteract
+          ? [
+              "hover:bg-[var(--brand-primary-subtle)] hover:border-[var(--brand-primary)]/30",
+              "cursor-pointer",
+              actionType === "replace" &&
+                "hover:ring-2 hover:ring-[var(--brand-primary)]/20",
+            ]
+          : "opacity-60 cursor-not-allowed",
+        isUserAdded && "bg-[var(--brand-primary-subtle)]/50"
+      )}
     >
-      <div className="flex flex-col items-start gap-0.5 w-full">
-        <div className="flex items-center gap-2 w-full">
-          <span
-            className={cn("text-sm font-medium flex-1", isDemo && "italic")}
-          >
-            {value.label}
-          </span>
-          {isDemo && (
-            <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-              esempio
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          {/* Label */}
+          <div className="flex items-center gap-1.5">
+            <span className="font-medium text-foreground truncate">
+              {value.label}
             </span>
+            {isDemo && !isUserAdded && (
+              <span className="text-[9px] text-muted-foreground bg-muted px-1 py-0.5 rounded flex-shrink-0">
+                demo
+              </span>
+            )}
+            {isUserAdded && (
+              <span className="text-[9px] text-[var(--brand-primary)] bg-[var(--brand-primary-subtle)] px-1 py-0.5 rounded flex-shrink-0">
+                tuo
+              </span>
+            )}
+          </div>
+
+          {/* Value (se diverso da label) */}
+          {value.value !== value.label && (
+            <p className="text-xs text-muted-foreground truncate mt-0.5">
+              {value.value}
+            </p>
           )}
         </div>
-        <span className="text-xs text-muted-foreground line-clamp-2 break-all">
-          {value.value}
-        </span>
+
+        {/* Azione indicator */}
+        {canInteract && (
+          <span
+            className={cn(
+              "text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0",
+              actionType === "replace"
+                ? "bg-amber-100 text-amber-700"
+                : "bg-muted text-muted-foreground"
+            )}
+          >
+            {actionType === "replace" ? "sostituisci" : "inserisci"}
+          </span>
+        )}
       </div>
-    </Button>
+    </button>
   );
 }

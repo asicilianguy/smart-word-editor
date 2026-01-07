@@ -2,35 +2,29 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 /**
- * Middleware for route protection
+ * CompilaloEasy - Middleware
  *
- * - Redirects unauthenticated users to /auth/login for protected routes
- * - Redirects authenticated users away from auth pages to /
- *
- * Note: This middleware can only check for token presence, not validity.
- * Token validation happens on the client side after page load.
+ * Logica di accesso:
+ * - "/" (landing) → tutti
+ * - "/editor" → tutti (con/senza auth)
+ * - "/vault" → solo autenticati
+ * - "/auth/*" → tutti
  */
 
-// Routes that require authentication
-const PROTECTED_ROUTES = ["/", "/editor", "/vault", "/settings", "/profile"];
+// Routes che richiedono autenticazione
+const PROTECTED_ROUTES = ["/vault"];
 
-// Auth routes (login, register)
+// Auth routes
 const AUTH_ROUTES = ["/auth/login", "/auth/register"];
-
-// Public routes that don't require auth
-const PUBLIC_ROUTES = ["/auth", "/api"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Get token from cookie or check localStorage via header
-  // Note: localStorage is not accessible in middleware, so we use cookies
+  // Get token from cookie
   const token = request.cookies.get("smart_word_editor_token")?.value;
-
-  // Check if user has token (basic check, not validation)
   const hasToken = !!token;
 
-  // Check if current route is protected
+  // Check if current route is protected (only /vault)
   const isProtectedRoute = PROTECTED_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
@@ -40,33 +34,21 @@ export function middleware(request: NextRequest) {
     (route) => pathname === route || pathname.startsWith(route)
   );
 
-  // Check if current route is public
-  const isPublicRoute = PUBLIC_ROUTES.some((route) =>
-    pathname.startsWith(route)
-  );
-
   // If accessing protected route without token, redirect to login
-  // Note: We don't enforce this strictly because token is in localStorage
-  // The actual protection happens client-side with useAuth hook
+  if (isProtectedRoute && !hasToken) {
+    const loginUrl = new URL("/auth/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
 
-  // If accessing auth route with token, redirect to home
-  // This is optional - users might want to switch accounts
-  // if (isAuthRoute && hasToken) {
-  //   return NextResponse.redirect(new URL("/", request.url));
-  // }
+  // If accessing auth route with token, redirect to editor
+  if (isAuthRoute && hasToken) {
+    return NextResponse.redirect(new URL("/editor", request.url));
+  }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder files
-     */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\..*|api).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*|api).*)"],
 };

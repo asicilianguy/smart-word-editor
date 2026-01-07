@@ -7,7 +7,6 @@ import {
   Briefcase,
   Award,
   Mail,
-  Phone,
 } from "lucide-react";
 
 // ============================================================================
@@ -23,7 +22,7 @@ export const DEFAULT_GROUPS = [
   "Dati Professionali",
   "Certificazioni",
   "Altri dati",
-];
+] as const;
 
 export const GROUP_ICONS: Record<
   string,
@@ -42,3 +41,17 @@ export const GROUP_ICONS: Record<
 export const getGroupIcon = (group: string) => {
   return GROUP_ICONS[group] || FileText;
 };
+
+/**
+ * Opzioni per il Select delle categorie nel dialog di aggiunta
+ */
+export const GROUP_OPTIONS: { value: string; label: string }[] = [
+  { value: "Dati Identificativi", label: "Dati Identificativi" },
+  { value: "Persone", label: "Persone" },
+  { value: "Contatti", label: "Contatti" },
+  { value: "Indirizzi", label: "Indirizzi" },
+  { value: "Coordinate Bancarie", label: "Coordinate Bancarie" },
+  { value: "Dati Professionali", label: "Dati Professionali" },
+  { value: "Certificazioni", label: "Certificazioni" },
+  { value: "Altri dati", label: "Altri dati" },
+];

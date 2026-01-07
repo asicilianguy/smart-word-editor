@@ -1,0 +1,232 @@
+"use client";
+
+import React, { useState } from "react";
+import { Search, Plus, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import type { VaultValue } from "@/lib/document-types";
+import type { VaultEntryCreate } from "@/lib/vault-api";
+import type { VaultSidebarProps, ActionType } from "./types";
+import {
+  StatusBadge,
+  DemoState,
+  EmptyAuthenticatedState,
+  ErrorState,
+  AddEntryDialog,
+  VaultCategoryList,
+} from "./components";
+
+export function VaultSidebar({
+  categories,
+  onValueClick,
+  hasSelection = false,
+  hasCursor = false,
+  selectedText,
+  isAuthenticated = false,
+  isDemo = false,
+  isEmpty = false,
+  isLoading = false,
+  error,
+  demoEntriesCount = 0,
+  onAddEntry,
+  onRefresh,
+  onLoginClick,
+  onRegisterClick,
+  onManageVaultClick,
+}: VaultSidebarProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [initialValueForDialog, setInitialValueForDialog] = useState<
+    string | undefined
+  >();
+
+  // Determina lo stato e l'azione
+  const canInteract = hasSelection || hasCursor;
+  const actionType: ActionType = hasSelection
+    ? "replace"
+    : hasCursor
+    ? "insert"
+    : "none";
+
+  // Filtra le categorie
+  const filteredCategories = categories
+    .map((category) => ({
+      ...category,
+      values: category.values.filter(
+        (value) =>
+          value.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          value.value.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    }))
+    .filter((category) => category.values.length > 0);
+
+  /**
+   * Previene che i click sulla sidebar facciano perdere il focus all'editor
+   */
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).tagName === "INPUT") {
+      return;
+    }
+    e.preventDefault();
+  };
+
+  const handleAddEntry = async (entry: VaultEntryCreate) => {
+    if (onAddEntry) {
+      const success = await onAddEntry(entry);
+      if (success) {
+        setAddDialogOpen(false);
+        setInitialValueForDialog(undefined);
+      }
+      return success;
+    }
+    return false;
+  };
+
+  const handleOpenAddDialog = (initialValue?: string) => {
+    setInitialValueForDialog(initialValue);
+    setAddDialogOpen(true);
+  };
+
+  const handleCloseAddDialog = (open: boolean) => {
+    setAddDialogOpen(open);
+    if (!open) {
+      setInitialValueForDialog(undefined);
+    }
+  };
+
+  // Determina cosa mostrare
+  const showDemo = isDemo && !isAuthenticated;
+  const showEmptyAuth = isAuthenticated && !error && isEmpty;
+  const showRealData = isAuthenticated && !error && !isEmpty;
+
+  return (
+    <>
+      <div
+        className="h-full flex flex-col border-l border-border bg-muted/30 overflow-hidden"
+        onMouseDown={handleMouseDown}
+      >
+        {/* Header - Fixed */}
+        <div className="flex-shrink-0 p-4 border-b border-border bg-card">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold">
+                {isDemo ? "I tuoi dati" : "Vault"}
+              </h2>
+              {isDemo && (
+                <span className="text-[10px] font-medium bg-[var(--brand-primary-subtle)] text-[var(--brand-primary)] px-2 py-0.5 rounded-full">
+                  DEMO
+                </span>
+              )}
+              {isLoading && (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              )}
+            </div>
+            {onAddEntry && categories.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1"
+                onClick={() => handleOpenAddDialog()}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Aggiungi</span>
+              </Button>
+            )}
+          </div>
+
+          {/* Status Badge */}
+          <StatusBadge
+            actionType={actionType}
+            selectedText={selectedText}
+            onSaveSelected={
+              onAddEntry && selectedText
+                ? () => handleOpenAddDialog(selectedText)
+                : undefined
+            }
+            isDemo={isDemo}
+          />
+
+          {/* Search - solo se ha dati */}
+          {(showDemo || showRealData) && categories.length > 0 && (
+            <div className="relative mt-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Cerca valori..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
+          {/* Errore */}
+          {error && <ErrorState error={error} onRefresh={onRefresh} />}
+
+          {/* Demo Mode (non autenticato) */}
+          {!error && showDemo && (
+            <DemoState
+              categories={categories}
+              filteredCategories={filteredCategories}
+              searchQuery={searchQuery}
+              onValueClick={onValueClick}
+              onAddClick={() => handleOpenAddDialog()}
+              onRegisterClick={onRegisterClick}
+              canInteract={canInteract}
+              actionType={actionType}
+              demoEntriesCount={demoEntriesCount}
+            />
+          )}
+
+          {/* Autenticato ma vault vuoto */}
+          {!error && showEmptyAuth && (
+            <EmptyAuthenticatedState
+              onAddClick={() => handleOpenAddDialog()}
+              onManageClick={onManageVaultClick}
+            />
+          )}
+
+          {/* Dati reali (autenticato con dati) */}
+          {!error && showRealData && (
+            <VaultCategoryList
+              categories={categories}
+              filteredCategories={filteredCategories}
+              searchQuery={searchQuery}
+              onValueClick={onValueClick}
+              onManageClick={onManageVaultClick}
+              canInteract={canInteract}
+              actionType={actionType}
+              hasSelection={hasSelection}
+            />
+          )}
+        </div>
+
+        {/* Footer - Fixed */}
+        {(showDemo || showRealData) && categories.length > 0 && (
+          <div className="flex-shrink-0 p-3 border-t border-border bg-card">
+            <p className="text-xs text-muted-foreground text-center">
+              {categories.reduce((acc, cat) => acc + cat.values.length, 0)}{" "}
+              valori in {categories.length} categorie
+              {isDemo && demoEntriesCount > 0 && (
+                <span className="text-[var(--brand-primary)]">
+                  {" "}
+                  · {demoEntriesCount} aggiunti da te
+                </span>
+              )}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Add Entry Dialog */}
+      <AddEntryDialog
+        open={addDialogOpen}
+        onOpenChange={handleCloseAddDialog}
+        onAdd={handleAddEntry}
+        initialValue={initialValueForDialog}
+      />
+    </>
+  );
+}

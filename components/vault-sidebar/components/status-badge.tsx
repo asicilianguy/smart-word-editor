@@ -24,7 +24,6 @@ export function StatusBadge({
           <Type className="h-4 w-4 flex-shrink-0" />
           <span>
             Clicca un valore per <strong>sostituire</strong> il testo
-            selezionato
           </span>
         </div>
         {selectedText && (
@@ -36,20 +35,24 @@ export function StatusBadge({
                   &quot;{selectedText}&quot;
                 </span>
               </div>
-              {onSaveSelected && !isDemo && (
+              {onSaveSelected && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 px-2 text-xs shrink-0"
+                  className="h-6 px-2 text-xs shrink-0 text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] hover:bg-[var(--brand-primary-subtle)]"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     onSaveSelected();
                   }}
-                  title="Salva questo testo nel vault"
+                  title={
+                    isDemo
+                      ? "Aggiungi questo testo ai dati demo"
+                      : "Salva questo testo nel vault"
+                  }
                 >
                   <Plus className="h-3 w-3 mr-1" />
-                  Salva
+                  {isDemo ? "Aggiungi" : "Salva"}
                 </Button>
               )}
             </div>
@@ -61,10 +64,10 @@ export function StatusBadge({
 
   if (actionType === "insert") {
     return (
-      <div className="flex items-center gap-2 text-xs bg-muted text-muted-foreground px-3 py-2 rounded-md border border-border">
+      <div className="flex items-center gap-2 text-xs bg-[var(--brand-primary-subtle)] text-[var(--brand-primary-hover)] px-3 py-2 rounded-md border border-[var(--brand-primary)]/20">
         <MousePointer2 className="h-4 w-4 flex-shrink-0" />
         <span>
-          Cursore attivo — clicca per <strong>inserire</strong>
+          Cursore attivo — clicca un valore per <strong>inserirlo</strong>
         </span>
       </div>
     );

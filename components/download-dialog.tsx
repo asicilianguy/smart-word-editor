@@ -8,6 +8,9 @@ import {
   Loader2,
   Coins,
   AlertTriangle,
+  Lock,
+  UserPlus,
+  LogIn,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +37,9 @@ interface DownloadDialogProps {
   defaultFileName: string;
   onDownload: (fileName: string, format: DownloadFormat) => Promise<void>;
   isLoading?: boolean;
+  isAuthenticated?: boolean;
+  onRegisterClick?: () => void;
+  onLoginClick?: () => void;
 }
 
 interface TokenInfo {
@@ -82,47 +88,51 @@ export function DownloadDialog({
   defaultFileName,
   onDownload,
   isLoading = false,
+  isAuthenticated = false,
+  onRegisterClick,
+  onLoginClick,
 }: DownloadDialogProps) {
-  // Stato locale
   const [fileName, setFileName] = useState("");
   const [format, setFormat] = useState<DownloadFormat>("docx");
   const [error, setError] = useState<string | null>(null);
   const [tokenInfo, setTokenInfo] = useState<TokenInfo>({
     available: 0,
-    isChecking: true,
+    isChecking: false,
     error: null,
   });
 
-  // Reset stato e verifica token quando si apre il dialog
+  // Reset stato quando si apre il dialog
   useEffect(() => {
     if (open) {
-      // Rimuovi l'estensione dal nome file di default
       const nameWithoutExt = defaultFileName.replace(/\.[^/.]+$/, "");
       setFileName(nameWithoutExt);
       setFormat("docx");
       setError(null);
 
-      // Verifica token disponibili
-      setTokenInfo({ available: 0, isChecking: true, error: null });
-      checkUserTokens().then((result) => {
-        if (result) {
-          setTokenInfo({
-            available: result.tokens,
-            isChecking: false,
-            error: null,
-          });
-        } else {
-          setTokenInfo({
-            available: 0,
-            isChecking: false,
-            error: "Impossibile verificare i token",
-          });
-        }
-      });
+      // Verifica token solo se autenticato
+      if (isAuthenticated) {
+        setTokenInfo({ available: 0, isChecking: true, error: null });
+        checkUserTokens().then((result) => {
+          if (result) {
+            setTokenInfo({
+              available: result.tokens,
+              isChecking: false,
+              error: null,
+            });
+          } else {
+            setTokenInfo({
+              available: 0,
+              isChecking: false,
+              error: "Impossibile verificare i token",
+            });
+          }
+        });
+      } else {
+        setTokenInfo({ available: 0, isChecking: false, error: null });
+      }
     }
-  }, [open, defaultFileName]);
+  }, [open, defaultFileName, isAuthenticated]);
 
-  // Gestisce il download
   const handleDownload = async () => {
     if (!fileName.trim()) {
       setError("Inserisci un nome per il file");
@@ -138,14 +148,11 @@ export function DownloadDialog({
 
     try {
       await onDownload(fileName.trim(), format);
-      // Aggiorna il conteggio token localmente (il backend lo ha già decrementato)
       setTokenInfo((prev) => ({
         ...prev,
         available: Math.max(0, prev.available - 1),
       }));
-      onOpenChange(false);
     } catch (err) {
-      // Gestisci errore 402 (token insufficienti) dal backend
       if (err instanceof Error) {
         const errorMessage = err.message.toLowerCase();
         if (
@@ -154,7 +161,6 @@ export function DownloadDialog({
           errorMessage.includes("token")
         ) {
           setError("Token insufficienti. Ricarica la pagina e riprova.");
-          // Ricarica info token
           checkUserTokens().then((result) => {
             if (result) {
               setTokenInfo({
@@ -173,10 +179,10 @@ export function DownloadDialog({
     }
   };
 
-  // Nome file completo con estensione
   const fullFileName = `${fileName}.${format}`;
   const hasEnoughTokens = tokenInfo.available >= 1;
-  const canDownload = hasEnoughTokens && !tokenInfo.isChecking && !isLoading;
+  const canDownload =
+    isAuthenticated && hasEnoughTokens && !tokenInfo.isChecking && !isLoading;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -192,8 +198,16 @@ export function DownloadDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          {/* Token status */}
-          <TokenStatusBanner tokenInfo={tokenInfo} />
+          {/* Auth required banner - se non autenticato */}
+          {!isAuthenticated && (
+            <AuthRequiredBanner
+              onRegisterClick={onRegisterClick}
+              onLoginClick={onLoginClick}
+            />
+          )}
+
+          {/* Token status - solo se autenticato */}
+          {isAuthenticated && <TokenStatusBanner tokenInfo={tokenInfo} />}
 
           {/* Nome file */}
           <div className="space-y-1.5">
@@ -207,7 +221,7 @@ export function DownloadDialog({
                 onChange={(e) => setFileName(e.target.value)}
                 placeholder="Nome del file"
                 className="flex-1 h-9"
-                disabled={isLoading || !hasEnoughTokens}
+                disabled={isLoading}
               />
               <span className="text-sm text-muted-foreground w-12">
                 .{format}
@@ -215,7 +229,7 @@ export function DownloadDialog({
             </div>
           </div>
 
-          {/* Formato - design compatto */}
+          {/* Formato */}
           <div className="space-y-1.5">
             <Label className="text-sm">Formato</Label>
             <div className="grid grid-cols-2 gap-3">
@@ -223,7 +237,7 @@ export function DownloadDialog({
                 format="docx"
                 selected={format === "docx"}
                 onClick={() => setFormat("docx")}
-                disabled={isLoading || !hasEnoughTokens}
+                disabled={isLoading}
                 icon={<FileText className="h-5 w-5 text-blue-600" />}
                 label="DOCX"
                 description="Microsoft Word"
@@ -232,7 +246,7 @@ export function DownloadDialog({
                 format="pdf"
                 selected={format === "pdf"}
                 onClick={() => setFormat("pdf")}
-                disabled={isLoading || !hasEnoughTokens}
+                disabled={isLoading}
                 icon={<FileIcon className="h-5 w-5 text-red-600" />}
                 label="PDF"
                 description="Documento portabile"
@@ -240,7 +254,7 @@ export function DownloadDialog({
             </div>
           </div>
 
-          {/* Preview nome file - compatto */}
+          {/* Preview nome file */}
           <div className="rounded-md bg-muted/50 px-3 py-2 text-sm">
             <span className="text-muted-foreground">File: </span>
             <span className="font-mono">{fullFileName}</span>
@@ -264,22 +278,83 @@ export function DownloadDialog({
           >
             Annulla
           </Button>
-          <Button onClick={handleDownload} disabled={!canDownload} size="sm">
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {format === "pdf" ? "Conversione..." : "Download..."}
-              </>
-            ) : (
-              <>
-                <Download className="mr-2 h-4 w-4" />
-                Scarica
-              </>
-            )}
-          </Button>
+
+          {isAuthenticated ? (
+            <Button onClick={handleDownload} disabled={!canDownload} size="sm">
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {format === "pdf" ? "Conversione..." : "Download..."}
+                </>
+              ) : (
+                <>
+                  <Download className="mr-2 h-4 w-4" />
+                  Scarica
+                </>
+              )}
+            </Button>
+          ) : (
+            <Button
+              onClick={onRegisterClick}
+              size="sm"
+              className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+            >
+              <UserPlus className="mr-2 h-4 w-4" />
+              Registrati per scaricare
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ============================================================================
+// AUTH REQUIRED BANNER
+// ============================================================================
+
+function AuthRequiredBanner({
+  onRegisterClick,
+  onLoginClick,
+}: {
+  onRegisterClick?: () => void;
+  onLoginClick?: () => void;
+}) {
+  return (
+    <div className="rounded-lg border border-[var(--brand-primary)]/30 bg-[var(--brand-primary-subtle)] p-4">
+      <div className="flex items-start gap-3">
+        <div className="h-10 w-10 rounded-full bg-[var(--brand-primary)]/10 flex items-center justify-center flex-shrink-0">
+          <Lock className="h-5 w-5 text-[var(--brand-primary)]" />
+        </div>
+        <div className="flex-1">
+          <h4 className="font-medium text-sm mb-1">Registrati per scaricare</h4>
+          <p className="text-xs text-muted-foreground mb-3">
+            Crea un account gratuito per scaricare il documento compilato.
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              onClick={onRegisterClick}
+              className="h-8 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+            >
+              <UserPlus className="h-3.5 w-3.5 mr-1.5" />
+              Registrati
+            </Button>
+            {onLoginClick && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onLoginClick}
+                className="h-8 text-xs"
+              >
+                <LogIn className="h-3.5 w-3.5 mr-1.5" />
+                Hai già un account?
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

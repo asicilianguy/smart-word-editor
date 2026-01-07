@@ -12,9 +12,10 @@ import {
   RotateCcw,
   ChevronRight,
   ChevronLeft,
-  Eye,
-  Navigation,
+  GitCompare,
   FileCheck,
+  Info,
+  Highlighter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -62,7 +63,7 @@ export function CompareView({
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
   const [originalPdfUrl, setOriginalPdfUrl] = useState<string | null>(null);
   const [modifiedPdfUrl, setModifiedPdfUrl] = useState<string | null>(null);
-  const [zoom, setZoom] = useState(100);
+  const [zoom, setZoom] = useState(75);
   const [mounted, setMounted] = useState(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [iframeKey, setIframeKey] = useState(0);
@@ -102,6 +103,7 @@ export function CompareView({
     if (open && originalFile) {
       fetchPreview();
       setCurrentPage(1);
+      setZoom(75);
       setIframeKey(0);
     }
   }, [open, originalFile]);
@@ -205,12 +207,12 @@ export function CompareView({
   };
 
   const handleZoomOut = () => {
-    setZoom((z) => Math.max(z - 25, 50));
+    setZoom((z) => Math.max(z - 25, 25));
     setIframeKey((k) => k + 1);
   };
 
   const handleZoomReset = () => {
-    setZoom(100);
+    setZoom(75);
     setIframeKey((k) => k + 1);
   };
 
@@ -228,18 +230,13 @@ export function CompareView({
         "navpanes=0",
         "scrollbar=1",
         `zoom=${zoom}`,
-        "view=FitH",
+        "view=Fit",
         `page=${currentPage}`,
       ];
       return `${baseUrl}#${params.join("&")}`;
     },
     [zoom, currentPage]
   );
-
-  // Check if page has modifications
-  const isAffectedPage = (page: number): boolean => {
-    return previewData?.affected_pages.includes(page) ?? false;
-  };
 
   // Don't render if not open or not mounted
   if (!open || !mounted) return null;
@@ -253,53 +250,58 @@ export function CompareView({
     <div className="fixed inset-0 z-50">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={() => onOpenChange(false)}
       />
 
       {/* Modal Container - FULLSCREEN */}
       <div
-        className="absolute inset-4 bg-background rounded-md border shadow-lg flex flex-col"
+        className="absolute inset-4 bg-background rounded-lg border shadow-2xl flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b shrink-0">
+        <header className="flex items-center justify-between px-6 py-4 border-b bg-card shrink-0">
           <div className="flex items-center gap-3">
-            <Eye className="h-5 w-5 text-muted-foreground" />
-            <h2 className="text-lg font-semibold">Confronta Modifiche</h2>
-            {!isLoading && !error && previewData && (
-              <>
-                <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">
-                  {totalModifications} modific
-                  {totalModifications === 1 ? "a" : "he"}
-                </span>
-                <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded flex items-center gap-1">
-                  <FileCheck className="h-3 w-3" />
-                  {affectedPages.length} pagin
-                  {affectedPages.length === 1 ? "a" : "e"} coinvolt
-                  {affectedPages.length === 1 ? "a" : "e"}
-                </span>
-              </>
-            )}
+            <div className="h-9 w-9 rounded-lg bg-[var(--brand-primary)] flex items-center justify-center">
+              <GitCompare className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold">Confronta modifiche</h2>
+              {!isLoading && !error && previewData && (
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-xs text-muted-foreground">
+                    {totalModifications} modific
+                    {totalModifications === 1 ? "a" : "he"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">·</span>
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <FileCheck className="h-3 w-3" />
+                    {affectedPages.length} pagin
+                    {affectedPages.length === 1 ? "a" : "e"} coinvolt
+                    {affectedPages.length === 1 ? "a" : "e"}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {/* Zoom controls */}
-            <div className="flex items-center gap-1 mr-4">
+            <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
                 className="h-8 w-8"
                 onClick={handleZoomOut}
-                disabled={zoom <= 50}
+                disabled={zoom <= 25}
               >
                 <ZoomOut className="h-4 w-4" />
               </Button>
-              <span className="text-sm text-muted-foreground w-12 text-center">
+              <span className="text-sm text-muted-foreground w-12 text-center font-medium">
                 {zoom}%
               </span>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
                 className="h-8 w-8"
                 onClick={handleZoomIn}
@@ -307,11 +309,13 @@ export function CompareView({
               >
                 <ZoomIn className="h-4 w-4" />
               </Button>
+              <div className="w-px h-4 bg-border mx-1" />
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
                 className="h-8 w-8"
                 onClick={handleZoomReset}
+                title="Adatta alla pagina"
               >
                 <RotateCcw className="h-4 w-4" />
               </Button>
@@ -322,11 +326,12 @@ export function CompareView({
               variant="ghost"
               size="icon"
               onClick={() => onOpenChange(false)}
+              className="h-9 w-9"
             >
               <X className="h-5 w-5" />
             </Button>
           </div>
-        </div>
+        </header>
 
         {/* Content */}
         <div className="flex-1 overflow-hidden min-h-0">
@@ -339,19 +344,19 @@ export function CompareView({
               {/* Original PDF Panel */}
               <ResizablePanel defaultSize={50} minSize={30}>
                 <div className="h-full flex flex-col">
-                  <div className="px-4 py-2 border-b bg-muted/30 shrink-0">
+                  <div className="px-4 py-2.5 border-b bg-muted/30 shrink-0">
                     <h3 className="text-sm font-medium flex items-center gap-2">
                       <FileText className="h-4 w-4 text-muted-foreground" />
-                      Documento Originale
+                      Documento originale
                     </h3>
                   </div>
-                  <div className="flex-1 overflow-hidden bg-muted/50">
+                  <div className="flex-1 overflow-hidden bg-muted/20 p-2">
                     {originalPdfUrl ? (
                       <iframe
                         key={`original-${iframeKey}`}
                         ref={originalIframeRef}
                         src={getPdfUrl(originalPdfUrl)}
-                        className="w-full h-full border-0"
+                        className="w-full h-full border-0 rounded bg-white shadow"
                         title="Documento originale"
                       />
                     ) : (
@@ -368,22 +373,23 @@ export function CompareView({
               {/* Modified PDF Panel */}
               <ResizablePanel defaultSize={50} minSize={30}>
                 <div className="h-full flex flex-col">
-                  <div className="px-4 py-2 border-b bg-amber-50 shrink-0">
-                    <h3 className="text-sm font-medium flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-amber-700" />
-                      Documento Modificato
-                      <span className="text-xs text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
-                        Evidenziato
+                  <div className="px-4 py-2.5 border-b bg-amber-50 shrink-0">
+                    <h3 className="text-sm font-medium flex items-center gap-2 text-amber-800">
+                      <FileText className="h-4 w-4 text-amber-600" />
+                      Con le tue modifiche
+                      <span className="text-[10px] font-medium bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded flex items-center gap-1">
+                        <Highlighter className="h-3 w-3" />
+                        Solo anteprima
                       </span>
                     </h3>
                   </div>
-                  <div className="flex-1 overflow-hidden bg-muted/50">
+                  <div className="flex-1 overflow-hidden bg-muted/20 p-2">
                     {modifiedPdfUrl ? (
                       <iframe
                         key={`modified-${iframeKey}`}
                         ref={modifiedIframeRef}
                         src={getPdfUrl(modifiedPdfUrl)}
-                        className="w-full h-full border-0"
+                        className="w-full h-full border-0 rounded bg-white shadow"
                         title="Documento modificato"
                       />
                     ) : (
@@ -398,73 +404,96 @@ export function CompareView({
           )}
         </div>
 
-        {/* Footer con navigazione pagine */}
-        <div className="px-6 py-3 border-t bg-muted/30 flex items-center justify-between shrink-0">
-          {/* Info */}
-          <p className="text-xs text-muted-foreground">
-            Le modifiche sono evidenziate in giallo nel documento modificato
-          </p>
-
-          {/* Page Navigation */}
-          {previewData && totalPages > 1 && (
-            <div className="flex items-center gap-2">
-              {/* Previous */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => goToPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage <= 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-
-              {/* Page buttons */}
-              <div className="flex items-center gap-1">
-                {affectedPages.length > 0 ? (
-                  // Mostra solo le pagine con modifiche
-                  affectedPages.map((page) => (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? "default" : "outline"}
-                      size="sm"
-                      className={cn(
-                        "min-w-[2.5rem]",
-                        currentPage !== page &&
-                          "bg-amber-50 border-amber-200 hover:bg-amber-100"
-                      )}
-                      onClick={() => goToPage(page)}
-                    >
-                      {page}
-                    </Button>
-                  ))
-                ) : (
-                  // Nessuna modifica, mostra navigazione normale
-                  <span className="text-sm text-muted-foreground px-2">
-                    Pagina {currentPage} di {totalPages}
-                  </span>
-                )}
+        {/* Footer */}
+        <footer className="border-t bg-card shrink-0">
+          {/* Banner informativo evidenziature */}
+          <div className="bg-amber-50 border-b border-amber-200 px-6 py-3">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <Info className="h-4 w-4 text-amber-600" />
               </div>
-
-              {/* Next */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => goToPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage >= totalPages}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-
-              {/* Page indicator */}
-              <span className="text-xs text-muted-foreground ml-2">
-                {currentPage}/{totalPages}
-              </span>
+              <div className="flex-1">
+                <p className="text-sm text-amber-800">
+                  <strong>
+                    Le evidenziature in giallo sono solo per questa anteprima.
+                  </strong>{" "}
+                  Il documento che scaricherai <strong>non avrà</strong> alcuna
+                  evidenziatura: vedrai solo il testo modificato, esattamente
+                  come nell'originale.
+                </p>
+              </div>
             </div>
-          )}
+          </div>
 
-          {/* Close button */}
-          <Button onClick={() => onOpenChange(false)}>Chiudi</Button>
-        </div>
+          {/* Azioni */}
+          <div className="px-6 py-3 flex items-center justify-between">
+            {/* Page Navigation */}
+            <div className="flex items-center gap-2">
+              {previewData && totalPages > 1 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => goToPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage <= 1}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+
+                  <div className="flex items-center gap-1">
+                    {affectedPages.length > 0 ? (
+                      affectedPages.map((page) => (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          className={cn(
+                            "h-8 min-w-[2rem] px-2",
+                            currentPage === page
+                              ? "bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+                              : "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
+                          )}
+                          onClick={() => goToPage(page)}
+                        >
+                          {page}
+                        </Button>
+                      ))
+                    ) : (
+                      <span className="text-sm text-muted-foreground px-2">
+                        Pagina {currentPage} di {totalPages}
+                      </span>
+                    )}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      goToPage(Math.min(totalPages, currentPage + 1))
+                    }
+                    disabled={currentPage >= totalPages}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+
+                  <span className="text-xs text-muted-foreground ml-2">
+                    {currentPage}/{totalPages}
+                  </span>
+                </>
+              )}
+            </div>
+
+            {/* Close button */}
+            <Button
+              onClick={() => onOpenChange(false)}
+              className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+            >
+              Ho capito, chiudi
+            </Button>
+          </div>
+        </footer>
       </div>
     </div>,
     document.body
@@ -478,7 +507,9 @@ export function CompareView({
 function LoadingState() {
   return (
     <div className="h-full flex flex-col items-center justify-center gap-4">
-      <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
+      <div className="h-16 w-16 rounded-2xl bg-[var(--brand-primary-subtle)] border border-[var(--brand-primary)]/20 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-primary)]" />
+      </div>
       <div className="text-center">
         <p className="font-medium">Generazione preview in corso...</p>
         <p className="text-sm text-muted-foreground mt-1">
@@ -498,13 +529,16 @@ function ErrorState({
 }) {
   return (
     <div className="h-full flex flex-col items-center justify-center gap-4 p-8">
-      <div className="h-12 w-12 rounded-md bg-destructive/10 border border-destructive/20 flex items-center justify-center">
-        <AlertCircle className="h-6 w-6 text-destructive" />
+      <div className="h-16 w-16 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center">
+        <AlertCircle className="h-8 w-8 text-destructive" />
       </div>
       <div className="text-center max-w-md">
         <p className="font-medium mb-2">Errore generazione preview</p>
         <p className="text-sm text-muted-foreground mb-4">{error}</p>
-        <Button onClick={onRetry}>
+        <Button
+          onClick={onRetry}
+          className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+        >
           <RotateCcw className="h-4 w-4 mr-2" />
           Riprova
         </Button>

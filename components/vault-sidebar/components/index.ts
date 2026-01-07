@@ -1,7 +1,9 @@
 export { StatusBadge } from "./status-badge";
-export { VaultValueButton } from "./vault-value-button";
-export { NotAuthenticatedState } from "./not-authenticated-state";
+export { DemoState } from "./demo-state";
+export { EmptyAuthenticatedState } from "./empty-authenticated-state";
 export { ErrorState } from "./error-state";
-export { OnboardingState } from "./onboarding-state";
 export { AddEntryDialog } from "./add-entry-dialog";
 export { VaultCategoryList } from "./vault-category-list";
+export { VaultValueButton } from "./vault-value-button";
+export { OnboardingState } from "./onboarding-state";
+export { NotAuthenticatedState } from "./not-authenticated-state";
