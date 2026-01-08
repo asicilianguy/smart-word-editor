@@ -27,7 +27,10 @@ import {
 } from "@/components/download-dialog";
 import { CompareView } from "@/components/compare-view";
 import { DemoOnboardingDialog } from "@/components/demo-onboarding-dialog";
-import { DocumentUploadPreviewDialog } from "@/components/document-upload-preview-dialog";
+import {
+  DocumentUploadPreviewDialog,
+  shouldSkipUploadPreview,
+} from "@/components/document-upload-preview-dialog";
 import { useDocument } from "@/hooks/use-document";
 import { useVaultData } from "@/hooks/use-vault-data";
 import { useAuth } from "@/lib/auth-context";
@@ -107,8 +110,25 @@ export default function EditorPage() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setUploadedFile(file);
-      setShowUploadPreview(true);
+      // Controlla se l'utente ha scelto di saltare l'anteprima
+      if (shouldSkipUploadPreview()) {
+        // Carica direttamente senza mostrare l'anteprima
+        uploadDocument(file);
+
+        // Mostra onboarding in demo mode (solo se non l'ha già visto)
+        if (isDemo && typeof window !== "undefined") {
+          const hasSeenOnboarding = localStorage.getItem(
+            "demo_onboarding_seen"
+          );
+          if (!hasSeenOnboarding) {
+            setTimeout(() => setShowOnboarding(true), 600);
+          }
+        }
+      } else {
+        // Mostra l'anteprima
+        setUploadedFile(file);
+        setShowUploadPreview(true);
+      }
     }
     e.target.value = "";
   };

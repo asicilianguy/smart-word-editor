@@ -286,41 +286,6 @@ export function CompareView({
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Zoom controls */}
-            <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleZoomOut}
-                disabled={zoom <= 25}
-              >
-                <ZoomOut className="h-4 w-4" />
-              </Button>
-              <span className="text-sm text-muted-foreground w-12 text-center font-medium">
-                {zoom}%
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleZoomIn}
-                disabled={zoom >= 200}
-              >
-                <ZoomIn className="h-4 w-4" />
-              </Button>
-              <div className="w-px h-4 bg-border mx-1" />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleZoomReset}
-                title="Adatta alla pagina"
-              >
-                <RotateCcw className="h-4 w-4" />
-              </Button>
-            </div>
-
             {/* Close button */}
             <Button
               variant="ghost"
