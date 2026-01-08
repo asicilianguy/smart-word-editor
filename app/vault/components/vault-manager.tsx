@@ -13,7 +13,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, Folder, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -38,7 +38,7 @@ import { AddEntryDialog } from "./add-entry-dialog";
 import { EditEntryDialog } from "./edit-entry-dialog";
 import { CreateGroupDialog } from "./create-group-dialog";
 import { EntryDragOverlay } from "./entry-row";
-import { DocumentImportSection } from "./document-import-section";
+import { DocumentImportSection } from "./document-import";
 
 export function VaultManager() {
   const router = useRouter();
@@ -152,26 +152,13 @@ export function VaultManager() {
       const draggedEntry = activeData.entry as VaultEntry;
       const overId = over.id as string;
 
-      // Check se droppato su un gruppo
       if (overId.startsWith("group-")) {
         const newGroup = overId.replace("group-", "");
 
-        // Solo se è un gruppo diverso
         if (newGroup !== draggedEntry.group) {
-          console.log(
-            `[DnD] Moving ${draggedEntry.id} from "${draggedEntry.group}" to "${newGroup}"`
-          );
-
           setIsSubmitting(true);
           try {
-            const success = await updateEntry(draggedEntry.id, {
-              nameGroup: newGroup,
-            });
-            if (success) {
-              console.log(`[DnD] Successfully moved to ${newGroup}`);
-            } else {
-              console.error(`[DnD] Failed to move entry`);
-            }
+            await updateEntry(draggedEntry.id, { nameGroup: newGroup });
           } catch (err) {
             console.error(`[DnD] Error moving entry:`, err);
           } finally {
@@ -248,31 +235,13 @@ export function VaultManager() {
   };
 
   // Document extraction handlers
-  const handleExtractionComplete = useCallback(
-    async (
-      entries: Array<{
-        valueData: string;
-        nameLabel?: string | null;
-        nameGroup?: string | null;
-      }>,
-      tokensConsumed: number
-    ) => {
-      console.log(
-        `[Vault] Extraction complete: ${entries.length} entries, ${tokensConsumed} tokens consumed`
-      );
-
-      // Refresh vault to show new entries (they were saved by backend)
-      await refresh();
-    },
-    [refresh]
-  );
+  const handleExtractionComplete = useCallback(async () => {
+    await refresh();
+  }, [refresh]);
 
   const handleTokensUpdated = useCallback(
     (newBalance: number) => {
-      console.log(`[Vault] Tokens updated: ${newBalance}`);
       setUserTokens(newBalance);
-
-      // Also refresh auth to sync user state
       refreshAuth();
     },
     [refreshAuth]
@@ -281,9 +250,9 @@ export function VaultManager() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-4" />
+          <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-primary)] mx-auto mb-4" />
           <p className="text-muted-foreground">Caricamento vault...</p>
         </div>
       </div>
@@ -291,7 +260,8 @@ export function VaultManager() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
+      {/* Header */}
       <VaultHeader
         totalEntries={totalEntries}
         userTokens={userTokens}
@@ -304,76 +274,100 @@ export function VaultManager() {
         showSearch={!isEmpty}
       />
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* Error state */}
-        {error && (
-          <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center gap-3">
-            <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm text-destructive">{error}</p>
+      {/* Main Content - Full width, scrollable */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="p-4 lg:p-6 space-y-6 max-w-4xl mx-auto">
+          {/* Error state */}
+          {error && (
+            <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm text-destructive">{error}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={refresh}
+                className="shrink-0"
+              >
+                Riprova
+              </Button>
             </div>
-            <Button variant="outline" size="sm" onClick={refresh}>
-              Riprova
-            </Button>
-          </div>
-        )}
+          )}
 
-        {/* Document Import Section - Always visible */}
-        <DocumentImportSection
-          userTokens={userTokens}
-          onExtractionComplete={handleExtractionComplete}
-          onTokensUpdated={handleTokensUpdated}
-        />
+          {/* Document Import Section */}
+          <DocumentImportSection
+            userTokens={userTokens}
+            onExtractionComplete={handleExtractionComplete}
+            onTokensUpdated={handleTokensUpdated}
+          />
 
-        {/* Empty state */}
-        {isEmpty && !error && (
-          <EmptyState onAddClick={() => setAddDialogOpen(true)} />
-        )}
+          {/* Empty state */}
+          {isEmpty && !error && (
+            <EmptyState onAddClick={() => setAddDialogOpen(true)} />
+          )}
 
-        {/* Entries list with DnD */}
-        {!isEmpty && !error && (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={pointerWithin}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDragCancel={handleDragCancel}
-          >
-            <div className="space-y-4">
-              {Object.entries(groupedEntries).length === 0 && searchQuery ? (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">
-                    Nessun risultato per &quot;{searchQuery}&quot;
-                  </p>
+          {/* Entries list with DnD - LISTA VERTICALE */}
+          {!isEmpty && !error && (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={pointerWithin}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDragCancel={handleDragCancel}
+            >
+              {/* Lista verticale - NO GRID */}
+              <div className="space-y-4">
+                {Object.entries(groupedEntries).length === 0 && searchQuery ? (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground">
+                      Nessun risultato per &quot;{searchQuery}&quot;
+                    </p>
+                  </div>
+                ) : (
+                  Object.entries(groupedEntries).map(([group, entries]) => (
+                    <GroupSection
+                      key={group}
+                      group={group}
+                      entries={entries}
+                      onEdit={setEditingEntry}
+                      onDelete={setDeletingEntry}
+                      onMoveToGroup={handleMoveToGroup}
+                      availableGroups={availableGroups}
+                    />
+                  ))
+                )}
+              </div>
+
+              {/* Drag overlay */}
+              <DragOverlay dropAnimation={null}>
+                {activeEntry ? <EntryDragOverlay entry={activeEntry} /> : null}
+              </DragOverlay>
+            </DndContext>
+          )}
+
+          {/* Legenda e info drag & drop */}
+          {!isEmpty && !error && (
+            <div className="space-y-3 pb-4">
+              {/* Legenda icone */}
+              <div className="flex items-center justify-center gap-6 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <Folder className="h-3.5 w-3.5" />
+                  <span>= Categoria (per organizzare)</span>
                 </div>
-              ) : (
-                Object.entries(groupedEntries).map(([group, entries]) => (
-                  <GroupSection
-                    key={group}
-                    group={group}
-                    entries={entries}
-                    onEdit={setEditingEntry}
-                    onDelete={setDeletingEntry}
-                    onMoveToGroup={handleMoveToGroup}
-                    availableGroups={availableGroups}
-                  />
-                ))
-              )}
+                <div className="flex items-center gap-1.5">
+                  <Database className="h-3.5 w-3.5 text-[var(--brand-primary)]" />
+                  <span>= Dato (verrà inserito nei documenti)</span>
+                </div>
+              </div>
+
+              {/* Info drag & drop */}
+              <p className="text-xs text-center text-muted-foreground">
+                Trascina i dati per spostarli tra le categorie
+              </p>
             </div>
-
-            {/* Drag overlay */}
-            <DragOverlay dropAnimation={null}>
-              {activeEntry ? <EntryDragOverlay entry={activeEntry} /> : null}
-            </DragOverlay>
-          </DndContext>
-        )}
-
-        {/* Info sul drag & drop */}
-        {!isEmpty && !error && (
-          <p className="text-xs text-center text-muted-foreground">
-            Trascina i valori per spostarli tra le categorie
-          </p>
-        )}
+          )}
+        </div>
       </main>
 
       {/* Dialogs */}
@@ -405,9 +399,20 @@ export function VaultManager() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Elimina valore</AlertDialogTitle>
+            <AlertDialogTitle>Elimina dato</AlertDialogTitle>
             <AlertDialogDescription>
-              Sei sicuro di voler eliminare &quot;{deletingEntry?.label}&quot;?
+              Sei sicuro di voler eliminare questo dato?
+              <br />
+              <span className="font-medium text-foreground">
+                {deletingEntry?.value}
+              </span>
+              {deletingEntry?.label && (
+                <span className="text-muted-foreground">
+                  {" "}
+                  ({deletingEntry.label})
+                </span>
+              )}
+              <br />
               <br />
               Questa azione non può essere annullata.
             </AlertDialogDescription>

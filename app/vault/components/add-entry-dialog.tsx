@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, AlertTriangle, Loader2, Info } from "lucide-react";
+import { Plus, AlertTriangle, Loader2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { GROUP_OPTIONS } from "../constants";
 import type { VaultEntryCreate } from "@/lib/vault-api";
 
@@ -28,7 +33,6 @@ interface AddEntryDialogProps {
   onOpenChange: (open: boolean) => void;
   onAdd: (entry: VaultEntryCreate) => Promise<boolean>;
   initialValue?: string;
-  isDemo?: boolean;
 }
 
 export function AddEntryDialog({
@@ -36,7 +40,6 @@ export function AddEntryDialog({
   onOpenChange,
   onAdd,
   initialValue,
-  isDemo = false,
 }: AddEntryDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -46,6 +49,7 @@ export function AddEntryDialog({
     customGroup: "",
   });
   const [useCustomGroup, setUseCustomGroup] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -62,6 +66,7 @@ export function AddEntryDialog({
       customGroup: "",
     });
     setUseCustomGroup(false);
+    setShowOptions(false);
     setError(null);
   };
 
@@ -76,7 +81,7 @@ export function AddEntryDialog({
     e.preventDefault();
 
     if (!formData.valueData.trim()) {
-      setError("Il valore è obbligatorio");
+      setError("Inserisci un valore");
       return;
     }
 
@@ -98,7 +103,7 @@ export function AddEntryDialog({
       if (success) {
         handleOpenChange(false);
       } else {
-        setError("Impossibile aggiungere il valore. Riprova.");
+        setError("Impossibile aggiungere. Riprova.");
       }
     } catch {
       setError("Si è verificato un errore. Riprova.");
@@ -109,40 +114,24 @@ export function AddEntryDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle>
-            {initialValue ? "Aggiungi ai dati" : "Aggiungi nuovo valore"}
-          </DialogTitle>
+          <DialogTitle>Aggiungi un dato</DialogTitle>
           <DialogDescription>
-            {isDemo
-              ? "Aggiungi un dato di prova. Registrati per salvarlo permanentemente."
-              : "Inserisci un dato da salvare nel vault."}
+            Inserisci il valore che vuoi riutilizzare nei documenti.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Demo notice */}
-        {isDemo && (
-          <div className="flex items-start gap-2 text-xs bg-[var(--brand-primary-subtle)] text-[var(--brand-primary-hover)] px-3 py-2 rounded-md border border-[var(--brand-primary)]/20">
-            <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
-            <span>
-              Stai provando la demo. Questo dato sarà disponibile finché non
-              chiudi la pagina.{" "}
-              <strong>Registrati per salvarlo per sempre.</strong>
-            </span>
-          </div>
-        )}
-
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            {/* Valore (obbligatorio) */}
+          <div className="space-y-4 py-4">
+            {/* Campo principale - VALORE */}
             <div className="space-y-2">
-              <Label htmlFor="valueData">
-                Valore <span className="text-destructive">*</span>
+              <Label htmlFor="valueData" className="text-base font-medium">
+                Valore
               </Label>
               <Input
                 id="valueData"
-                placeholder="es. IT01234567890, Via Roma 123, mario.rossi@email.it"
+                placeholder="Scrivi qui il dato..."
                 value={formData.valueData}
                 onChange={(e) =>
                   setFormData((prev) => ({
@@ -150,104 +139,123 @@ export function AddEntryDialog({
                     valueData: e.target.value,
                   }))
                 }
+                className="text-base h-11"
                 autoFocus
               />
               <p className="text-xs text-muted-foreground">
-                Il dato che verrà inserito nel documento
+                Questo è il testo che verrà inserito nel documento
               </p>
             </div>
 
-            {/* Etichetta (opzionale) */}
-            <div className="space-y-2">
-              <Label htmlFor="nameLabel">
-                Etichetta{" "}
-                <span className="text-muted-foreground font-normal">
-                  (opzionale)
-                </span>
-              </Label>
-              <Input
-                id="nameLabel"
-                placeholder="es. Partita IVA, Indirizzo sede, Email PEC"
-                value={formData.nameLabel}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    nameLabel: e.target.value,
-                  }))
-                }
-              />
-              <p className="text-xs text-muted-foreground">
-                Un nome per riconoscere facilmente questo valore
-              </p>
-            </div>
+            {/* Opzioni aggiuntive - collassate */}
+            <Collapsible open={showOptions} onOpenChange={setShowOptions}>
+              <CollapsibleTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground w-full justify-start"
+                >
+                  <ChevronDown
+                    className={`h-3 w-3 mr-1.5 transition-transform ${
+                      showOptions ? "rotate-180" : ""
+                    }`}
+                  />
+                  {showOptions ? "Nascondi opzioni" : "Opzioni aggiuntive"}
+                  <span className="ml-1 opacity-60">(facoltative)</span>
+                </Button>
+              </CollapsibleTrigger>
 
-            {/* Categoria (opzionale) */}
-            <div className="space-y-2">
-              <Label>
-                Categoria{" "}
-                <span className="text-muted-foreground font-normal">
-                  (opzionale)
-                </span>
-              </Label>
-
-              {!useCustomGroup ? (
-                <>
-                  <Select
-                    value={formData.nameGroup}
-                    onValueChange={(value: string) =>
-                      setFormData((prev) => ({ ...prev, nameGroup: value }))
-                    }
+              <CollapsibleContent className="space-y-4 pt-3">
+                {/* Etichetta */}
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="nameLabel"
+                    className="text-sm text-muted-foreground"
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleziona categoria..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {GROUP_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
-                    onClick={() => setUseCustomGroup(true)}
-                  >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Crea nuova categoria
-                  </Button>
-                </>
-              ) : (
-                <>
+                    Etichetta
+                  </Label>
                   <Input
-                    placeholder="es. Referenze, Progetti, Clienti..."
-                    value={formData.customGroup}
+                    id="nameLabel"
+                    placeholder="Un nome per riconoscerlo"
+                    value={formData.nameLabel}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        customGroup: e.target.value,
+                        nameLabel: e.target.value,
                       }))
                     }
+                    className="h-9 text-sm"
                   />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
-                    onClick={() => {
-                      setUseCustomGroup(false);
-                      setFormData((prev) => ({ ...prev, customGroup: "" }));
-                    }}
-                  >
-                    ← Usa categoria esistente
-                  </Button>
-                </>
-              )}
-            </div>
+                </div>
 
+                {/* Categoria */}
+                <div className="space-y-1.5">
+                  <Label className="text-sm text-muted-foreground">
+                    Categoria
+                  </Label>
+
+                  {!useCustomGroup ? (
+                    <div className="space-y-1">
+                      <Select
+                        value={formData.nameGroup}
+                        onValueChange={(value: string) =>
+                          setFormData((prev) => ({ ...prev, nameGroup: value }))
+                        }
+                      >
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue placeholder="Nessuna" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {GROUP_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="link"
+                        size="sm"
+                        className="h-auto p-0 text-xs text-muted-foreground"
+                        onClick={() => setUseCustomGroup(true)}
+                      >
+                        Crea nuova categoria
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <Input
+                        placeholder="Nome categoria"
+                        value={formData.customGroup}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            customGroup: e.target.value,
+                          }))
+                        }
+                        className="h-9 text-sm"
+                      />
+                      <Button
+                        type="button"
+                        variant="link"
+                        size="sm"
+                        className="h-auto p-0 text-xs text-muted-foreground"
+                        onClick={() => {
+                          setUseCustomGroup(false);
+                          setFormData((prev) => ({ ...prev, customGroup: "" }));
+                        }}
+                      >
+                        ← Scegli esistente
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Error */}
             {error && (
               <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
                 <AlertTriangle className="h-4 w-4 flex-shrink-0" />
@@ -256,17 +264,17 @@ export function AddEntryDialog({
             )}
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={() => handleOpenChange(false)}
             >
               Annulla
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !formData.valueData.trim()}
               className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
             >
               {isSubmitting ? (
@@ -275,10 +283,7 @@ export function AddEntryDialog({
                   Aggiunta...
                 </>
               ) : (
-                <>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Aggiungi
-                </>
+                "Aggiungi"
               )}
             </Button>
           </DialogFooter>

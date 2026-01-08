@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -47,7 +48,6 @@ export function EditEntryDialog({
   });
   const [useCustomGroup, setUseCustomGroup] = useState(false);
 
-  // Sincronizza form quando entry cambia
   useEffect(() => {
     if (entry) {
       setFormData({
@@ -79,51 +79,72 @@ export function EditEntryDialog({
     }
   };
 
-  // Gruppi disponibili incluso quello corrente
   const allGroups = [
     ...new Set([...availableGroups, entry?.group || ""]),
   ].filter(Boolean);
 
   return (
     <Dialog open={!!entry} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle>Modifica valore</DialogTitle>
+          <DialogTitle>Modifica dato</DialogTitle>
+          <DialogDescription>
+            Aggiorna le informazioni di questo valore.
+          </DialogDescription>
         </DialogHeader>
+
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
+          <div className="space-y-4 py-4">
+            {/* Campo principale - VALORE */}
             <div className="space-y-2">
-              <Label htmlFor="edit-value">Valore</Label>
+              <Label htmlFor="edit-value" className="text-base font-medium">
+                Valore
+              </Label>
               <Input
                 id="edit-value"
                 value={formData.valueData}
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, valueData: e.target.value }))
                 }
+                className="text-base h-11"
               />
+              <p className="text-xs text-muted-foreground">
+                Questo è il testo che verrà inserito nel documento
+              </p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-label">Etichetta</Label>
+
+            {/* Etichetta - già visibile in edit mode */}
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="edit-label"
+                className="text-sm text-muted-foreground"
+              >
+                Etichetta
+              </Label>
               <Input
                 id="edit-label"
-                placeholder="Lascia vuoto per usare il valore"
+                placeholder="Un nome per riconoscerlo"
                 value={formData.nameLabel}
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, nameLabel: e.target.value }))
                 }
+                className="h-9 text-sm"
               />
             </div>
-            <div className="space-y-2">
-              <Label>Categoria</Label>
+
+            {/* Categoria - già visibile in edit mode */}
+            <div className="space-y-1.5">
+              <Label className="text-sm text-muted-foreground">Categoria</Label>
+
               {!useCustomGroup ? (
-                <>
+                <div className="space-y-1">
                   <Select
                     value={formData.nameGroup}
                     onValueChange={(v) =>
                       setFormData((p) => ({ ...p, nameGroup: v }))
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-9 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -136,19 +157,18 @@ export function EditEntryDialog({
                   </Select>
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="link"
                     size="sm"
-                    className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                    className="h-auto p-0 text-xs text-muted-foreground"
                     onClick={() => setUseCustomGroup(true)}
                   >
-                    <Plus className="h-3 w-3 mr-1" />
                     Sposta in nuova categoria
                   </Button>
-                </>
+                </div>
               ) : (
-                <>
+                <div className="space-y-1">
                   <Input
-                    placeholder="Nome nuova categoria"
+                    placeholder="Nome categoria"
                     value={formData.customGroup}
                     onChange={(e) =>
                       setFormData((p) => ({
@@ -156,32 +176,41 @@ export function EditEntryDialog({
                         customGroup: e.target.value,
                       }))
                     }
+                    className="h-9 text-sm"
                     autoFocus
                   />
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="link"
                     size="sm"
-                    className="h-auto p-0 text-xs"
+                    className="h-auto p-0 text-xs text-muted-foreground"
                     onClick={() => setUseCustomGroup(false)}
                   >
-                    ← Usa categoria esistente
+                    ← Scegli esistente
                   </Button>
-                </>
+                </div>
               )}
             </div>
           </div>
-          <DialogFooter>
+
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={() => onOpenChange(false)}
             >
               Annulla
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              disabled={isSubmitting || !formData.valueData.trim()}
+              className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+            >
               {isSubmitting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Salvataggio...
+                </>
               ) : (
                 "Salva"
               )}

@@ -7,14 +7,21 @@ import {
   Pencil,
   Trash2,
   MoreHorizontal,
-  FolderPlus,
+  FolderInput,
+  Copy,
+  Check,
+  Database,
 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -35,6 +42,8 @@ export function EntryRow({
   onMoveToGroup,
   availableGroups,
 }: EntryRowProps) {
+  const [copied, setCopied] = useState(false);
+
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: entry.id,
@@ -51,75 +60,121 @@ export function EntryRow({
       }
     : undefined;
 
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(entry.value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-center gap-3 px-4 py-3 group bg-card",
-        isDragging && "opacity-50 shadow-md rounded-md border border-primary/50"
+        "flex items-start gap-3 px-4 py-3 group bg-card transition-all",
+        isDragging &&
+          "opacity-50 shadow-lg rounded-lg border-2 border-[var(--brand-primary)]/50"
       )}
     >
       {/* Drag handle */}
-      <button
-        {...attributes}
-        {...listeners}
-        className="touch-none text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
-      >
-        <GripVertical className="h-4 w-4" />
-      </button>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <p className="font-medium text-sm truncate">{entry.label}</p>
-        <p className="text-xs text-muted-foreground truncate">{entry.value}</p>
+      <div className="pt-0.5">
+        <button
+          {...attributes}
+          {...listeners}
+          className="touch-none text-muted-foreground/50 hover:text-muted-foreground cursor-grab active:cursor-grabbing transition-colors"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+      {/* Icona dato */}
+      <div className="pt-0.5">
+        <Database className="h-4 w-4 text-[var(--brand-primary)]" />
+      </div>
+
+      {/* Content - VALORE in evidenza */}
+      <div className="flex-1 min-w-0 space-y-0.5">
+        {/* VALORE - il dato principale, in grassetto */}
+        <p className="font-semibold text-sm break-words">{entry.value}</p>
+
+        {/* ETICHETTA - secondaria, più piccola */}
+        {entry.label && (
+          <p className="text-xs text-muted-foreground italic">{entry.label}</p>
+        )}
+      </div>
+
+      {/* Quick actions */}
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8"
+          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+          onClick={handleCopy}
+          title="Copia valore"
+        >
+          {copied ? (
+            <Check className="h-4 w-4 text-green-500" />
+          ) : (
+            <Copy className="h-4 w-4" />
+          )}
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground hover:text-foreground"
           onClick={onEdit}
+          title="Modifica"
         >
           <Pencil className="h-4 w-4" />
         </Button>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={handleCopy}>
+              <Copy className="h-4 w-4 mr-2" />
+              Copia valore
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={onEdit}>
               <Pencil className="h-4 w-4 mr-2" />
               Modifica
             </DropdownMenuItem>
+
             {availableGroups.length > 0 && (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  disabled
-                  className="text-xs text-muted-foreground"
-                >
-                  Sposta in...
-                </DropdownMenuItem>
-                {availableGroups.slice(0, 5).map((group) => (
-                  <DropdownMenuItem
-                    key={group}
-                    onClick={() => onMoveToGroup(group)}
-                  >
-                    <FolderPlus className="h-4 w-4 mr-2" />
-                    {group}
-                  </DropdownMenuItem>
-                ))}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <FolderInput className="h-4 w-4 mr-2" />
+                    Sposta in...
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {availableGroups.map((group) => (
+                      <DropdownMenuItem
+                        key={group}
+                        onClick={() => onMoveToGroup(group)}
+                      >
+                        {group}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
               </>
             )}
+
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={onDelete}
-              className="text-destructive focus:text-destructive"
+              className="text-destructive focus:text-destructive focus:bg-destructive/10"
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Elimina
@@ -131,12 +186,19 @@ export function EntryRow({
   );
 }
 
-// Componente per il drag overlay
+// Componente per il drag overlay - anche qui valore in evidenza
 export function EntryDragOverlay({ entry }: { entry: VaultEntry }) {
   return (
-    <div className="bg-card border-2 border-primary rounded-md p-3 shadow-lg">
-      <p className="font-medium text-sm">{entry.label}</p>
-      <p className="text-xs text-muted-foreground truncate">{entry.value}</p>
+    <div className="bg-card border-2 border-[var(--brand-primary)] rounded-lg p-3 shadow-xl flex items-start gap-3">
+      <Database className="h-4 w-4 text-[var(--brand-primary)] shrink-0 mt-0.5" />
+      <div className="min-w-0">
+        <p className="font-semibold text-sm">{entry.value}</p>
+        {entry.label && (
+          <p className="text-xs text-muted-foreground italic truncate">
+            {entry.label}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

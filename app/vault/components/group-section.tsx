@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
+import { ChevronDown, ChevronUp, Folder } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { EntryRow } from "./entry-row";
-import { getGroupIcon } from "../constants";
 import type { VaultEntry } from "../types";
 
 interface GroupSectionProps {
@@ -13,7 +15,6 @@ interface GroupSectionProps {
   onDelete: (entry: VaultEntry) => void;
   onMoveToGroup: (entryId: string, newGroup: string) => void;
   availableGroups: string[];
-  isDraggingOver?: boolean;
 }
 
 export function GroupSection({
@@ -24,7 +25,7 @@ export function GroupSection({
   onMoveToGroup,
   availableGroups,
 }: GroupSectionProps) {
-  const Icon = getGroupIcon(group);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const { setNodeRef, isOver, active } = useDroppable({
     id: `group-${group}`,
@@ -34,7 +35,6 @@ export function GroupSection({
     },
   });
 
-  // Determina se stiamo trascinando un elemento da un altro gruppo
   const isDraggingFromOtherGroup =
     active?.data?.current?.type === "entry" &&
     active?.data?.current?.entry?.group !== group;
@@ -43,76 +43,110 @@ export function GroupSection({
     <div
       ref={setNodeRef}
       className={cn(
-        "rounded-md border-2 overflow-hidden",
+        "rounded-xl border overflow-hidden transition-all duration-200",
         isOver && isDraggingFromOtherGroup
-          ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+          ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/5 ring-2 ring-[var(--brand-primary)]/20"
           : "border-border bg-card"
       )}
     >
-      {/* Group header */}
+      {/* Group header - CATEGORIA chiaramente etichettata */}
       <div
         className={cn(
-          "flex items-center gap-3 px-4 py-3 border-b",
+          "flex items-center gap-3 px-4 py-2.5 border-b transition-colors",
           isOver && isDraggingFromOtherGroup
-            ? "bg-primary/10 border-primary/30"
-            : "bg-muted/30 border-border"
+            ? "bg-[var(--brand-primary)]/10 border-[var(--brand-primary)]/30"
+            : "bg-muted/40 border-border"
         )}
       >
-        <Icon
-          className={cn(
-            "h-5 w-5",
-            isOver && isDraggingFromOtherGroup
-              ? "text-primary"
-              : "text-muted-foreground"
-          )}
-        />
-        <h2 className="font-medium flex-1">{group}</h2>
-        <span
-          className={cn(
-            "text-sm",
-            isOver && isDraggingFromOtherGroup
-              ? "text-primary"
-              : "text-muted-foreground"
-          )}
+        {/* Area cliccabile per expand/collapse */}
+        <div
+          className="flex-1 flex items-center gap-3 cursor-pointer"
+          onClick={() => setIsExpanded(!isExpanded)}
         >
-          {entries.length} valor{entries.length === 1 ? "e" : "i"}
-          {isOver && isDraggingFromOtherGroup && (
-            <span className="ml-1">• Rilascia qui</span>
-          )}
-        </span>
-      </div>
-
-      {/* Entries */}
-      <div className="divide-y divide-border">
-        {entries.map((entry) => (
-          <EntryRow
-            key={entry.id}
-            entry={entry}
-            onEdit={() => onEdit(entry)}
-            onDelete={() => onDelete(entry)}
-            onMoveToGroup={(newGroup) => onMoveToGroup(entry.id, newGroup)}
-            availableGroups={availableGroups.filter((g) => g !== group)}
-          />
-        ))}
-
-        {/* Empty group placeholder */}
-        {entries.length === 0 && (
+          {/* Icona categoria */}
           <div
             className={cn(
-              "px-4 py-8 text-center",
+              "h-8 w-8 rounded-lg flex items-center justify-center transition-colors",
               isOver && isDraggingFromOtherGroup
-                ? "text-primary"
-                : "text-muted-foreground"
+                ? "bg-[var(--brand-primary)]/20"
+                : "bg-muted"
             )}
           >
-            <p className="text-sm">
-              {isOver && isDraggingFromOtherGroup
-                ? "Rilascia per spostare qui"
-                : "Nessun valore in questa categoria"}
+            <Folder
+              className={cn(
+                "h-4 w-4 transition-colors",
+                isOver && isDraggingFromOtherGroup
+                  ? "text-[var(--brand-primary)]"
+                  : "text-muted-foreground"
+              )}
+            />
+          </div>
+
+          {/* Nome categoria con label esplicita */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                Categoria:
+              </span>
+              <span className="font-medium text-sm truncate">{group}</span>
+            </div>
+            <p
+              className={cn(
+                "text-xs transition-colors",
+                isOver && isDraggingFromOtherGroup
+                  ? "text-[var(--brand-primary)]"
+                  : "text-muted-foreground"
+              )}
+            >
+              {entries.length} {entries.length === 1 ? "dato" : "dati"}
+              {isOver && isDraggingFromOtherGroup && " • Rilascia qui"}
             </p>
           </div>
-        )}
+
+          {/* Chevron */}
+          <div className="text-muted-foreground">
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* Entries - I VERI DATI */}
+      {isExpanded && (
+        <div className="divide-y divide-border">
+          {entries.map((entry) => (
+            <EntryRow
+              key={entry.id}
+              entry={entry}
+              onEdit={() => onEdit(entry)}
+              onDelete={() => onDelete(entry)}
+              onMoveToGroup={(newGroup) => onMoveToGroup(entry.id, newGroup)}
+              availableGroups={availableGroups.filter((g) => g !== group)}
+            />
+          ))}
+
+          {/* Empty group placeholder */}
+          {entries.length === 0 && (
+            <div
+              className={cn(
+                "px-4 py-8 text-center transition-colors",
+                isOver && isDraggingFromOtherGroup
+                  ? "text-[var(--brand-primary)]"
+                  : "text-muted-foreground"
+              )}
+            >
+              <p className="text-sm">
+                {isOver && isDraggingFromOtherGroup
+                  ? "Rilascia per spostare qui"
+                  : "Nessun dato in questa categoria"}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

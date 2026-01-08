@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FolderPlus, Loader2 } from "lucide-react";
+import { FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +30,6 @@ export function CreateGroupDialog({
   const [groupName, setGroupName] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // Reset quando si apre
   useEffect(() => {
     if (open) {
       setGroupName("");
@@ -62,20 +61,23 @@ export function CreateGroupDialog({
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FolderPlus className="h-5 w-5" />
+            <div className="h-8 w-8 rounded-lg bg-[var(--brand-primary)]/10 flex items-center justify-center">
+              <FolderPlus className="h-4 w-4 text-[var(--brand-primary)]" />
+            </div>
             Nuova categoria
           </DialogTitle>
           <DialogDescription>
-            Crea una nuova categoria per organizzare i tuoi dati.
+            Crea una categoria per organizzare i tuoi dati.
           </DialogDescription>
         </DialogHeader>
+
         <form onSubmit={handleSubmit}>
           <div className="py-4">
             <div className="space-y-2">
               <Label htmlFor="group-name">Nome categoria</Label>
               <Input
                 id="group-name"
-                placeholder="es. Certificazioni, Documenti personali..."
+                placeholder="es. Certificazioni, Progetti..."
                 value={groupName}
                 onChange={(e) => {
                   setGroupName(e.target.value);
@@ -86,6 +88,7 @@ export function CreateGroupDialog({
               {error && <p className="text-sm text-destructive">{error}</p>}
             </div>
           </div>
+
           <DialogFooter>
             <Button
               type="button"
@@ -94,7 +97,13 @@ export function CreateGroupDialog({
             >
               Annulla
             </Button>
-            <Button type="submit">Crea categoria</Button>
+            <Button
+              type="submit"
+              className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] text-white"
+            >
+              <FolderPlus className="h-4 w-4 mr-2" />
+              Crea
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
