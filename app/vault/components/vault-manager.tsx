@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   DndContext,
@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useVaultData } from "@/hooks/use-vault-data";
+import { useAuth } from "@/lib/auth-context";
 import { DEFAULT_GROUPS } from "../constants";
 import type { VaultEntry } from "../types";
 
@@ -37,9 +38,11 @@ import { AddEntryDialog } from "./add-entry-dialog";
 import { EditEntryDialog } from "./edit-entry-dialog";
 import { CreateGroupDialog } from "./create-group-dialog";
 import { EntryDragOverlay } from "./entry-row";
+import { DocumentImportSection } from "./document-import-section";
 
 export function VaultManager() {
   const router = useRouter();
+  const { user, refreshAuth } = useAuth();
   const {
     categories,
     isEmpty,
@@ -51,6 +54,17 @@ export function VaultManager() {
     updateEntry,
     deleteEntry,
   } = useVaultData();
+
+  // Token state
+  const [userTokens, setUserTokens] = useState(user?.tokens ?? 0);
+  const [isLoadingTokens, setIsLoadingTokens] = useState(false);
+
+  // Sync tokens from user
+  useEffect(() => {
+    if (user?.tokens !== undefined) {
+      setUserTokens(user.tokens);
+    }
+  }, [user?.tokens]);
 
   // State
   const [searchQuery, setSearchQuery] = useState("");
@@ -79,9 +93,6 @@ export function VaultManager() {
 
   // Tutti i gruppi disponibili
   const availableGroups = [...new Set([...DEFAULT_GROUPS, ...existingGroups])];
-
-  // Gruppi da mostrare (quelli con entries + custom groups vuoti)
-  const groupsToShow = [...new Set([...existingGroups, ...customGroups])];
 
   // Filter entries
   const filteredEntries = allEntries.filter(
@@ -236,6 +247,37 @@ export function VaultManager() {
     setCustomGroups((prev) => [...prev, groupName]);
   };
 
+  // Document extraction handlers
+  const handleExtractionComplete = useCallback(
+    async (
+      entries: Array<{
+        valueData: string;
+        nameLabel?: string | null;
+        nameGroup?: string | null;
+      }>,
+      tokensConsumed: number
+    ) => {
+      console.log(
+        `[Vault] Extraction complete: ${entries.length} entries, ${tokensConsumed} tokens consumed`
+      );
+
+      // Refresh vault to show new entries (they were saved by backend)
+      await refresh();
+    },
+    [refresh]
+  );
+
+  const handleTokensUpdated = useCallback(
+    (newBalance: number) => {
+      console.log(`[Vault] Tokens updated: ${newBalance}`);
+      setUserTokens(newBalance);
+
+      // Also refresh auth to sync user state
+      refreshAuth();
+    },
+    [refreshAuth]
+  );
+
   // Loading state
   if (isLoading) {
     return (
@@ -252,6 +294,8 @@ export function VaultManager() {
     <div className="min-h-screen bg-background">
       <VaultHeader
         totalEntries={totalEntries}
+        userTokens={userTokens}
+        isLoadingTokens={isLoadingTokens}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onAddClick={() => setAddDialogOpen(true)}
@@ -260,10 +304,10 @@ export function VaultManager() {
         showSearch={!isEmpty}
       />
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Error state */}
         {error && (
-          <div className="mb-6 p-4 rounded-md bg-destructive/10 border border-destructive/20 flex items-center gap-3">
+          <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />
             <div className="flex-1">
               <p className="text-sm text-destructive">{error}</p>
@@ -273,6 +317,13 @@ export function VaultManager() {
             </Button>
           </div>
         )}
+
+        {/* Document Import Section - Always visible */}
+        <DocumentImportSection
+          userTokens={userTokens}
+          onExtractionComplete={handleExtractionComplete}
+          onTokensUpdated={handleTokensUpdated}
+        />
 
         {/* Empty state */}
         {isEmpty && !error && (
@@ -319,7 +370,7 @@ export function VaultManager() {
 
         {/* Info sul drag & drop */}
         {!isEmpty && !error && (
-          <p className="text-xs text-center text-muted-foreground mt-6">
+          <p className="text-xs text-center text-muted-foreground">
             Trascina i valori per spostarli tra le categorie
           </p>
         )}
@@ -330,8 +381,6 @@ export function VaultManager() {
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
         onAdd={handleAddEntry}
-        isSubmitting={isSubmitting}
-        availableGroups={availableGroups}
       />
 
       <EditEntryDialog
