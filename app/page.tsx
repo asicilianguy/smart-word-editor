@@ -109,7 +109,7 @@ export default function LandingPage() {
   };
 
   const handleLogin = () => {
-    router.push("/auth/login");
+    router.push("/auth");
   };
 
   // Keyboard navigation

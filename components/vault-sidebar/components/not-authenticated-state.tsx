@@ -1,31 +1,37 @@
+// components/vault-sidebar/components/not-authenticated-state.tsx
+
 "use client";
 
-import { LogIn } from "lucide-react";
+import { Lock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface NotAuthenticatedStateProps {
-  onLoginClick?: () => void;
+  onAuthClick?: () => void;
 }
 
 export function NotAuthenticatedState({
-  onLoginClick,
+  onAuthClick,
 }: NotAuthenticatedStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-      <div className="w-12 h-12 rounded-md bg-muted border border-border flex items-center justify-center mb-4">
-        <LogIn className="h-6 w-6 text-muted-foreground" />
+    <div className="flex-1 flex items-center justify-center p-6">
+      <div className="text-center max-w-xs">
+        <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+          <Lock className="h-6 w-6 text-muted-foreground" />
+        </div>
+        <h3 className="font-semibold mb-2">Accedi per usare il Vault</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Salva i tuoi dati una volta e usali per compilare qualsiasi documento.
+        </p>
+        {onAuthClick && (
+          <Button
+            onClick={onAuthClick}
+            className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+          >
+            Accedi o registrati
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        )}
       </div>
-      <h3 className="font-semibold mb-2">Accesso richiesto</h3>
-      <p className="text-sm text-muted-foreground mb-4">
-        Effettua l&apos;accesso per visualizzare e gestire i tuoi dati salvati
-        nel vault.
-      </p>
-      {onLoginClick && (
-        <Button onClick={onLoginClick}>
-          <LogIn className="h-4 w-4 mr-2" />
-          Accedi
-        </Button>
-      )}
     </div>
   );
 }

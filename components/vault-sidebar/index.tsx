@@ -30,8 +30,7 @@ export function VaultSidebar({
   demoEntriesCount = 0,
   onAddEntry,
   onRefresh,
-  onLoginClick,
-  onRegisterClick,
+  onAuthClick,
   onManageVaultClick,
 }: VaultSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -173,7 +172,7 @@ export function VaultSidebar({
               searchQuery={searchQuery}
               onValueClick={onValueClick}
               onAddClick={() => handleOpenAddDialog()}
-              onRegisterClick={onRegisterClick}
+              onAuthClick={onAuthClick}
               canInteract={canInteract}
               actionType={actionType}
               demoEntriesCount={demoEntriesCount}

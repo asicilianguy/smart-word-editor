@@ -314,24 +314,14 @@ export default function EditorPage() {
               </Button>
             </>
           ) : (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push("/auth/login")}
-              >
-                Accedi
-              </Button>
-
-              <Button
-                size="sm"
-                onClick={() => router.push("/auth/register")}
-                className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
-              >
-                <User className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Registrati</span>
-              </Button>
-            </>
+            <Button
+              size="sm"
+              onClick={() => router.push("/auth")}
+              className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+            >
+              <User className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Accedi</span>
+            </Button>
           )}
         </div>
       </header>
@@ -378,8 +368,7 @@ export default function EditorPage() {
             demoEntriesCount={demoEntriesCount}
             onAddEntry={addVaultEntry}
             onRefresh={refreshVault}
-            onLoginClick={() => router.push("/auth/login")}
-            onRegisterClick={() => router.push("/auth/register")}
+            onAuthClick={() => router.push("/auth")}
             onManageVaultClick={() => router.push("/vault")}
           />
         </div>
@@ -402,13 +391,9 @@ export default function EditorPage() {
           onDownload={handleDownload}
           isLoading={isDownloading}
           isAuthenticated={isAuthenticated}
-          onRegisterClick={() => {
+          onAuthClick={() => {
             setDownloadDialogOpen(false);
-            router.push("/auth/register?redirect=/editor");
-          }}
-          onLoginClick={() => {
-            setDownloadDialogOpen(false);
-            router.push("/auth/login?redirect=/editor");
+            router.push("/auth");
           }}
         />
       )}

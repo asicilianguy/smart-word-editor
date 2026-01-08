@@ -256,7 +256,7 @@ export function VaultManager() {
         onSearchChange={setSearchQuery}
         onAddClick={() => setAddDialogOpen(true)}
         onCreateGroupClick={() => setCreateGroupDialogOpen(true)}
-        onBackClick={() => router.push("/")}
+        onBackClick={() => router.push("/editor")}
         showSearch={!isEmpty}
       />
 

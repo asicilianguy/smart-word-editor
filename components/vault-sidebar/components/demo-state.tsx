@@ -1,6 +1,6 @@
 "use client";
 
-import { UserPlus, Sparkles, FileText } from "lucide-react";
+import { ArrowRight, Sparkles, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -19,7 +19,7 @@ interface DemoStateProps {
   searchQuery: string;
   onValueClick?: (value: VaultValue) => void;
   onAddClick: () => void;
-  onRegisterClick?: () => void;
+  onAuthClick?: () => void;
   canInteract: boolean;
   actionType: ActionType;
   demoEntriesCount: number;
@@ -31,7 +31,7 @@ export function DemoState({
   searchQuery,
   onValueClick,
   onAddClick,
-  onRegisterClick,
+  onAuthClick,
   canInteract,
   actionType,
   demoEntriesCount,
@@ -126,14 +126,14 @@ export function DemoState({
 
       {/* CTA Footer */}
       <div className="flex-shrink-0 p-4 border-t border-border bg-card space-y-3">
-        {/* CTA Registrazione */}
-        {onRegisterClick && (
+        {/* CTA Accesso */}
+        {onAuthClick && (
           <div className="bg-gradient-to-r from-[var(--brand-primary-subtle)] to-[var(--bg-surface)] rounded-lg p-3 border border-[var(--brand-primary)]/20">
             <p className="text-xs text-foreground font-medium mb-2">
               Ti piace? Salva i tuoi dati reali
             </p>
             <p className="text-[11px] text-muted-foreground mb-3">
-              Registrati per salvare i tuoi dati e usarli su qualsiasi documento
+              Accedi per salvare i tuoi dati e usarli su qualsiasi documento
               {demoEntriesCount > 0 && (
                 <span className="text-[var(--brand-primary)]">
                   {" "}
@@ -142,19 +142,19 @@ export function DemoState({
               )}
             </p>
             <Button
-              onClick={onRegisterClick}
+              onClick={onAuthClick}
               size="sm"
               className="w-full bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
             >
-              <UserPlus className="h-4 w-4 mr-2" />
-              Registrati gratis
+              Accedi o registrati
+              <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </div>
         )}
 
         {/* Note */}
         <p className="text-[10px] text-center text-muted-foreground">
-          I dati demo non vengono salvati. Registrati per conservarli.
+          I dati demo non vengono salvati. Accedi per conservarli.
         </p>
       </div>
     </div>

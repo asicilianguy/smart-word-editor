@@ -26,6 +26,15 @@ export interface AuthResponse {
   error?: string;
 }
 
+export interface AuthenticateResponse {
+  success: boolean;
+  token?: string;
+  user?: AuthUser;
+  isNewUser?: boolean;
+  hasVaultEntries?: boolean;
+  error?: string;
+}
+
 export interface UserProfile {
   id: string;
   phone_number: string;
@@ -140,11 +149,71 @@ export function getAuthHeaders(): HeadersInit {
 }
 
 // ============================================================================
+// HELPERS
+// ============================================================================
+
+/**
+ * Format phone number to +39 format
+ */
+export function formatPhone(phone: string): string {
+  const cleaned = phone.replace(/\s/g, "");
+  if (cleaned.startsWith("+39")) {
+    return cleaned;
+  }
+  if (cleaned.startsWith("39")) {
+    return `+${cleaned}`;
+  }
+  return `+39${cleaned}`;
+}
+
+// ============================================================================
 // AUTH API FUNCTIONS
 // ============================================================================
 
 /**
+ * Unified authenticate - handles both login and registration
+ *
+ * - If phone exists → login (verify password)
+ * - If phone doesn't exist → register (create user)
+ *
+ * Returns isNewUser and hasVaultEntries for smart redirect
+ */
+export async function authenticate(
+  phone: string,
+  password: string
+): Promise<AuthenticateResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/authenticate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        phone_number: formatPhone(phone),
+        password,
+      }),
+    });
+
+    const data: AuthenticateResponse = await response.json();
+
+    if (data.success && data.token && data.user) {
+      saveToken(data.token);
+      saveUser(data.user);
+    }
+
+    return data;
+  } catch (error) {
+    console.error("[Auth] Authenticate error:", error);
+    return {
+      success: false,
+      error: "Errore di connessione. Riprova più tardi.",
+    };
+  }
+}
+
+/**
  * Register a new user
+ * @deprecated Use authenticate() instead
  */
 export async function register(
   phone: string,
@@ -181,6 +250,7 @@ export async function register(
 
 /**
  * Login user
+ * @deprecated Use authenticate() instead
  */
 export async function login(
   phone: string,
@@ -220,9 +290,9 @@ export async function login(
  */
 export function logout(): void {
   removeToken();
-  // Redirect to login page
+  // Redirect to unified auth page
   if (typeof window !== "undefined") {
-    window.location.href = "/auth/login";
+    window.location.href = "/auth";
   }
 }
 
@@ -362,22 +432,4 @@ export async function addToVault(
       error: "Errore di connessione",
     };
   }
-}
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-/**
- * Format phone number to +39 format
- */
-function formatPhone(phone: string): string {
-  const cleaned = phone.replace(/\s/g, "");
-  if (cleaned.startsWith("+39")) {
-    return cleaned;
-  }
-  if (cleaned.startsWith("39")) {
-    return `+${cleaned}`;
-  }
-  return `+39${cleaned}`;
 }

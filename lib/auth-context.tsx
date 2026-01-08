@@ -25,6 +25,8 @@ import {
   getVault,
   updateVault,
   addToVault,
+  saveToken,
+  saveUser,
   type AuthUser,
   type AuthResponse,
   type VaultResponse,
@@ -33,9 +35,20 @@ import {
 import type { VaultEntry } from "./auth-types";
 import { generateEntryId } from "./auth-types";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 // ============================================================================
 // TYPES
 // ============================================================================
+
+export interface AuthenticateResponse {
+  success: boolean;
+  token?: string;
+  user?: AuthUser;
+  isNewUser?: boolean;
+  hasVaultEntries?: boolean;
+  error?: string;
+}
 
 interface AuthContextValue {
   // State
@@ -48,6 +61,10 @@ interface AuthContextValue {
   isVaultLoading: boolean;
 
   // Auth actions
+  authenticate: (
+    phone: string,
+    password: string
+  ) => Promise<AuthenticateResponse>;
   login: (phone: string, password: string) => Promise<AuthResponse>;
   register: (phone: string, password: string) => Promise<AuthResponse>;
   logout: () => void;
@@ -59,6 +76,24 @@ interface AuthContextValue {
 
   // Utility
   refreshAuth: () => Promise<void>;
+}
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+/**
+ * Format phone number to +39 format
+ */
+function formatPhone(phone: string): string {
+  const cleaned = phone.replace(/\s/g, "");
+  if (cleaned.startsWith("+39")) {
+    return cleaned;
+  }
+  if (cleaned.startsWith("39")) {
+    return `+${cleaned}`;
+  }
+  return `+39${cleaned}`;
 }
 
 // ============================================================================
@@ -128,6 +163,49 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // AUTH ACTIONS
   // ============================================================================
 
+  /**
+   * Unified authenticate - handles both login and registration
+   *
+   * - If phone exists → login (verify password)
+   * - If phone doesn't exist → register (create user)
+   *
+   * Returns isNewUser and hasVaultEntries for smart redirect
+   */
+  const authenticate = useCallback(
+    async (phone: string, password: string): Promise<AuthenticateResponse> => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/authenticate`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            phone_number: formatPhone(phone),
+            password,
+          }),
+        });
+
+        const data: AuthenticateResponse = await response.json();
+
+        if (data.success && data.token && data.user) {
+          saveToken(data.token);
+          saveUser(data.user);
+          setUser(data.user);
+          setIsAuthenticated(true);
+        }
+
+        return data;
+      } catch (error) {
+        console.error("[Auth] Authenticate error:", error);
+        return {
+          success: false,
+          error: "Errore di connessione. Riprova più tardi.",
+        };
+      }
+    },
+    []
+  );
+
   const login = useCallback(
     async (phone: string, password: string): Promise<AuthResponse> => {
       const response = await authLogin(phone, password);
@@ -193,7 +271,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (response.success) {
         // Convert API entries to VaultEntry format
         const entries: VaultEntry[] = response.entries.map(
-          (e: VaultEntryAPI, index: number) => ({
+          (e: VaultEntryAPI) => ({
             id: generateEntryId(),
             valueData: e.valueData,
             nameLabel: e.nameLabel || undefined,
@@ -243,6 +321,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isLoading,
     vaultEntries,
     isVaultLoading,
+    authenticate,
     login,
     register,
     logout,

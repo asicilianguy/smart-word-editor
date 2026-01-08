@@ -29,7 +29,7 @@ export function VaultSidebar({
   error,
   onAddEntry,
   onRefresh,
-  onLoginClick,
+  onAuthClick,
   onManageVaultClick,
 }: VaultSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -169,7 +169,7 @@ export function VaultSidebar({
         <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
           {/* Non autenticato */}
           {!isAuthenticated && (
-            <NotAuthenticatedState onLoginClick={onLoginClick} />
+            <NotAuthenticatedState onAuthClick={onAuthClick} />
           )}
 
           {/* Autenticato ma errore */}

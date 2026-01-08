@@ -9,8 +9,7 @@ import {
   Coins,
   AlertTriangle,
   Lock,
-  UserPlus,
-  LogIn,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,8 +37,7 @@ interface DownloadDialogProps {
   onDownload: (fileName: string, format: DownloadFormat) => Promise<void>;
   isLoading?: boolean;
   isAuthenticated?: boolean;
-  onRegisterClick?: () => void;
-  onLoginClick?: () => void;
+  onAuthClick?: () => void;
 }
 
 interface TokenInfo {
@@ -89,8 +87,7 @@ export function DownloadDialog({
   onDownload,
   isLoading = false,
   isAuthenticated = false,
-  onRegisterClick,
-  onLoginClick,
+  onAuthClick,
 }: DownloadDialogProps) {
   const [fileName, setFileName] = useState("");
   const [format, setFormat] = useState<DownloadFormat>("docx");
@@ -199,12 +196,7 @@ export function DownloadDialog({
 
         <div className="space-y-4 py-2">
           {/* Auth required banner - se non autenticato */}
-          {!isAuthenticated && (
-            <AuthRequiredBanner
-              onRegisterClick={onRegisterClick}
-              onLoginClick={onLoginClick}
-            />
-          )}
+          {!isAuthenticated && <AuthRequiredBanner onAuthClick={onAuthClick} />}
 
           {/* Token status - solo se autenticato */}
           {isAuthenticated && <TokenStatusBanner tokenInfo={tokenInfo} />}
@@ -295,12 +287,12 @@ export function DownloadDialog({
             </Button>
           ) : (
             <Button
-              onClick={onRegisterClick}
+              onClick={onAuthClick}
               size="sm"
               className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
             >
-              <UserPlus className="mr-2 h-4 w-4" />
-              Registrati per scaricare
+              Accedi per scaricare
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           )}
         </DialogFooter>
@@ -313,13 +305,7 @@ export function DownloadDialog({
 // AUTH REQUIRED BANNER
 // ============================================================================
 
-function AuthRequiredBanner({
-  onRegisterClick,
-  onLoginClick,
-}: {
-  onRegisterClick?: () => void;
-  onLoginClick?: () => void;
-}) {
+function AuthRequiredBanner({ onAuthClick }: { onAuthClick?: () => void }) {
   return (
     <div className="rounded-lg border border-[var(--brand-primary)]/30 bg-[var(--brand-primary-subtle)] p-4">
       <div className="flex items-start gap-3">
@@ -327,31 +313,19 @@ function AuthRequiredBanner({
           <Lock className="h-5 w-5 text-[var(--brand-primary)]" />
         </div>
         <div className="flex-1">
-          <h4 className="font-medium text-sm mb-1">Registrati per scaricare</h4>
+          <h4 className="font-medium text-sm mb-1">Accedi per scaricare</h4>
           <p className="text-xs text-muted-foreground mb-3">
-            Crea un account gratuito per scaricare il documento compilato.
+            Accedi o crea un account gratuito per scaricare il documento
+            compilato.
           </p>
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              onClick={onRegisterClick}
-              className="h-8 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
-            >
-              <UserPlus className="h-3.5 w-3.5 mr-1.5" />
-              Registrati
-            </Button>
-            {onLoginClick && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={onLoginClick}
-                className="h-8 text-xs"
-              >
-                <LogIn className="h-3.5 w-3.5 mr-1.5" />
-                Hai già un account?
-              </Button>
-            )}
-          </div>
+          <Button
+            size="sm"
+            onClick={onAuthClick}
+            className="h-8 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+          >
+            Continua
+            <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+          </Button>
         </div>
       </div>
     </div>

@@ -21,7 +21,6 @@ export interface VaultSidebarProps {
   demoEntriesCount?: number;
   onAddEntry?: (entry: VaultEntryCreate) => Promise<boolean>;
   onRefresh?: () => Promise<void>;
-  onLoginClick?: () => void;
-  onRegisterClick?: () => void;
+  onAuthClick?: () => void;  // Unificato
   onManageVaultClick?: () => void;
 }

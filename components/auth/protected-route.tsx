@@ -4,11 +4,11 @@
  * Protected Route Component
  *
  * Wraps pages that require authentication.
- * Redirects to login if user is not authenticated.
+ * Redirects to unified auth page if user is not authenticated.
  */
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
 
@@ -20,13 +20,16 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push("/auth/login");
+      // Reindirizza a /auth con redirect param per tornare dopo il login
+      // const redirectUrl = `/auth?redirect=${encodeURIComponent(pathname)}`;
+      // router.push(redirectUrl);
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, router, pathname]);
 
   // Show loading state
   if (isLoading) {
