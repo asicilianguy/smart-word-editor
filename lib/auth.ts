@@ -135,17 +135,51 @@ export function isAuthenticated(): boolean {
   }
 }
 
+// ============================================================================
+// LOCALE MANAGEMENT
+// ============================================================================
+
+const LOCALE_COOKIE = "NEXT_LOCALE";
+const DEFAULT_LOCALE = "it";
+
+/**
+ * Get current locale from cookie (client-side)
+ * Falls back to "it" if not set or on server-side
+ */
+export function getCurrentLocale(): string {
+  if (typeof document === "undefined") return DEFAULT_LOCALE;
+
+  const match = document.cookie.match(new RegExp(`${LOCALE_COOKIE}=([^;]+)`));
+  return match?.[1] || DEFAULT_LOCALE;
+}
+
+// ============================================================================
+// AUTH HEADERS
+// ============================================================================
+
 /**
  * Get auth headers for API requests
+ * Includes JWT token (if present) and current locale
  */
 export function getAuthHeaders(): HeadersInit {
   const token = getToken();
-  if (token) {
-    return {
-      Authorization: `Bearer ${token}`,
-    };
-  }
-  return {};
+  const locale = getCurrentLocale();
+
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    "X-Locale": locale,
+  };
+}
+
+/**
+ * Get headers for public API requests (no auth required)
+ * Includes Content-Type and current locale
+ */
+export function getPublicHeaders(): HeadersInit {
+  return {
+    "Content-Type": "application/json",
+    "X-Locale": getCurrentLocale(),
+  };
 }
 
 // ============================================================================
@@ -185,9 +219,7 @@ export async function authenticate(
   try {
     const response = await fetch(`${API_BASE_URL}/api/auth/authenticate`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getPublicHeaders(),
       body: JSON.stringify({
         phone_number: formatPhone(phone),
         password,
@@ -222,9 +254,7 @@ export async function register(
   try {
     const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getPublicHeaders(),
       body: JSON.stringify({
         phone_number: formatPhone(phone),
         password,
@@ -259,9 +289,7 @@ export async function login(
   try {
     const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getPublicHeaders(),
       body: JSON.stringify({
         phone_number: formatPhone(phone),
         password,

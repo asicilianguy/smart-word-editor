@@ -97,7 +97,7 @@ export function EntryRow({
       {/* Content - VALORE in evidenza */}
       <div className="flex-1 min-w-0 space-y-0.5">
         {/* VALORE - il dato principale, in grassetto */}
-        <p className="font-semibold text-sm break-words">{entry.value}</p>
+        <p className="font-semibold text-sm wrap-break-word">{entry.value}</p>
 
         {/* ETICHETTA - secondaria, più piccola */}
         {entry.label && (

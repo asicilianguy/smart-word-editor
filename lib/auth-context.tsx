@@ -27,6 +27,7 @@ import {
   addToVault,
   saveToken,
   saveUser,
+  getPublicHeaders,
   type AuthUser,
   type AuthResponse,
   type VaultResponse,
@@ -87,13 +88,8 @@ interface AuthContextValue {
  */
 function formatPhone(phone: string): string {
   const cleaned = phone.replace(/\s/g, "");
-  if (cleaned.startsWith("+39")) {
-    return cleaned;
-  }
-  if (cleaned.startsWith("39")) {
-    return `+${cleaned}`;
-  }
-  return `+39${cleaned}`;
+
+  return `${cleaned}`;
 }
 
 // ============================================================================
@@ -176,9 +172,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         const response = await fetch(`${API_BASE_URL}/api/auth/authenticate`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: getPublicHeaders(),
           body: JSON.stringify({
             phone_number: formatPhone(phone),
             password,

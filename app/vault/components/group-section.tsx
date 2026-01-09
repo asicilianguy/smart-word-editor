@@ -47,7 +47,7 @@ export function GroupSection({
       className={cn(
         "rounded-xl border overflow-hidden transition-all duration-200",
         isOver && isDraggingFromOtherGroup
-          ? "border-(--brand-primary) bg-(--brand-primary)/5 ring-2 ring-[var(--brand-primary)]/20"
+          ? "border-(--brand-primary) bg-(--brand-primary)/5 ring-2 ring-(--brand-primary)/20"
           : "border-border bg-card"
       )}
     >
