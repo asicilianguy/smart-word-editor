@@ -204,7 +204,7 @@ export function EditEntryDialog({
             <Button
               type="submit"
               disabled={isSubmitting || !formData.valueData.trim()}
-              className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
+              className="bg-(--brand-primary) hover:bg-(--brand-primary-hover)"
             >
               {isSubmitting ? (
                 <>

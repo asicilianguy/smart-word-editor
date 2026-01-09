@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 import {
   X,
   Loader2,
@@ -43,6 +44,8 @@ export function DocumentUploadPreviewDialog({
   file,
   onContinue,
 }: DocumentUploadPreviewDialogProps) {
+  const t = useTranslations("editor.uploadPreview");
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
@@ -116,7 +119,8 @@ export function DocumentUploadPreviewDialog({
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.detail || `Errore server: ${response.statusText}`
+          errorData.detail ||
+            t("errors.serverError", { status: response.statusText })
         );
       }
 
@@ -129,9 +133,7 @@ export function DocumentUploadPreviewDialog({
     } catch (err) {
       console.error("Preview generation error:", err);
       setError(
-        err instanceof Error
-          ? err.message
-          : "Errore durante la generazione dell'anteprima"
+        err instanceof Error ? err.message : t("errors.generationFailed")
       );
     } finally {
       setIsLoading(false);
@@ -153,8 +155,6 @@ export function DocumentUploadPreviewDialog({
   };
 
   const getPdfUrl = (baseUrl: string) => {
-    // Fit: adatta il documento al contenitore
-    // L'utente può zoomare con touchpad/scroll
     const params = [
       "toolbar=0",
       "navpanes=0",
@@ -166,7 +166,6 @@ export function DocumentUploadPreviewDialog({
   };
 
   const handleContinue = () => {
-    // Salva preferenza se selezionata
     if (dontShowAgain && typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEY, "true");
     }
@@ -192,11 +191,10 @@ export function DocumentUploadPreviewDialog({
               <Eye className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold">Pronto per iniziare!</h2>
+              <h2 className="text-lg font-semibold">{t("title")}</h2>
               {previewData && (
                 <p className="text-sm text-muted-foreground">
-                  {previewData.file_name} · {totalPages} pagin
-                  {totalPages === 1 ? "a" : "e"}
+                  {previewData.file_name} · {t("pages", { count: totalPages })}
                 </p>
               )}
             </div>
@@ -228,7 +226,7 @@ export function DocumentUploadPreviewDialog({
                     key={currentPage}
                     src={getPdfUrl(pdfUrl)}
                     className="w-full h-full border-0 rounded-lg shadow-lg bg-white"
-                    title="Anteprima documento"
+                    title={t("iframeTitle")}
                   />
                 </div>
               ) : null}
@@ -270,13 +268,13 @@ export function DocumentUploadPreviewDialog({
               {/* Success banner */}
               <div className="bg-(--brand-primary) text-white rounded-xl p-4 mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                  <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
                     <CheckCircle2 className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="font-semibold">Documento caricato!</p>
+                    <p className="font-semibold">{t("success.title")}</p>
                     <p className="text-sm text-white/90">
-                      Il file è stato processato correttamente
+                      {t("success.description")}
                     </p>
                   </div>
                 </div>
@@ -285,56 +283,51 @@ export function DocumentUploadPreviewDialog({
               {/* Tutorial title */}
               <div className="mb-5">
                 <h3 className="text-base font-semibold flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-[var(--brand-primary)]" />
-                  Come funziona
+                  <Sparkles className="h-4 w-4 text-(--brand-primary)" />
+                  {t("tutorial.title")}
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Ecco cosa puoi fare nell'editor
+                  {t("tutorial.subtitle")}
                 </p>
               </div>
 
               {/* Features list */}
               <div className="space-y-4">
-                {/* Feature 1: Inserimento libero */}
                 <FeatureCard
                   icon={<MousePointer2 className="h-4 w-4" />}
                   iconBg="bg-blue-100 text-blue-600"
-                  title="Clicca e scrivi"
-                  description="Clicca in qualsiasi punto del documento e inizia a digitare, esattamente come in Word."
+                  title={t("features.clickAndType.title")}
+                  description={t("features.clickAndType.description")}
                 />
 
-                {/* Feature 2: Inserimento da sidebar */}
                 <FeatureCard
                   icon={<Database className="h-4 w-4" />}
-                  iconBg="bg-[var(--brand-primary-subtle)] text-[var(--brand-primary)]"
-                  title="Inserisci dalla sidebar"
-                  description="Posiziona il cursore e clicca un valore dalla sidebar: verrà inserito automaticamente."
+                  iconBg="bg-(--brand-primary-subtle) text-(--brand-primary)"
+                  title={t("features.insertFromSidebar.title")}
+                  description={t("features.insertFromSidebar.description")}
                 />
 
-                {/* Feature 3: Selezione e sostituzione */}
                 <FeatureCard
                   icon={<Replace className="h-4 w-4" />}
                   iconBg="bg-amber-100 text-amber-600"
-                  title="Seleziona e sostituisci"
-                  description="Seleziona del testo e scrivi per sostituirlo, oppure clicca un valore dalla sidebar per rimpiazzarlo."
+                  title={t("features.selectAndReplace.title")}
+                  description={t("features.selectAndReplace.description")}
                   highlight
                 />
 
-                {/* Feature 4: Salva nella sidebar */}
                 <FeatureCard
                   icon={<PlusCircle className="h-4 w-4" />}
                   iconBg="bg-emerald-100 text-emerald-600"
-                  title="Salva per riutilizzare"
-                  description="Seleziona del testo e aggiungilo alla sidebar con un click: potrai riusarlo in altri documenti."
+                  title={t("features.saveForReuse.title")}
+                  description={t("features.saveForReuse.description")}
                 />
               </div>
 
               {/* Note about simplified view */}
               <div className="mt-6 p-3 bg-muted/50 rounded-lg border border-border/50">
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  <strong className="text-foreground">Nota:</strong> Nell'editor
-                  vedrai una vista semplificata per facilitare le modifiche. Il
-                  documento scaricato manterrà la formattazione originale.
+                  <strong className="text-foreground">{t("note.label")}</strong>{" "}
+                  {t("note.text")}
                 </p>
               </div>
             </div>
@@ -354,23 +347,23 @@ export function DocumentUploadPreviewDialog({
               htmlFor="dontShowAgain"
               className="text-sm text-muted-foreground cursor-pointer select-none"
             >
-              Non mostrare più questa schermata
+              {t("dontShowAgain")}
             </label>
           </div>
 
           {/* Action buttons */}
           <div className="flex items-center gap-3">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Annulla
+              {t("cancel")}
             </Button>
 
             <Button
               onClick={handleContinue}
               disabled={isLoading || !!error}
               size="lg"
-              className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)] px-6"
+              className="bg-(--brand-primary) hover:bg-(--brand-primary-hover) px-6"
             >
-              Inizia a modificare
+              {t("continue")}
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </div>
@@ -407,7 +400,7 @@ function FeatureCard({
       }`}
     >
       <div
-        className={`h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0 ${iconBg}`}
+        className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${iconBg}`}
       >
         {icon}
       </div>
@@ -426,15 +419,17 @@ function FeatureCard({
 // ============================================================================
 
 function LoadingState() {
+  const t = useTranslations("editor.uploadPreview");
+
   return (
     <div className="h-full flex flex-col items-center justify-center gap-4">
-      <div className="h-16 w-16 rounded-2xl bg-[var(--brand-primary-subtle)] border border-[var(--brand-primary)]/20 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-primary)]" />
+      <div className="h-16 w-16 rounded-2xl bg-(--brand-primary-subtle) border border-(--brand-primary)/20 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-(--brand-primary)" />
       </div>
       <div className="text-center">
-        <p className="font-medium">Generazione anteprima...</p>
+        <p className="font-medium">{t("loading.title")}</p>
         <p className="text-sm text-muted-foreground mt-1">
-          Stiamo preparando il tuo documento
+          {t("loading.description")}
         </p>
       </div>
     </div>
@@ -448,20 +443,22 @@ function ErrorState({
   error: string;
   onRetry: () => void;
 }) {
+  const t = useTranslations("editor.uploadPreview");
+
   return (
     <div className="h-full flex flex-col items-center justify-center gap-4 p-8">
       <div className="h-16 w-16 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center">
         <AlertCircle className="h-8 w-8 text-destructive" />
       </div>
       <div className="text-center max-w-md">
-        <p className="font-medium mb-2">Errore generazione anteprima</p>
+        <p className="font-medium mb-2">{t("errors.title")}</p>
         <p className="text-sm text-muted-foreground mb-4">{error}</p>
         <Button
           onClick={onRetry}
-          className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
+          className="bg-(--brand-primary) hover:bg-(--brand-primary-hover)"
         >
           <RotateCcw className="h-4 w-4 mr-2" />
-          Riprova
+          {t("errors.retry")}
         </Button>
       </div>
     </div>

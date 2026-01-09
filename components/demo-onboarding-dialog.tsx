@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,7 @@ export function DemoOnboardingDialog({
   open,
   onOpenChange,
 }: DemoOnboardingDialogProps) {
+  const t = useTranslations("editor.onboarding");
   const [step, setStep] = useState(0);
 
   // Reset step quando si apre
@@ -51,13 +53,13 @@ export function DemoOnboardingDialog({
               <Sparkles className="h-4 w-4 text-white" />
             </div>
             <DialogTitle className="text-xl">
-              {step === 0 ? "Come inserire i dati" : "Come sostituire il testo"}
+              {step === 0 ? t("steps.insert.title") : t("steps.replace.title")}
             </DialogTitle>
           </div>
           <DialogDescription>
             {step === 0
-              ? "Il modo più semplice per compilare un documento"
-              : "Se devi modificare del testo già presente"}
+              ? t("steps.insert.subtitle")
+              : t("steps.replace.subtitle")}
           </DialogDescription>
         </DialogHeader>
 
@@ -66,16 +68,17 @@ export function DemoOnboardingDialog({
           <div className="py-6 space-y-5">
             <div className="bg-muted/50 rounded-lg p-4 border border-border">
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-[var(--brand-primary-subtle)] flex items-center justify-center">
-                  <span className="text-lg font-semibold text-[var(--brand-primary)]">
+                <div className="shrink-0 h-10 w-10 rounded-full bg-(--brand-primary-subtle) flex items-center justify-center">
+                  <span className="text-lg font-semibold text-(--brand-primary)">
                     1
                   </span>
                 </div>
                 <div>
-                  <p className="font-medium mb-1">Clicca dove vuoi scrivere</p>
+                  <p className="font-medium mb-1">
+                    {t("steps.insert.step1.title")}
+                  </p>
                   <p className="text-sm text-muted-foreground">
-                    Posiziona il cursore nel punto del documento dove vuoi
-                    aggiungere il testo
+                    {t("steps.insert.step1.description")}
                   </p>
                 </div>
               </div>
@@ -83,16 +86,17 @@ export function DemoOnboardingDialog({
 
             <div className="bg-muted/50 rounded-lg p-4 border border-border">
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-[var(--brand-primary-subtle)] flex items-center justify-center">
-                  <span className="text-lg font-semibold text-[var(--brand-primary)]">
+                <div className="shrink-0 h-10 w-10 rounded-full bg-(--brand-primary-subtle) flex items-center justify-center">
+                  <span className="text-lg font-semibold text-(--brand-primary)">
                     2
                   </span>
                 </div>
                 <div>
-                  <p className="font-medium mb-1">Inserisci il dato</p>
+                  <p className="font-medium mb-1">
+                    {t("steps.insert.step2.title")}
+                  </p>
                   <p className="text-sm text-muted-foreground">
-                    Scrivi con la tastiera, oppure clicca su un valore dalla
-                    barra a destra per inserirlo automaticamente
+                    {t("steps.insert.step2.description")}
                   </p>
                 </div>
               </div>
@@ -102,12 +106,12 @@ export function DemoOnboardingDialog({
             <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground pt-2">
               <div className="flex items-center gap-1.5 bg-card px-3 py-1.5 rounded-md border">
                 <MousePointer2 className="h-4 w-4" />
-                <span>Clicca</span>
+                <span>{t("steps.insert.hint.click")}</span>
               </div>
               <ArrowRight className="h-4 w-4" />
               <div className="flex items-center gap-1.5 bg-card px-3 py-1.5 rounded-md border">
                 <Type className="h-4 w-4" />
-                <span>Scrivi o scegli</span>
+                <span>{t("steps.insert.hint.write")}</span>
               </div>
             </div>
           </div>
@@ -118,18 +122,17 @@ export function DemoOnboardingDialog({
           <div className="py-6 space-y-5">
             <div className="bg-muted/50 rounded-lg p-4 border border-border">
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
+                <div className="shrink-0 h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
                   <span className="text-lg font-semibold text-amber-700">
                     1
                   </span>
                 </div>
                 <div>
                   <p className="font-medium mb-1">
-                    Seleziona il testo da cambiare
+                    {t("steps.replace.step1.title")}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Clicca e trascina con il mouse per evidenziare il testo che
-                    vuoi sostituire
+                    {t("steps.replace.step1.description")}
                   </p>
                 </div>
               </div>
@@ -137,16 +140,17 @@ export function DemoOnboardingDialog({
 
             <div className="bg-muted/50 rounded-lg p-4 border border-border">
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
+                <div className="shrink-0 h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
                   <span className="text-lg font-semibold text-amber-700">
                     2
                   </span>
                 </div>
                 <div>
-                  <p className="font-medium mb-1">Sostituisci</p>
+                  <p className="font-medium mb-1">
+                    {t("steps.replace.step2.title")}
+                  </p>
                   <p className="text-sm text-muted-foreground">
-                    Scrivi il nuovo testo, oppure clicca un valore dalla barra a
-                    destra per sostituirlo
+                    {t("steps.replace.step2.description")}
                   </p>
                 </div>
               </div>
@@ -156,12 +160,12 @@ export function DemoOnboardingDialog({
             <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground pt-2">
               <div className="flex items-center gap-1.5 bg-amber-50 text-amber-800 px-3 py-1.5 rounded-md border border-amber-200">
                 <MousePointer2 className="h-4 w-4" />
-                <span>Seleziona</span>
+                <span>{t("steps.replace.hint.select")}</span>
               </div>
               <ArrowRight className="h-4 w-4" />
               <div className="flex items-center gap-1.5 bg-amber-50 text-amber-800 px-3 py-1.5 rounded-md border border-amber-200">
                 <Type className="h-4 w-4" />
-                <span>Sostituisci</span>
+                <span>{t("steps.replace.hint.replace")}</span>
               </div>
             </div>
           </div>
@@ -186,14 +190,14 @@ export function DemoOnboardingDialog({
 
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={handleSkip}>
-              Salta
+              {t("skip")}
             </Button>
             <Button
               size="sm"
               onClick={handleNext}
-              className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
+              className="bg-(--brand-primary) hover:bg-(--brand-primary-hover)"
             >
-              {step === 1 ? "Ho capito!" : "Avanti"}
+              {step === 1 ? t("gotIt") : t("next")}
             </Button>
           </div>
         </DialogFooter>

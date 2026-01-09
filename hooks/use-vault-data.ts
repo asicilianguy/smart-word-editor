@@ -7,10 +7,11 @@
  * - Se utente autenticato: carica dati dall'API
  * - Se utente NON autenticato: mostra dati DEMO interattivi in memoria locale
  *
- * UPDATED: Supporto completo per demo mode con dati mock modificabili
+ * UPDATED: Supporto completo per demo mode con dati mock modificabili + i18n
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import type { VaultCategory } from "@/lib/document-types";
 import {
   getVaultEntries,
@@ -54,87 +55,121 @@ interface UseVaultDataResult {
 }
 
 // ============================================================================
-// DEMO DATA
-// Le demo entries usano ID che iniziano con "demo-" per identificarle
-// source è undefined per evitare conflitti di tipo
+// DEMO DATA CONFIGURATION
+// Le demo entries usano chiavi di traduzione per label
+// nameGroup resta in italiano perché è il valore usato per raggruppare
 // ============================================================================
 
-const DEMO_ENTRIES: VaultEntryBackend[] = [
+interface DemoEntryConfig {
+  id: string;
+  valueData: string;
+  labelKey: string;
+  nameGroup: string;
+}
+
+const DEMO_ENTRY_CONFIGS: DemoEntryConfig[] = [
   // Dati Identificativi
   {
     id: "demo-1",
     valueData: "Rossi S.r.l.",
-    nameLabel: "Ragione Sociale",
+    labelKey: "companyName",
     nameGroup: "Dati Identificativi",
   },
   {
     id: "demo-2",
     valueData: "IT01234567890",
-    nameLabel: "Partita IVA",
+    labelKey: "vatNumber",
     nameGroup: "Dati Identificativi",
   },
   {
     id: "demo-3",
     valueData: "RSSMRA80A01H501Z",
-    nameLabel: "Codice Fiscale",
+    labelKey: "taxCode",
     nameGroup: "Dati Identificativi",
   },
   // Persone
   {
     id: "demo-4",
     valueData: "Mario Rossi",
-    nameLabel: "Legale Rappresentante",
+    labelKey: "legalRepresentative",
     nameGroup: "Persone",
   },
   // Contatti
   {
     id: "demo-5",
     valueData: "info@rossisrl.it",
-    nameLabel: "Email",
+    labelKey: "email",
     nameGroup: "Contatti",
   },
   {
     id: "demo-6",
     valueData: "rossisrl@pec.it",
-    nameLabel: "PEC",
+    labelKey: "pec",
     nameGroup: "Contatti",
   },
   {
     id: "demo-7",
     valueData: "+39 02 1234567",
-    nameLabel: "Telefono",
+    labelKey: "phone",
     nameGroup: "Contatti",
   },
   // Indirizzi
   {
     id: "demo-8",
     valueData: "Via Roma 123, 20100 Milano (MI)",
-    nameLabel: "Sede Legale",
+    labelKey: "registeredOffice",
     nameGroup: "Indirizzi",
   },
   // Coordinate Bancarie
   {
     id: "demo-9",
     valueData: "IT60X0542811101000000123456",
-    nameLabel: "IBAN",
+    labelKey: "iban",
     nameGroup: "Coordinate Bancarie",
   },
 ];
 
 // ============================================================================
+// GROUP TRANSLATION MAPPING
+// Mappa da nome gruppo italiano a chiave di traduzione
+// ============================================================================
+
+const GROUP_NAME_TO_KEY: Record<string, string> = {
+  "Dati Identificativi": "identification",
+  Persone: "people",
+  Contatti: "contacts",
+  Indirizzi: "addresses",
+  "Coordinate Bancarie": "banking",
+  "Dati Professionali": "professional",
+  Certificazioni: "certifications",
+  "Altri dati": "other",
+};
+
+// ============================================================================
 // CONSTANTS
 // ============================================================================
 
-const DEFAULT_GROUPS: Record<string, { name: string; icon: string }> = {
-  "Dati Identificativi": { name: "Dati Identificativi", icon: "building" },
-  Persone: { name: "Persone", icon: "users" },
-  Contatti: { name: "Contatti", icon: "mail" },
-  Indirizzi: { name: "Indirizzi", icon: "map-pin" },
-  "Coordinate Bancarie": { name: "Coordinate Bancarie", icon: "landmark" },
-  "Dati Professionali": { name: "Dati Professionali", icon: "briefcase" },
-  Certificazioni: { name: "Certificazioni", icon: "award" },
-  "Altri dati": { name: "Altri dati", icon: "file-text" },
+const DEFAULT_GROUPS: Record<string, { icon: string }> = {
+  "Dati Identificativi": { icon: "building" },
+  Persone: { icon: "users" },
+  Contatti: { icon: "mail" },
+  Indirizzi: { icon: "map-pin" },
+  "Coordinate Bancarie": { icon: "landmark" },
+  "Dati Professionali": { icon: "briefcase" },
+  Certificazioni: { icon: "award" },
+  "Altri dati": { icon: "file-text" },
 };
+
+const PREFERRED_ORDER = [
+  "Dati Identificativi",
+  "Persone",
+  "Contatti",
+  "Indirizzi",
+  "Coordinate Bancarie",
+  "Dati Professionali",
+  "Certificazioni",
+  "Altri dati",
+];
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -157,7 +192,10 @@ function isUserDemoEntry(id: string): boolean {
 /**
  * Trasforma le entries flat del backend in categorie per la sidebar
  */
-function transformToCategories(entries: VaultEntryBackend[]): VaultCategory[] {
+function transformToCategories(
+  entries: VaultEntryBackend[],
+  translateGroup: (groupName: string) => string
+): VaultCategory[] {
   const grouped: Record<string, VaultEntryBackend[]> = {};
 
   for (const entry of entries) {
@@ -170,26 +208,12 @@ function transformToCategories(entries: VaultEntryBackend[]): VaultCategory[] {
 
   const categories: VaultCategory[] = [];
 
-  const preferredOrder = [
-    "Dati Identificativi",
-    "Persone",
-    "Contatti",
-    "Indirizzi",
-    "Coordinate Bancarie",
-    "Dati Professionali",
-    "Certificazioni",
-    "Altri dati",
-  ];
-
-  for (const groupName of preferredOrder) {
+  for (const groupName of PREFERRED_ORDER) {
     if (grouped[groupName]) {
-      const groupInfo = DEFAULT_GROUPS[groupName] || {
-        name: groupName,
-        icon: "file-text",
-      };
+      const groupInfo = DEFAULT_GROUPS[groupName] || { icon: "file-text" };
       categories.push({
         id: groupName.toLowerCase().replace(/\s+/g, "-"),
-        name: groupInfo.name,
+        name: translateGroup(groupName),
         icon: groupInfo.icon,
         values: grouped[groupName].map((entry) => ({
           id: entry.id,
@@ -201,10 +225,11 @@ function transformToCategories(entries: VaultEntryBackend[]): VaultCategory[] {
     }
   }
 
+  // Gruppi custom non nell'ordine predefinito
   for (const [groupName, groupEntries] of Object.entries(grouped)) {
     categories.push({
       id: groupName.toLowerCase().replace(/\s+/g, "-"),
-      name: groupName,
+      name: translateGroup(groupName),
       icon: "file-text",
       values: groupEntries.map((entry) => ({
         id: entry.id,
@@ -230,11 +255,38 @@ function checkAuthenticated(): boolean {
 // ============================================================================
 
 export function useVaultData(): UseVaultDataResult {
+  const tGroups = useTranslations("sidebar.constants.groups");
+  const tLabels = useTranslations("sidebar.vaultData.demoLabels");
+  const tErrors = useTranslations("sidebar.vaultData.errors");
+
   const [rawEntries, setRawEntries] = useState<VaultEntryBackend[]>([]);
   const [demoEntries, setDemoEntries] = useState<VaultEntryBackend[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Crea le demo entries tradotte
+   */
+  const translatedDemoEntries = useMemo((): VaultEntryBackend[] => {
+    return DEMO_ENTRY_CONFIGS.map((config) => ({
+      id: config.id,
+      valueData: config.valueData,
+      nameLabel: tLabels(config.labelKey),
+      nameGroup: config.nameGroup,
+    }));
+  }, [tLabels]);
+
+  /**
+   * Funzione per tradurre i nomi dei gruppi
+   */
+  const translateGroup = useCallback(
+    (groupName: string): string => {
+      const key = GROUP_NAME_TO_KEY[groupName];
+      return key ? tGroups(key) : groupName;
+    },
+    [tGroups]
+  );
 
   /**
    * Carica i dati vault dall'API o inizializza demo
@@ -250,7 +302,9 @@ export function useVaultData(): UseVaultDataResult {
     if (!authenticated) {
       setRawEntries([]);
       // Inizializza demo entries solo se vuote
-      setDemoEntries((prev) => (prev.length === 0 ? [...DEMO_ENTRIES] : prev));
+      setDemoEntries((prev) =>
+        prev.length === 0 ? [...translatedDemoEntries] : prev
+      );
       setIsLoading(false);
       return;
     }
@@ -271,11 +325,11 @@ export function useVaultData(): UseVaultDataResult {
     } catch (err) {
       console.error("[useVaultData] Load failed:", err);
       setRawEntries([]);
-      setError("Errore nel caricamento dei dati");
+      setError(tErrors("loadFailed"));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [translatedDemoEntries, tErrors]);
 
   useEffect(() => {
     loadVaultData();
@@ -308,7 +362,7 @@ export function useVaultData(): UseVaultDataResult {
         const response = await createVaultEntry(entry);
 
         if (!response.success) {
-          setError(response.error || "Errore nell'aggiunta");
+          setError(response.error || tErrors("addFailed"));
           return false;
         }
 
@@ -319,11 +373,11 @@ export function useVaultData(): UseVaultDataResult {
         return true;
       } catch (err) {
         console.error("[useVaultData] Add failed:", err);
-        setError("Errore nell'aggiunta del dato");
+        setError(tErrors("addFailed"));
         return false;
       }
     },
-    []
+    [tErrors]
   );
 
   /**
@@ -348,7 +402,7 @@ export function useVaultData(): UseVaultDataResult {
         const response = await updateVaultEntry(entryId, updates);
 
         if (!response.success) {
-          setError(response.error || "Errore nell'aggiornamento");
+          setError(response.error || tErrors("updateFailed"));
           return false;
         }
 
@@ -364,11 +418,11 @@ export function useVaultData(): UseVaultDataResult {
         return true;
       } catch (err) {
         console.error("[useVaultData] Update failed:", err);
-        setError("Errore nell'aggiornamento del dato");
+        setError(tErrors("updateFailed"));
         return false;
       }
     },
-    []
+    [tErrors]
   );
 
   /**
@@ -389,7 +443,7 @@ export function useVaultData(): UseVaultDataResult {
         const response = await deleteVaultEntry(entryId);
 
         if (!response.success) {
-          setError(response.error || "Errore nell'eliminazione");
+          setError(response.error || tErrors("deleteFailed"));
           return false;
         }
 
@@ -398,17 +452,20 @@ export function useVaultData(): UseVaultDataResult {
         return true;
       } catch (err) {
         console.error("[useVaultData] Delete failed:", err);
-        setError("Errore nell'eliminazione del dato");
+        setError(tErrors("deleteFailed"));
         return false;
       }
     },
-    []
+    [tErrors]
   );
 
   // Calcola le categorie da visualizzare
   const isDemo = !isAuthenticated;
   const activeEntries = isDemo ? demoEntries : rawEntries;
-  const categories = transformToCategories(activeEntries);
+  const categories = useMemo(
+    () => transformToCategories(activeEntries, translateGroup),
+    [activeEntries, translateGroup]
+  );
   const totalEntries = activeEntries.length;
   const isEmpty = isAuthenticated && rawEntries.length === 0 && !isLoading;
 

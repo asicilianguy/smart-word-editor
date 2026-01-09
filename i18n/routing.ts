@@ -1,10 +1,9 @@
 import { defineRouting } from "next-intl/routing";
 import { locales, defaultLocale } from "./config";
 
+// Manteniamo per compatibilità, ma non usiamo il routing basato su URL
 export const routing = defineRouting({
   locales,
   defaultLocale,
-  localePrefix: "as-needed",
+  localePrefix: "never", // MAI aggiungere prefisso URL
 });
-
-// Non esportiamo più createNavigation poiché usiamo gli hook standard di Next.js

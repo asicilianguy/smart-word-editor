@@ -40,12 +40,12 @@ export function PreviewInfoBanner({ className }: PreviewInfoBannerProps) {
   return (
     <div
       className={cn(
-        "bg-[var(--brand-primary-subtle)] border-b border-[var(--brand-primary)]/20",
+        "bg-(--brand-primary-subtle) border-b border-(--brand-primary)/20",
         className
       )}
     >
       <div className="px-4 py-2 flex items-center justify-center gap-3">
-        <Info className="h-4 w-4 text-[var(--brand-primary)] shrink-0" />
+        <Info className="h-4 w-4 text-(--brand-primary) shrink-0" />
         <p className="text-sm text-[var(--brand-primary-hover)]">
           <span className="font-medium">Vista semplificata</span>
           <span className="hidden sm:inline">
@@ -57,7 +57,7 @@ export function PreviewInfoBanner({ className }: PreviewInfoBannerProps) {
         </p>
         <button
           onClick={handleDismiss}
-          className="ml-auto p-1 rounded-md hover:bg-(--brand-primary)/10 text-[var(--brand-primary)] transition-colors"
+          className="ml-auto p-1 rounded-md hover:bg-(--brand-primary)/10 text-(--brand-primary) transition-colors"
           aria-label="Chiudi banner"
         >
           <X className="h-4 w-4" />

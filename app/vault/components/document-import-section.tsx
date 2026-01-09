@@ -347,7 +347,7 @@ export function DocumentImportSection({
           <button className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors text-left">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-lg bg-(--brand-primary)/10 flex items-center justify-center">
-                <Wand2 className="h-5 w-5 text-[var(--brand-primary)]" />
+                <Wand2 className="h-5 w-5 text-(--brand-primary)" />
               </div>
               <div>
                 <h3 className="font-medium">Importa da documenti</h3>
@@ -358,7 +358,7 @@ export function DocumentImportSection({
             </div>
             <div className="flex items-center gap-3">
               {hasFiles && !isOpen && (
-                <span className="text-xs px-2 py-1 rounded-full bg-(--brand-primary)/10 text-[var(--brand-primary)]">
+                <span className="text-xs px-2 py-1 rounded-full bg-(--brand-primary)/10 text-(--brand-primary)">
                   {uploadedFiles.length} file
                 </span>
               )}
@@ -400,8 +400,8 @@ export function DocumentImportSection({
                   className={cn(
                     "relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
                     isDragOver
-                      ? "border-[var(--brand-primary)] bg-(--brand-primary)/5"
-                      : "border-muted-foreground/25 hover:border-[var(--brand-primary)]/50 hover:bg-muted/50",
+                      ? "border-(--brand-primary) bg-(--brand-primary)/5"
+                      : "border-muted-foreground/25 hover:border-(--brand-primary)/50 hover:bg-muted/50",
                     isExtracting && "pointer-events-none opacity-50"
                   )}
                 >
@@ -426,7 +426,7 @@ export function DocumentImportSection({
                         className={cn(
                           "h-5 w-5",
                           isDragOver
-                            ? "text-[var(--brand-primary)]"
+                            ? "text-(--brand-primary)"
                             : "text-muted-foreground"
                         )}
                       />
@@ -440,7 +440,7 @@ export function DocumentImportSection({
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         oppure{" "}
-                        <span className="text-[var(--brand-primary)]">
+                        <span className="text-(--brand-primary)">
                           clicca per sfogliare
                         </span>
                       </p>
@@ -519,7 +519,7 @@ export function DocumentImportSection({
                         <p className="text-xs text-muted-foreground">
                           {formatSize(uploadedFile.size)}
                           {uploadedFile.status === "processing" && (
-                            <span className="ml-2 text-[var(--brand-primary)]">
+                            <span className="ml-2 text-(--brand-primary)">
                               Elaborazione...
                             </span>
                           )}
@@ -536,7 +536,7 @@ export function DocumentImportSection({
                         </p>
                       </div>
                       {uploadedFile.status === "processing" ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-[var(--brand-primary)]" />
+                        <Loader2 className="h-4 w-4 animate-spin text-(--brand-primary)" />
                       ) : uploadedFile.status === "done" ? (
                         <CheckCircle2 className="h-4 w-4 text-green-500" />
                       ) : (
@@ -628,7 +628,7 @@ export function DocumentImportSection({
                 <Button
                   onClick={handleExtract}
                   disabled={!canExtract}
-                  className="w-full bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
+                  className="w-full bg-(--brand-primary) hover:bg-(--brand-primary-hover)"
                 >
                   {isExtracting ? (
                     <>

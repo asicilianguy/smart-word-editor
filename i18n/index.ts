@@ -1,10 +1,11 @@
 /**
  * i18n Module
  *
- * Esporta tutte le funzionalità per l'internazionalizzazione
+ * Approccio: Lingua gestita via cookie, NON via URL
+ * - /editor (non /en/editor)
+ * - Cambio lingua salva cookie + refresh
  */
 
-// Configurazione
 export {
   locales,
   defaultLocale,
@@ -15,5 +16,7 @@ export {
   type Locale,
 } from "./config";
 
-// Routing
 export { routing } from "./routing";
+
+// Cookie name per uso esterno
+export const LOCALE_COOKIE = "NEXT_LOCALE";

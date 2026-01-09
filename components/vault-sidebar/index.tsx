@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Search, Plus, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,8 @@ export function VaultSidebar({
   onAuthClick,
   onManageVaultClick,
 }: VaultSidebarProps) {
+  const t = useTranslations("sidebar");
+
   const [searchQuery, setSearchQuery] = useState("");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [initialValueForDialog, setInitialValueForDialog] = useState<
@@ -98,6 +101,12 @@ export function VaultSidebar({
   const showEmptyAuth = isAuthenticated && !error && isEmpty;
   const showRealData = isAuthenticated && !error && !isEmpty;
 
+  const totalValues = categories.reduce(
+    (acc, cat) => acc + cat.values.length,
+    0
+  );
+  const totalCategories = categories.length;
+
   return (
     <>
       <div
@@ -105,15 +114,15 @@ export function VaultSidebar({
         onMouseDown={handleMouseDown}
       >
         {/* Header - Fixed */}
-        <div className="flex-shrink-0 p-4 border-b border-border bg-card">
+        <div className="shrink-0 p-4 border-b border-border bg-card">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold">
-                {isDemo ? "I tuoi dati" : "Vault"}
+                {isDemo ? t("title.demo") : t("title.default")}
               </h2>
               {isDemo && (
-                <span className="text-[10px] font-medium bg-[var(--brand-primary-subtle)] text-[var(--brand-primary)] px-2 py-0.5 rounded-full">
-                  DEMO
+                <span className="text-[10px] font-medium bg-(--brand-primary-subtle) text-(--brand-primary) px-2 py-0.5 rounded-full">
+                  {t("demoBadge")}
                 </span>
               )}
               {isLoading && (
@@ -128,7 +137,7 @@ export function VaultSidebar({
                 onClick={() => handleOpenAddDialog()}
               >
                 <Plus className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Aggiungi</span>
+                <span className="hidden sm:inline">{t("add")}</span>
               </Button>
             )}
           </div>
@@ -150,7 +159,7 @@ export function VaultSidebar({
             <div className="relative mt-3">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Cerca valori..."
+                placeholder={t("searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -204,14 +213,16 @@ export function VaultSidebar({
 
         {/* Footer - Fixed */}
         {(showDemo || showRealData) && categories.length > 0 && (
-          <div className="flex-shrink-0 p-3 border-t border-border bg-card">
+          <div className="shrink-0 p-3 border-t border-border bg-card">
             <p className="text-xs text-muted-foreground text-center">
-              {categories.reduce((acc, cat) => acc + cat.values.length, 0)}{" "}
-              valori in {categories.length} categorie
+              {t("footer.summary", {
+                values: totalValues,
+                categories: totalCategories,
+              })}
               {isDemo && demoEntriesCount > 0 && (
-                <span className="text-[var(--brand-primary)]">
+                <span className="text-(--brand-primary)">
                   {" "}
-                  · {demoEntriesCount} aggiunti da te
+                  {t("footer.addedByYou", { count: demoEntriesCount })}
                 </span>
               )}
             </p>

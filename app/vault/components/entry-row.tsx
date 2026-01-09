@@ -73,7 +73,7 @@ export function EntryRow({
       className={cn(
         "flex items-start gap-3 px-4 py-3 group bg-card transition-all",
         isDragging &&
-          "opacity-50 shadow-lg rounded-lg border-2 border-[var(--brand-primary)]/50"
+          "opacity-50 shadow-lg rounded-lg border-2 border-(--brand-primary)/50"
       )}
     >
       {/* Drag handle */}
@@ -89,7 +89,7 @@ export function EntryRow({
 
       {/* Icona dato */}
       <div className="pt-0.5">
-        <Database className="h-4 w-4 text-[var(--brand-primary)]" />
+        <Database className="h-4 w-4 text-(--brand-primary)" />
       </div>
 
       {/* Content - VALORE in evidenza */}
@@ -189,8 +189,8 @@ export function EntryRow({
 // Componente per il drag overlay - anche qui valore in evidenza
 export function EntryDragOverlay({ entry }: { entry: VaultEntry }) {
   return (
-    <div className="bg-card border-2 border-[var(--brand-primary)] rounded-lg p-3 shadow-xl flex items-start gap-3">
-      <Database className="h-4 w-4 text-[var(--brand-primary)] shrink-0 mt-0.5" />
+    <div className="bg-card border-2 border-(--brand-primary) rounded-lg p-3 shadow-xl flex items-start gap-3">
+      <Database className="h-4 w-4 text-(--brand-primary) shrink-0 mt-0.5" />
       <div className="min-w-0">
         <p className="font-semibold text-sm">{entry.value}</p>
         {entry.label && (

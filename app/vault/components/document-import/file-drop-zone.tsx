@@ -70,8 +70,8 @@ export function FileDropZone({
       className={cn(
         "relative border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all",
         isDragOver
-          ? "border-[var(--brand-primary)] bg-(--brand-primary)/5 scale-[1.02]"
-          : "border-muted-foreground/25 hover:border-[var(--brand-primary)]/50 hover:bg-muted/50",
+          ? "border-(--brand-primary) bg-(--brand-primary)/5 scale-[1.02]"
+          : "border-muted-foreground/25 hover:border-(--brand-primary)/50 hover:bg-muted/50",
         disabled && "pointer-events-none opacity-50"
       )}
     >
@@ -96,7 +96,7 @@ export function FileDropZone({
             className={cn(
               "h-6 w-6 transition-colors",
               isDragOver
-                ? "text-[var(--brand-primary)]"
+                ? "text-(--brand-primary)"
                 : "text-muted-foreground"
             )}
           />
@@ -108,7 +108,7 @@ export function FileDropZone({
           </p>
           <p className="text-sm text-muted-foreground mt-1">
             oppure{" "}
-            <span className="text-[var(--brand-primary)] font-medium">
+            <span className="text-(--brand-primary) font-medium">
               clicca per sfogliare
             </span>
           </p>

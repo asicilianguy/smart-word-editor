@@ -1,6 +1,38 @@
 {
   "common": {},
-  "auth": {},
+  "auth": {
+    "loading": "Loading...",
+    "welcomeBack": "Welcome back",
+    "subtitle": "Log in or create an account to continue",
+    "phone": "Phone number",
+    "phonePlaceholder": "+1 555 123 4567",
+    "password": "Password",
+    "passwordPlaceholder": "At least 8 characters",
+    "continue": "Continue",
+    "loggingIn": "Logging in...",
+    "autoCreateAccount": "If you don't have an account, we'll create one for you.",
+    "termsPrefix": "By continuing, you agree to our",
+    "termsLink": "Terms of Service",
+    "tryWithoutAccount": "Try without an account",
+    "hero": {
+      "title": "Fill out documents",
+      "titleLine2": "in just a few clicks",
+      "subtitle": "Save your data once, use it forever. No more copy-paste, no more mistakes."
+    },
+    "features": {
+      "preserveLayout": "Preserves layout and formatting",
+      "dataAtHand": "Your data always at your fingertips",
+      "instantDownload": "Instant download in DOCX"
+    },
+    "footer": "© 2024 CompilaloEasy. All rights reserved.",
+    "errors": {
+      "phoneRequired": "Phone number is required",
+      "phoneInvalid": "Please enter a valid phone number",
+      "passwordMin": "At least 8 characters",
+      "authFailed": "Authentication failed",
+      "unexpected": "Unexpected error"
+    }
+  },
   "landing": {
     "header": {
       "alreadyHaveAccount": "Already have an account?",
@@ -37,12 +69,371 @@
       "goToSlide": "Go to slide {number}"
     }
   },
-  "editor": {},
+  "editor": {
+    "onboarding": {
+      "steps": {
+        "insert": {
+          "title": "How to insert data",
+          "subtitle": "The easiest way to fill out a document",
+          "step1": {
+            "title": "Click where you want to write",
+            "description": "Place your cursor at the point in the document where you want to add text"
+          },
+          "step2": {
+            "title": "Insert the data",
+            "description": "Type with your keyboard, or click a value from the sidebar on the right to insert it automatically"
+          },
+          "hint": {
+            "click": "Click",
+            "write": "Type or choose"
+          }
+        },
+        "replace": {
+          "title": "How to replace text",
+          "subtitle": "If you need to modify existing text",
+          "step1": {
+            "title": "Select the text to change",
+            "description": "Click and drag with your mouse to highlight the text you want to replace"
+          },
+          "step2": {
+            "title": "Replace",
+            "description": "Type the new text, or click a value from the sidebar on the right to replace it"
+          },
+          "hint": {
+            "select": "Select",
+            "replace": "Replace"
+          }
+        }
+      },
+      "skip": "Skip",
+      "next": "Next",
+      "gotIt": "Got it!"
+    },
+    "uploadPreview": {
+      "title": "Ready to start!",
+      "pages": "{count, plural, =1 {# page} other {# pages}}",
+      "iframeTitle": "Document preview",
+      "success": {
+        "title": "Document uploaded!",
+        "description": "The file has been processed successfully"
+      },
+      "tutorial": {
+        "title": "How it works",
+        "subtitle": "Here's what you can do in the editor"
+      },
+      "features": {
+        "clickAndType": {
+          "title": "Click and type",
+          "description": "Click anywhere in the document and start typing, just like in Word."
+        },
+        "insertFromSidebar": {
+          "title": "Insert from sidebar",
+          "description": "Place your cursor and click a value from the sidebar: it will be inserted automatically."
+        },
+        "selectAndReplace": {
+          "title": "Select and replace",
+          "description": "Select text and type to replace it, or click a value from the sidebar to swap it."
+        },
+        "saveForReuse": {
+          "title": "Save for reuse",
+          "description": "Select text and add it to the sidebar with one click: you can reuse it in other documents."
+        }
+      },
+      "note": {
+        "label": "Note:",
+        "text": "In the editor you'll see a simplified view for easier editing. The downloaded document will keep its original formatting."
+      },
+      "dontShowAgain": "Don't show this screen again",
+      "cancel": "Cancel",
+      "continue": "Start editing",
+      "loading": {
+        "title": "Generating preview...",
+        "description": "We're preparing your document"
+      },
+      "errors": {
+        "title": "Preview generation error",
+        "retry": "Try again",
+        "serverError": "Server error: {status}",
+        "generationFailed": "Error generating preview"
+      }
+    },
+    "header": {
+      "modifications": "{count, plural, =1 {# change} other {# changes}}",
+      "compare": "Compare",
+      "download": "Download",
+      "myData": "My Data",
+      "login": "Login",
+      "user": "User"
+    },
+    "empty": {
+      "title": "Upload a document",
+      "titleDemo": "Try it now!",
+      "description": "Drag your file here or click to select it.",
+      "descriptionHint": "You can edit it and download it in your preferred format.",
+      "descriptionDemo": "Upload a Word document and use the data on the right to fill it out quickly.",
+      "descriptionDemoHint": "This is a demo, nothing is saved.",
+      "uploadButton": "Select file",
+      "uploadButtonDemo": "Upload test document",
+      "supportedFormats": "Supported formats: DOC, DOCX, ODT, RTF, TXT"
+    },
+    "loading": {
+      "document": "Loading document..."
+    },
+    "error": {
+      "title": "Something went wrong",
+      "retry": "Try again"
+    }
+  },
   "myData": {},
   "import": {},
-  "sidebar": {},
-  "download": {},
-  "compare": {},
+  "sidebar": {
+    "vaultData": {
+      "demoLabels": {
+        "companyName": "Company Name",
+        "vatNumber": "VAT Number",
+        "taxCode": "Tax Code",
+        "legalRepresentative": "Legal Representative",
+        "email": "Email",
+        "pec": "Certified Email (PEC)",
+        "phone": "Phone",
+        "registeredOffice": "Registered Office",
+        "iban": "IBAN"
+      },
+      "errors": {
+        "loadFailed": "Error loading data",
+        "addFailed": "Error adding data",
+        "updateFailed": "Error updating data",
+        "deleteFailed": "Error deleting data"
+      }
+    },
+    "valueButton": {
+      "demoBadge": "demo",
+      "yoursBadge": "yours",
+      "actionReplace": "replace",
+      "actionInsert": "insert"
+    },
+    "onboarding": {
+      "welcome": "Bienvenido a tus datos",
+      "welcomeDescription": "Estos son datos de ejemplo. Pruébalos en el documento, luego añade tus datos reales.",
+      "demoBadge": "demo",
+      "addYourData": "Añade tus datos",
+      "manageVault": "Gestionar mis datos",
+      "demoNotSaved": "Los datos demo no se guardan. Añade los tuyos para usarlos en cualquier lugar."
+    },
+    "constants": {
+      "groups": {
+        "identification": "Identification Data",
+        "people": "People",
+        "contacts": "Contacts",
+        "addresses": "Addresses",
+        "banking": "Bank Details",
+        "professional": "Professional Data",
+        "certifications": "Certifications",
+        "other": "Other data"
+      },
+      "demoLabels": {
+        "vatNumber": "VAT Number",
+        "taxCode": "Tax Code",
+        "legalRepresentative": "Legal Representative",
+        "businessEmail": "Business email",
+        "registeredOffice": "Registered office"
+      },
+      "onboardingTips": {
+        "tip1": "Select text in the document to replace it with a value",
+        "tip2": "Click on a value to insert it at the cursor position",
+        "tip3": "Add your real data to fill out documents in seconds",
+        "tip4": "Your data is securely saved in your account"
+      }
+    },
+    "title": {
+      "demo": "Your data",
+      "default": "My Data"
+    },
+    "demoBadge": "DEMO",
+    "add": "Add",
+    "searchPlaceholder": "Search values...",
+    "footer": {
+      "summary": "{values} values in {categories} categories",
+      "addedByYou": "· {count} added by you"
+    },
+    "status": {
+      "replaceHint": "Click a value to <strong>replace</strong> the text",
+      "insertHint": "Cursor active — click a value to <strong>insert</strong> it",
+      "defaultHint": "Select text in the document to replace it",
+      "selected": "Selected:",
+      "saveButton": "Save",
+      "addButton": "Add",
+      "saveTooltip": "Save this text to your data",
+      "saveTooltipDemo": "Add this text to demo data"
+    },
+    "demo": {
+      "banner": {
+        "title": "¡Pruébalo ahora!",
+        "description": "Estos son datos de ejemplo. Sube un documento y haz clic en un valor para insertarlo."
+      },
+      "yoursBadge": "+ tuyos",
+      "noResults": "Sin resultados para \"{query}\"",
+      "cta": {
+        "title": "¿Te gusta? Guarda tus datos reales",
+        "description": "Inicia sesión para guardar tus datos y usarlos en cualquier documento",
+        "includingAdded": "(incluyendo los {count} que has añadido)",
+        "button": "Inicia sesión o regístrate"
+      },
+      "notSavedNote": "Los datos demo no se guardan. Inicia sesión para conservarlos."
+    },
+    "empty": {
+      "title": "Your data is empty",
+      "description": "Add your data to fill out documents in no time. Just enter them once.",
+      "addButton": "Add first data",
+      "manageButton": "Manage my data"
+    },
+    "error": {
+      "title": "Loading error",
+      "retry": "Retry"
+    },
+    "categories": {
+      "noResults": "No results for \"{query}\"",
+      "clearSearch": "Clear search",
+      "manage": "Manage all data"
+    },
+    "addDialog": {
+      "title": "Add data",
+      "description": "Enter the value you want to reuse in documents.",
+      "value": "Value",
+      "valuePlaceholder": "Type your data here...",
+      "valueHint": "This is the text that will be inserted in the document",
+      "showOptions": "Additional options",
+      "hideOptions": "Hide options",
+      "optional": "optional",
+      "label": "Label",
+      "labelPlaceholder": "A name to recognize it",
+      "category": "Category",
+      "categoryNone": "None",
+      "createNewCategory": "Create new category",
+      "categoryNamePlaceholder": "Category name",
+      "chooseExisting": "← Choose existing",
+      "cancel": "Cancel",
+      "add": "Add",
+      "adding": "Adding...",
+      "errors": {
+        "valueRequired": "Please enter a value",
+        "addFailed": "Unable to add. Please try again.",
+        "unexpected": "An error occurred. Please try again."
+      }
+    }
+  },
+  "download": {
+    "title": "Download document",
+    "description": "Choose the file name and format.",
+    "fileName": "File name",
+    "fileNamePlaceholder": "File name",
+    "format": "Format",
+    "filePreview": "File:",
+    "cancel": "Cancel",
+    "download": "Download",
+    "downloading": "Downloading...",
+    "converting": "Converting...",
+    "loginToDownload": "Log in to download",
+    "formats": {
+      "docx": {
+        "label": "DOCX",
+        "description": "Microsoft Word"
+      },
+      "pdf": {
+        "label": "PDF",
+        "description": "Portable document"
+      }
+    },
+    "auth": {
+      "title": "Log in to download",
+      "description": "Log in or create a free account to download the completed document.",
+      "continue": "Continue"
+    },
+    "credits": {
+      "checking": "Checking available credits...",
+      "verificationError": "Unable to verify credits",
+      "exhausted": "Credits exhausted",
+      "buy": "Buy credits",
+      "available": "{count, plural, =1 {# credit available} other {# credits available}}",
+      "costPerDownload": "-1 per download"
+    },
+    "errors": {
+      "fileNameRequired": "Please enter a file name",
+      "insufficientCredits": "Insufficient credits for download",
+      "insufficientCreditsRetry": "Insufficient credits. Refresh the page and try again.",
+      "downloadFailed": "Download failed"
+    }
+  },
+  "compare": {
+    "title": "Compare changes",
+    "modifications": "{count, plural, =1 {# change} other {# changes}}",
+    "affectedPages": "{count, plural, =1 {# page affected} other {# pages affected}}",
+    "noPreview": "No preview available",
+    "close": "Got it, close",
+    "panels": {
+      "original": "Original document",
+      "modified": "With your changes",
+      "previewOnly": "Preview only"
+    },
+    "highlightBanner": {
+      "emphasis": "Yellow highlights are only for this preview.",
+      "text": "The document you download will have no highlights: you'll only see the modified text, exactly like the original."
+    },
+    "pagination": {
+      "pageOf": "Page {current} of {total}"
+    },
+    "loading": {
+      "title": "Generating preview...",
+      "description": "Converting documents to PDF"
+    },
+    "errors": {
+      "title": "Preview generation error",
+      "retry": "Try again",
+      "serverError": "Server error: {status}",
+      "generationFailed": "Error generating preview"
+    }
+  },
   "errors": {},
-  "footer": {}
+  "footer": {},
+  "vaultMock": {
+    "categories": {
+      "company": "Company Data",
+      "contacts": "Contacts",
+      "addresses": "Addresses",
+      "legal": "Legal Data",
+      "certifications": "Certifications",
+      "banking": "Banking Data"
+    },
+    "labels": {
+      "companyName": "Company Name",
+      "vatNumber": "VAT Number",
+      "taxCode": "Tax Code",
+      "rea": "REA",
+      "shareCapital": "Share Capital",
+      "atecoCode": "ATECO Code",
+      "email": "Email",
+      "pec": "Certified Email (PEC)",
+      "phone": "Phone",
+      "fax": "Fax",
+      "mobile": "Mobile",
+      "website": "Website",
+      "legalAddress": "Legal Address",
+      "operativeAddress": "Operative Address",
+      "warehouse": "Warehouse",
+      "legalRepresentative": "Legal Representative",
+      "legalRepTaxCode": "Legal Rep. Tax Code",
+      "legalRepBirthDate": "Legal Rep. Birth Date",
+      "legalRepBirthPlace": "Legal Rep. Birth Place",
+      "legalRepResidence": "Legal Rep. Residence",
+      "legalForm": "Legal Form",
+      "incorporationDate": "Incorporation Date",
+      "businessRegister": "Business Register",
+      "iso9001": "ISO 9001",
+      "iso14001": "ISO 14001",
+      "soa": "SOA",
+      "bankName": "Bank",
+      "iban": "IBAN",
+      "swift": "SWIFT/BIC"
+    }
+  }
 }

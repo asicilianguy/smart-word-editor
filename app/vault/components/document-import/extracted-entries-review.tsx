@@ -357,7 +357,7 @@ export function ExtractedEntriesReview({
           <Button
             onClick={onConfirm}
             disabled={uniqueCount === 0 || isSubmitting}
-            className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
+            className="bg-(--brand-primary) hover:bg-(--brand-primary-hover)"
           >
             {isSubmitting ? (
               "Salvataggio..."
@@ -453,7 +453,7 @@ function EntryRow({
             <Button
               variant="default"
               size="sm"
-              className="h-7 text-xs bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
+              className="h-7 text-xs bg-(--brand-primary) hover:bg-(--brand-primary-hover)"
               onClick={onToggleEdit}
             >
               <Check className="h-3 w-3 mr-1" />
@@ -465,13 +465,13 @@ function EntryRow({
         {/* VALORE - Campo principale con icona Database */}
         <div className="space-y-1.5">
           <Label className="text-sm font-medium flex items-center gap-2">
-            <Database className="h-4 w-4 text-[var(--brand-primary)]" />
+            <Database className="h-4 w-4 text-(--brand-primary)" />
             Valore da inserire
           </Label>
           <Input
             value={entry.valueData}
             onChange={(e) => onUpdate("valueData", e.target.value)}
-            className="text-base font-semibold h-12 bg-background border-2 border-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)]"
+            className="text-base font-semibold h-12 bg-background border-2 border-(--brand-primary)/30 focus:border-(--brand-primary)"
             placeholder="Il dato che verrà inserito nei documenti..."
           />
           <p className="text-xs text-muted-foreground">
@@ -562,7 +562,7 @@ function EntryRow({
                   type="button"
                   variant="default"
                   size="sm"
-                  className="flex-1 h-8 text-xs bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
+                  className="flex-1 h-8 text-xs bg-(--brand-primary) hover:bg-(--brand-primary-hover)"
                   onClick={handleCreateGroup}
                 >
                   <Check className="h-3 w-3 mr-1" />
@@ -604,7 +604,7 @@ function EntryRow({
           className={cn(
             "h-4 w-4",
             entry.selected
-              ? "text-[var(--brand-primary)]"
+              ? "text-(--brand-primary)"
               : "text-muted-foreground"
           )}
         />

@@ -252,7 +252,7 @@ export function VaultManager() {
     return (
       <div className="h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-primary)] mx-auto mb-4" />
+          <Loader2 className="h-8 w-8 animate-spin text-(--brand-primary) mx-auto mb-4" />
           <p className="text-muted-foreground">Caricamento vault...</p>
         </div>
       </div>
@@ -280,7 +280,7 @@ export function VaultManager() {
           {/* Error state */}
           {error && (
             <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 flex items-center gap-3">
-              <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />
+              <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
               <div className="flex-1">
                 <p className="text-sm text-destructive">{error}</p>
               </div>
@@ -356,7 +356,7 @@ export function VaultManager() {
                   <span>= Categoria (per organizzare)</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Database className="h-3.5 w-3.5 text-[var(--brand-primary)]" />
+                  <Database className="h-3.5 w-3.5 text-(--brand-primary)" />
                   <span>= Dato (verrà inserito nei documenti)</span>
                 </div>
               </div>

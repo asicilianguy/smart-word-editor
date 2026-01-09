@@ -258,7 +258,7 @@ export function AddEntryDialog({
             {/* Error */}
             {error && (
               <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
-                <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                <AlertTriangle className="h-4 w-4 shrink-0" />
                 {error}
               </div>
             )}
@@ -275,7 +275,7 @@ export function AddEntryDialog({
             <Button
               type="submit"
               disabled={isSubmitting || !formData.valueData.trim()}
-              className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
+              className="bg-(--brand-primary) hover:bg-(--brand-primary-hover)"
             >
               {isSubmitting ? (
                 <>

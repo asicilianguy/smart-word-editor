@@ -128,7 +128,7 @@ export default function LandingPage() {
               <span className="text-white font-semibold text-sm">CE</span>
             </div>
             <span className="text-lg font-semibold text-foreground">
-              Compilalo<span className="text-[var(--brand-primary)]">Easy</span>
+              Compilalo<span className="text-(--brand-primary)">Easy</span>
             </span>
           </div>
 
@@ -143,7 +143,7 @@ export default function LandingPage() {
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               {t("header.alreadyHaveAccount")}{" "}
-              <span className="font-medium text-[var(--brand-primary)]">
+              <span className="font-medium text-(--brand-primary)">
                 {t("header.login")}
               </span>
             </button>
@@ -174,7 +174,7 @@ export default function LandingPage() {
               className={cn(
                 "text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight tracking-tight",
                 slideConfig.emphasis === "cta"
-                  ? "text-[var(--brand-primary)]"
+                  ? "text-(--brand-primary)"
                   : "text-foreground"
               )}
             >
@@ -205,7 +205,7 @@ export default function LandingPage() {
                   }}
                   className={cn(
                     "inline-flex items-center gap-3 px-8 py-4",
-                    "bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]",
+                    "bg-(--brand-primary) hover:bg-(--brand-primary-hover)",
                     "text-white text-lg font-medium",
                     "rounded-xl shadow-lg hover:shadow-xl",
                     "transform hover:-translate-y-0.5",

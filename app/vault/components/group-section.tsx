@@ -45,7 +45,7 @@ export function GroupSection({
       className={cn(
         "rounded-xl border overflow-hidden transition-all duration-200",
         isOver && isDraggingFromOtherGroup
-          ? "border-[var(--brand-primary)] bg-(--brand-primary)/5 ring-2 ring-[var(--brand-primary)]/20"
+          ? "border-(--brand-primary) bg-(--brand-primary)/5 ring-2 ring-[var(--brand-primary)]/20"
           : "border-border bg-card"
       )}
     >
@@ -54,7 +54,7 @@ export function GroupSection({
         className={cn(
           "flex items-center gap-3 px-4 py-2.5 border-b transition-colors",
           isOver && isDraggingFromOtherGroup
-            ? "bg-(--brand-primary)/10 border-[var(--brand-primary)]/30"
+            ? "bg-(--brand-primary)/10 border-(--brand-primary)/30"
             : "bg-muted/40 border-border"
         )}
       >
@@ -76,7 +76,7 @@ export function GroupSection({
               className={cn(
                 "h-4 w-4 transition-colors",
                 isOver && isDraggingFromOtherGroup
-                  ? "text-[var(--brand-primary)]"
+                  ? "text-(--brand-primary)"
                   : "text-muted-foreground"
               )}
             />
@@ -94,7 +94,7 @@ export function GroupSection({
               className={cn(
                 "text-xs transition-colors",
                 isOver && isDraggingFromOtherGroup
-                  ? "text-[var(--brand-primary)]"
+                  ? "text-(--brand-primary)"
                   : "text-muted-foreground"
               )}
             >
@@ -134,7 +134,7 @@ export function GroupSection({
               className={cn(
                 "px-4 py-8 text-center transition-colors",
                 isOver && isDraggingFromOtherGroup
-                  ? "text-[var(--brand-primary)]"
+                  ? "text-(--brand-primary)"
                   : "text-muted-foreground"
               )}
             >

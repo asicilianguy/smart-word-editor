@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale } from "next-intl";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { locales, localeNames, localeFlags, type Locale } from "@/i18n/config";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Globe, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Nome del cookie (deve matchare quello in request.ts)
+const LOCALE_COOKIE = "NEXT_LOCALE";
 
 interface LocaleSwitcherProps {
   variant?: "default" | "compact" | "minimal";
@@ -24,29 +27,15 @@ export function LocaleSwitcher({
 }: LocaleSwitcherProps) {
   const locale = useLocale() as Locale;
   const router = useRouter();
-  const pathname = usePathname();
 
   const handleChange = (newLocale: Locale) => {
-    // Rimuovi il prefisso lingua corrente dal pathname se presente
-    let newPathname = pathname;
+    // Salva la preferenza nel cookie (1 anno)
+    document.cookie = `${LOCALE_COOKIE}=${newLocale};path=/;max-age=${
+      60 * 60 * 24 * 365
+    }`;
 
-    // Se il pathname inizia con una locale, rimuovila
-    for (const loc of locales) {
-      if (pathname.startsWith(`/${loc}/`)) {
-        newPathname = pathname.replace(`/${loc}`, "");
-        break;
-      } else if (pathname === `/${loc}`) {
-        newPathname = "/";
-        break;
-      }
-    }
-
-    // Costruisci il nuovo URL con la nuova lingua
-    // Se è la lingua default (it), non aggiungere prefisso
-    const newUrl =
-      newLocale === "it" ? newPathname : `/${newLocale}${newPathname}`;
-
-    router.push(newUrl);
+    // Ricarica la pagina per applicare la nuova lingua
+    router.refresh();
   };
 
   return (
@@ -95,13 +84,13 @@ export function LocaleSwitcher({
               <span
                 className={cn(
                   "flex-1 text-sm",
-                  isActive && "font-medium text-[var(--brand-primary)]"
+                  isActive && "font-medium text-(--brand-primary)"
                 )}
               >
                 {localeNames[loc]}
               </span>
               {isActive && (
-                <Check className="h-4 w-4 text-[var(--brand-primary)]" />
+                <Check className="h-4 w-4 text-(--brand-primary)" />
               )}
             </DropdownMenuItem>
           );

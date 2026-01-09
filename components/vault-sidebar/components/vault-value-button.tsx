@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import type { VaultValue } from "@/lib/document-types";
 import type { ActionType } from "../types";
@@ -21,6 +22,8 @@ export function VaultValueButton({
   isDemo = false,
   isUserAdded = false,
 }: VaultValueButtonProps) {
+  const t = useTranslations("sidebar.valueButton");
+
   return (
     <button
       onClick={onClick}
@@ -31,13 +34,13 @@ export function VaultValueButton({
         "group relative",
         canInteract
           ? [
-              "hover:bg-[var(--brand-primary-subtle)] hover:border-[var(--brand-primary)]/30",
+              "hover:bg-(--brand-primary-subtle) hover:border-(--brand-primary)/30",
               "cursor-pointer",
               actionType === "replace" &&
-                "hover:ring-2 hover:ring-[var(--brand-primary)]/20",
+                "hover:ring-2 hover:ring-(--brand-primary)/20",
             ]
           : "opacity-60 cursor-not-allowed",
-        isUserAdded && "bg-[var(--brand-primary-subtle)]/50"
+        isUserAdded && "bg-(--brand-primary-subtle)/50"
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -48,13 +51,13 @@ export function VaultValueButton({
               {value.label}
             </span>
             {isDemo && !isUserAdded && (
-              <span className="text-[9px] text-muted-foreground bg-muted px-1 py-0.5 rounded flex-shrink-0">
-                demo
+              <span className="text-[9px] text-muted-foreground bg-muted px-1 py-0.5 rounded shrink-0">
+                {t("demoBadge")}
               </span>
             )}
             {isUserAdded && (
-              <span className="text-[9px] text-[var(--brand-primary)] bg-[var(--brand-primary-subtle)] px-1 py-0.5 rounded flex-shrink-0">
-                tuo
+              <span className="text-[9px] text-(--brand-primary) bg-(--brand-primary-subtle) px-1 py-0.5 rounded shrink-0">
+                {t("yoursBadge")}
               </span>
             )}
           </div>
@@ -71,13 +74,13 @@ export function VaultValueButton({
         {canInteract && (
           <span
             className={cn(
-              "text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0",
+              "text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity shrink-0",
               actionType === "replace"
                 ? "bg-amber-100 text-amber-700"
                 : "bg-muted text-muted-foreground"
             )}
           >
-            {actionType === "replace" ? "sostituisci" : "inserisci"}
+            {actionType === "replace" ? t("actionReplace") : t("actionInsert")}
           </span>
         )}
       </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 import {
   X,
   Loader2,
@@ -57,6 +58,8 @@ export function CompareView({
   modifications,
   checkboxModifications,
 }: CompareViewProps) {
+  const t = useTranslations("compare");
+
   // State
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -154,7 +157,8 @@ export function CompareView({
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.detail || `Errore server: ${response.statusText}`
+          errorData.detail ||
+            t("errors.serverError", { status: response.statusText })
         );
       }
 
@@ -180,9 +184,7 @@ export function CompareView({
     } catch (err) {
       console.error("Preview fetch error:", err);
       setError(
-        err instanceof Error
-          ? err.message
-          : "Errore durante la generazione della preview"
+        err instanceof Error ? err.message : t("errors.generationFailed")
       );
     } finally {
       setIsLoading(false);
@@ -266,19 +268,16 @@ export function CompareView({
               <GitCompare className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold">Confronta modifiche</h2>
+              <h2 className="text-lg font-semibold">{t("title")}</h2>
               {!isLoading && !error && previewData && (
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-xs text-muted-foreground">
-                    {totalModifications} modific
-                    {totalModifications === 1 ? "a" : "he"}
+                    {t("modifications", { count: totalModifications })}
                   </span>
                   <span className="text-xs text-muted-foreground">·</span>
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <FileCheck className="h-3 w-3" />
-                    {affectedPages.length} pagin
-                    {affectedPages.length === 1 ? "a" : "e"} coinvolt
-                    {affectedPages.length === 1 ? "a" : "e"}
+                    {t("affectedPages", { count: affectedPages.length })}
                   </span>
                 </div>
               )}
@@ -312,7 +311,7 @@ export function CompareView({
                   <div className="px-4 py-2.5 border-b bg-muted/30 shrink-0">
                     <h3 className="text-sm font-medium flex items-center gap-2">
                       <FileText className="h-4 w-4 text-muted-foreground" />
-                      Documento originale
+                      {t("panels.original")}
                     </h3>
                   </div>
                   <div className="flex-1 overflow-hidden bg-muted/20 p-2">
@@ -322,11 +321,11 @@ export function CompareView({
                         ref={originalIframeRef}
                         src={getPdfUrl(originalPdfUrl)}
                         className="w-full h-full border-0 rounded bg-white shadow"
-                        title="Documento originale"
+                        title={t("panels.original")}
                       />
                     ) : (
                       <div className="h-full flex items-center justify-center text-muted-foreground">
-                        Nessuna preview disponibile
+                        {t("noPreview")}
                       </div>
                     )}
                   </div>
@@ -341,10 +340,10 @@ export function CompareView({
                   <div className="px-4 py-2.5 border-b bg-amber-50 shrink-0">
                     <h3 className="text-sm font-medium flex items-center gap-2 text-amber-800">
                       <FileText className="h-4 w-4 text-amber-600" />
-                      Con le tue modifiche
+                      {t("panels.modified")}
                       <span className="text-[10px] font-medium bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded flex items-center gap-1">
                         <Highlighter className="h-3 w-3" />
-                        Solo anteprima
+                        {t("panels.previewOnly")}
                       </span>
                     </h3>
                   </div>
@@ -355,11 +354,11 @@ export function CompareView({
                         ref={modifiedIframeRef}
                         src={getPdfUrl(modifiedPdfUrl)}
                         className="w-full h-full border-0 rounded bg-white shadow"
-                        title="Documento modificato"
+                        title={t("panels.modified")}
                       />
                     ) : (
                       <div className="h-full flex items-center justify-center text-muted-foreground">
-                        Nessuna preview disponibile
+                        {t("noPreview")}
                       </div>
                     )}
                   </div>
@@ -374,17 +373,13 @@ export function CompareView({
           {/* Banner informativo evidenziature */}
           <div className="bg-amber-50 border-b border-amber-200 px-6 py-3">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+              <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
                 <Info className="h-4 w-4 text-amber-600" />
               </div>
               <div className="flex-1">
                 <p className="text-sm text-amber-800">
-                  <strong>
-                    Le evidenziature in giallo sono solo per questa anteprima.
-                  </strong>{" "}
-                  Il documento che scaricherai <strong>non avrà</strong> alcuna
-                  evidenziatura: vedrai solo il testo modificato, esattamente
-                  come nell'originale.
+                  <strong>{t("highlightBanner.emphasis")}</strong>{" "}
+                  {t("highlightBanner.text")}
                 </p>
               </div>
             </div>
@@ -416,7 +411,7 @@ export function CompareView({
                           className={cn(
                             "h-8 min-w-[2rem] px-2",
                             currentPage === page
-                              ? "bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
+                              ? "bg-(--brand-primary) hover:bg-(--brand-primary-hover)"
                               : "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
                           )}
                           onClick={() => goToPage(page)}
@@ -426,7 +421,10 @@ export function CompareView({
                       ))
                     ) : (
                       <span className="text-sm text-muted-foreground px-2">
-                        Pagina {currentPage} di {totalPages}
+                        {t("pagination.pageOf", {
+                          current: currentPage,
+                          total: totalPages,
+                        })}
                       </span>
                     )}
                   </div>
@@ -453,9 +451,9 @@ export function CompareView({
             {/* Close button */}
             <Button
               onClick={() => onOpenChange(false)}
-              className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
+              className="bg-(--brand-primary) hover:bg-(--brand-primary-hover)"
             >
-              Ho capito, chiudi
+              {t("close")}
             </Button>
           </div>
         </footer>
@@ -470,15 +468,17 @@ export function CompareView({
 // ============================================================================
 
 function LoadingState() {
+  const t = useTranslations("compare");
+
   return (
     <div className="h-full flex flex-col items-center justify-center gap-4">
-      <div className="h-16 w-16 rounded-2xl bg-[var(--brand-primary-subtle)] border border-[var(--brand-primary)]/20 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-primary)]" />
+      <div className="h-16 w-16 rounded-2xl bg-(--brand-primary-subtle) border border-(--brand-primary)/20 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-(--brand-primary)" />
       </div>
       <div className="text-center">
-        <p className="font-medium">Generazione preview in corso...</p>
+        <p className="font-medium">{t("loading.title")}</p>
         <p className="text-sm text-muted-foreground mt-1">
-          Conversione documenti in PDF
+          {t("loading.description")}
         </p>
       </div>
     </div>
@@ -492,20 +492,22 @@ function ErrorState({
   error: string;
   onRetry: () => void;
 }) {
+  const t = useTranslations("compare");
+
   return (
     <div className="h-full flex flex-col items-center justify-center gap-4 p-8">
       <div className="h-16 w-16 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center">
         <AlertCircle className="h-8 w-8 text-destructive" />
       </div>
       <div className="text-center max-w-md">
-        <p className="font-medium mb-2">Errore generazione preview</p>
+        <p className="font-medium mb-2">{t("errors.title")}</p>
         <p className="text-sm text-muted-foreground mb-4">{error}</p>
         <Button
           onClick={onRetry}
-          className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
+          className="bg-(--brand-primary) hover:bg-(--brand-primary-hover)"
         >
           <RotateCcw className="h-4 w-4 mr-2" />
-          Riprova
+          {t("errors.retry")}
         </Button>
       </div>
     </div>

@@ -36,7 +36,7 @@ export function FileList({ files, onRemove, canRemove }: FileListProps) {
             "flex items-center gap-3 p-3 rounded-xl border bg-card group transition-colors",
             file.status === "error" && "border-destructive/50 bg-destructive/5",
             file.status === "done" && "border-green-500/50 bg-green-50/50",
-            file.status === "validated" && "border-[var(--brand-primary)]/50"
+            file.status === "validated" && "border-(--brand-primary)/50"
           )}
         >
           {/* Icon */}
@@ -59,7 +59,7 @@ export function FileList({ files, onRemove, canRemove }: FileListProps) {
             <p className="text-xs text-muted-foreground">
               {formatSize(file.size)}
               {file.pageCount !== undefined && file.pageCount > 0 && (
-                <span className="ml-2 text-[var(--brand-primary)]">
+                <span className="ml-2 text-(--brand-primary)">
                   • {file.pageCount} pagin{file.pageCount === 1 ? "a" : "e"}
                 </span>
               )}
@@ -71,11 +71,11 @@ export function FileList({ files, onRemove, canRemove }: FileListProps) {
 
           {/* Status / Actions */}
           {file.status === "validating" || file.status === "extracting" ? (
-            <Loader2 className="h-5 w-5 animate-spin text-[var(--brand-primary)]" />
+            <Loader2 className="h-5 w-5 animate-spin text-(--brand-primary)" />
           ) : file.status === "done" ? (
             <CheckCircle2 className="h-5 w-5 text-green-500" />
           ) : file.status === "validated" ? (
-            <CheckCircle2 className="h-5 w-5 text-[var(--brand-primary)]" />
+            <CheckCircle2 className="h-5 w-5 text-(--brand-primary)" />
           ) : file.status === "error" ? (
             <AlertCircle className="h-5 w-5 text-destructive" />
           ) : canRemove ? (

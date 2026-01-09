@@ -1,140 +1,186 @@
 import type { VaultCategory } from "./document-types";
 
-/**
- * Dati mock del vault per il PoC
- *
- * Struttura basata sul README tecnico:
- * - Dati Azienda
- * - Contatti
- * - Indirizzi
- * - Dati Legali
- */
-export const vaultData: VaultCategory[] = [
+// ============================================================================
+// CONFIGURATION - Struttura dati con chiavi di traduzione
+// ============================================================================
+
+interface VaultValueConfig {
+  id: string;
+  labelKey: string;
+  value: string;
+}
+
+interface VaultCategoryConfig {
+  id: string;
+  nameKey: string;
+  icon: string;
+  values: VaultValueConfig[];
+}
+
+const VAULT_DATA_CONFIG: VaultCategoryConfig[] = [
   {
     id: "company",
-    name: "Dati Azienda",
+    nameKey: "company",
     icon: "building",
     values: [
-      { id: "company-name", label: "Ragione Sociale", value: "Rossi S.r.l." },
-      { id: "company-vat", label: "Partita IVA", value: "IT01234567890" },
-      { id: "company-cf", label: "Codice Fiscale", value: "RSSMRA80A01H501Z" },
-      { id: "company-rea", label: "REA", value: "MI-123456" },
+      { id: "company-name", labelKey: "companyName", value: "Rossi S.r.l." },
+      { id: "company-vat", labelKey: "vatNumber", value: "IT01234567890" },
+      { id: "company-cf", labelKey: "taxCode", value: "RSSMRA80A01H501Z" },
+      { id: "company-rea", labelKey: "rea", value: "MI-123456" },
       {
         id: "company-capital",
-        label: "Capitale Sociale",
+        labelKey: "shareCapital",
         value: "€ 100.000,00 i.v.",
       },
-      { id: "company-ateco", label: "Codice ATECO", value: "62.01.00" },
+      { id: "company-ateco", labelKey: "atecoCode", value: "62.01.00" },
     ],
   },
   {
     id: "contacts",
-    name: "Contatti",
+    nameKey: "contacts",
     icon: "mail",
     values: [
-      { id: "contact-email", label: "Email", value: "info@rossi.it" },
-      { id: "contact-pec", label: "PEC", value: "rossi@pec.it" },
-      { id: "contact-phone", label: "Telefono", value: "+39 02 1234567" },
-      { id: "contact-fax", label: "Fax", value: "+39 02 7654321" },
-      { id: "contact-mobile", label: "Cellulare", value: "+39 333 1234567" },
-      { id: "contact-website", label: "Sito Web", value: "www.rossi.it" },
+      { id: "contact-email", labelKey: "email", value: "info@rossi.it" },
+      { id: "contact-pec", labelKey: "pec", value: "rossi@pec.it" },
+      { id: "contact-phone", labelKey: "phone", value: "+39 02 1234567" },
+      { id: "contact-fax", labelKey: "fax", value: "+39 02 7654321" },
+      { id: "contact-mobile", labelKey: "mobile", value: "+39 333 1234567" },
+      { id: "contact-website", labelKey: "website", value: "www.rossi.it" },
     ],
   },
   {
     id: "addresses",
-    name: "Indirizzi",
+    nameKey: "addresses",
     icon: "map-pin",
     values: [
       {
         id: "address-legal",
-        label: "Sede Legale",
+        labelKey: "legalAddress",
         value: "Via Roma 123, 20100 Milano (MI)",
       },
       {
         id: "address-operative",
-        label: "Sede Operativa",
+        labelKey: "operativeAddress",
         value: "Via Napoli 456, 00100 Roma (RM)",
       },
       {
         id: "address-warehouse",
-        label: "Magazzino",
+        labelKey: "warehouse",
         value: "Via Torino 789, 10100 Torino (TO)",
       },
     ],
   },
   {
     id: "legal",
-    name: "Dati Legali",
+    nameKey: "legal",
     icon: "file-text",
     values: [
-      { id: "legal-rep", label: "Legale Rappresentante", value: "Mario Rossi" },
+      {
+        id: "legal-rep",
+        labelKey: "legalRepresentative",
+        value: "Mario Rossi",
+      },
       {
         id: "legal-rep-cf",
-        label: "CF Legale Rappresentante",
+        labelKey: "legalRepTaxCode",
         value: "RSSMRA80A01H501Z",
       },
-      { id: "legal-rep-birth", label: "Data Nascita LR", value: "01/01/1980" },
+      {
+        id: "legal-rep-birth",
+        labelKey: "legalRepBirthDate",
+        value: "01/01/1980",
+      },
       {
         id: "legal-rep-birthplace",
-        label: "Luogo Nascita LR",
+        labelKey: "legalRepBirthPlace",
         value: "Milano (MI)",
       },
       {
         id: "legal-rep-residence",
-        label: "Residenza LR",
+        labelKey: "legalRepResidence",
         value: "Via Dante 10, 20100 Milano (MI)",
       },
       {
         id: "legal-entity",
-        label: "Forma Giuridica",
+        labelKey: "legalForm",
         value: "Società a Responsabilità Limitata",
       },
       {
         id: "legal-incorporation",
-        label: "Data Costituzione",
+        labelKey: "incorporationDate",
         value: "15/01/2020",
       },
-      { id: "legal-register", label: "Registro Imprese", value: "Milano" },
+      { id: "legal-register", labelKey: "businessRegister", value: "Milano" },
     ],
   },
   {
     id: "certifications",
-    name: "Certificazioni",
+    nameKey: "certifications",
     icon: "award",
     values: [
       {
         id: "cert-iso9001",
-        label: "ISO 9001",
+        labelKey: "iso9001",
         value: "Certificato n. 12345 - valido fino al 31/12/2025",
       },
       {
         id: "cert-iso14001",
-        label: "ISO 14001",
+        labelKey: "iso14001",
         value: "Certificato n. 67890 - valido fino al 31/12/2025",
       },
       {
         id: "cert-soa",
-        label: "SOA",
+        labelKey: "soa",
         value: "OG1 Classifica III - Attestazione n. 11111",
       },
     ],
   },
   {
     id: "banking",
-    name: "Dati Bancari",
+    nameKey: "banking",
     icon: "landmark",
     values: [
-      { id: "bank-name", label: "Banca", value: "Banca Intesa Sanpaolo" },
-      { id: "bank-iban", label: "IBAN", value: "IT60X0542811101000000123456" },
-      { id: "bank-swift", label: "SWIFT/BIC", value: "BCITITMM" },
+      { id: "bank-name", labelKey: "bankName", value: "Banca Intesa Sanpaolo" },
+      {
+        id: "bank-iban",
+        labelKey: "iban",
+        value: "IT60X0542811101000000123456",
+      },
+      { id: "bank-swift", labelKey: "swift", value: "BCITITMM" },
     ],
   },
 ];
 
+// ============================================================================
+// TRANSLATION FUNCTIONS
+// ============================================================================
+
 /**
- * Cerca valori nel vault
+ * Costruisce i dati vault tradotti
  */
-export function searchVaultValues(query: string): VaultCategory[] {
+export function buildVaultData(
+  translateCategory: (key: string) => string,
+  translateLabel: (key: string) => string
+): VaultCategory[] {
+  return VAULT_DATA_CONFIG.map((category) => ({
+    id: category.id,
+    name: translateCategory(category.nameKey),
+    icon: category.icon,
+    values: category.values.map((value) => ({
+      id: value.id,
+      label: translateLabel(value.labelKey),
+      value: value.value,
+    })),
+  }));
+}
+
+/**
+ * Cerca valori nel vault tradotto
+ */
+export function searchVaultValues(
+  vaultData: VaultCategory[],
+  query: string
+): VaultCategory[] {
   if (!query.trim()) return vaultData;
 
   const lowerQuery = query.toLowerCase();
@@ -155,6 +201,7 @@ export function searchVaultValues(query: string): VaultCategory[] {
  * Trova un valore nel vault per ID
  */
 export function findVaultValueById(
+  vaultData: VaultCategory[],
   id: string
 ): { category: VaultCategory; value: VaultCategory["values"][0] } | null {
   for (const category of vaultData) {
@@ -165,3 +212,14 @@ export function findVaultValueById(
   }
   return null;
 }
+
+// ============================================================================
+// LEGACY EXPORT (per retrocompatibilità durante la migrazione)
+// Questi dati NON sono tradotti - usare useVaultMockData hook invece
+// ============================================================================
+
+/** @deprecated Use useVaultMockData hook instead */
+export const vaultData: VaultCategory[] = buildVaultData(
+  (key) => key, // Non tradotto
+  (key) => key // Non tradotto
+);

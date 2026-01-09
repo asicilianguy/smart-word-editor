@@ -1,6 +1,38 @@
 {
   "common": {},
-  "auth": {},
+  "auth": {
+    "loading": "Caricamento...",
+    "welcomeBack": "Bentornato",
+    "subtitle": "Accedi o crea un account per continuare",
+    "phone": "Numero di telefono",
+    "phonePlaceholder": "+39 333 123 4567",
+    "password": "Password",
+    "passwordPlaceholder": "Minimo 8 caratteri",
+    "continue": "Continua",
+    "loggingIn": "Accesso in corso...",
+    "autoCreateAccount": "Se non hai un account, ne creeremo uno automaticamente.",
+    "termsPrefix": "Continuando accetti i",
+    "termsLink": "Termini di servizio",
+    "tryWithoutAccount": "Prova senza account",
+    "hero": {
+      "title": "Compila documenti",
+      "titleLine2": "in pochi click",
+      "subtitle": "Salva i tuoi dati una volta, usali per sempre. Niente più copia-incolla, niente più errori."
+    },
+    "features": {
+      "preserveLayout": "Preserva layout e formattazione",
+      "dataAtHand": "I tuoi dati sempre a portata di mano",
+      "instantDownload": "Download immediato in DOCX"
+    },
+    "footer": "© 2024 CompilaloEasy. Tutti i diritti riservati.",
+    "errors": {
+      "phoneRequired": "Numero di telefono richiesto",
+      "phoneInvalid": "Inserisci un numero di telefono valido",
+      "passwordMin": "Minimo 8 caratteri",
+      "authFailed": "Errore durante l'autenticazione",
+      "unexpected": "Errore imprevisto"
+    }
+  },
   "landing": {
     "header": {
       "alreadyHaveAccount": "Hai già un account?",
@@ -37,12 +69,371 @@
       "goToSlide": "Vai alla slide {number}"
     }
   },
-  "editor": {},
+  "editor": {
+    "onboarding": {
+      "steps": {
+        "insert": {
+          "title": "Come inserire i dati",
+          "subtitle": "Il modo più semplice per compilare un documento",
+          "step1": {
+            "title": "Clicca dove vuoi scrivere",
+            "description": "Posiziona il cursore nel punto del documento dove vuoi aggiungere il testo"
+          },
+          "step2": {
+            "title": "Inserisci il dato",
+            "description": "Scrivi con la tastiera, oppure clicca su un valore dalla barra a destra per inserirlo automaticamente"
+          },
+          "hint": {
+            "click": "Clicca",
+            "write": "Scrivi o scegli"
+          }
+        },
+        "replace": {
+          "title": "Come sostituire il testo",
+          "subtitle": "Se devi modificare del testo già presente",
+          "step1": {
+            "title": "Seleziona il testo da cambiare",
+            "description": "Clicca e trascina con il mouse per evidenziare il testo che vuoi sostituire"
+          },
+          "step2": {
+            "title": "Sostituisci",
+            "description": "Scrivi il nuovo testo, oppure clicca un valore dalla barra a destra per sostituirlo"
+          },
+          "hint": {
+            "select": "Seleziona",
+            "replace": "Sostituisci"
+          }
+        }
+      },
+      "skip": "Salta",
+      "next": "Avanti",
+      "gotIt": "Ho capito!"
+    },
+    "uploadPreview": {
+      "title": "Pronto per iniziare!",
+      "pages": "{count, plural, =1 {# pagina} other {# pagine}}",
+      "iframeTitle": "Anteprima documento",
+      "success": {
+        "title": "Documento caricato!",
+        "description": "Il file è stato processato correttamente"
+      },
+      "tutorial": {
+        "title": "Come funziona",
+        "subtitle": "Ecco cosa puoi fare nell'editor"
+      },
+      "features": {
+        "clickAndType": {
+          "title": "Clicca e scrivi",
+          "description": "Clicca in qualsiasi punto del documento e inizia a digitare, esattamente come in Word."
+        },
+        "insertFromSidebar": {
+          "title": "Inserisci dalla sidebar",
+          "description": "Posiziona il cursore e clicca un valore dalla sidebar: verrà inserito automaticamente."
+        },
+        "selectAndReplace": {
+          "title": "Seleziona e sostituisci",
+          "description": "Seleziona del testo e scrivi per sostituirlo, oppure clicca un valore dalla sidebar per rimpiazzarlo."
+        },
+        "saveForReuse": {
+          "title": "Salva per riutilizzare",
+          "description": "Seleziona del testo e aggiungilo alla sidebar con un click: potrai riusarlo in altri documenti."
+        }
+      },
+      "note": {
+        "label": "Nota:",
+        "text": "Nell'editor vedrai una vista semplificata per facilitare le modifiche. Il documento scaricato manterrà la formattazione originale."
+      },
+      "dontShowAgain": "Non mostrare più questa schermata",
+      "cancel": "Annulla",
+      "continue": "Inizia a modificare",
+      "loading": {
+        "title": "Generazione anteprima...",
+        "description": "Stiamo preparando il tuo documento"
+      },
+      "errors": {
+        "title": "Errore generazione anteprima",
+        "retry": "Riprova",
+        "serverError": "Errore server: {status}",
+        "generationFailed": "Errore durante la generazione dell'anteprima"
+      }
+    },
+    "header": {
+      "modifications": "{count, plural, =1 {# modifica} other {# modifiche}}",
+      "compare": "Confronta",
+      "download": "Scarica",
+      "myData": "I miei dati",
+      "login": "Accedi",
+      "user": "Utente"
+    },
+    "empty": {
+      "title": "Carica un documento",
+      "titleDemo": "Prova subito!",
+      "description": "Trascina qui il tuo file oppure clicca per selezionarlo.",
+      "descriptionHint": "Potrai modificarlo e scaricarlo nel formato che preferisci.",
+      "descriptionDemo": "Carica un documento Word e usa i dati sulla destra per compilarlo velocemente.",
+      "descriptionDemoHint": "È una demo, niente viene salvato.",
+      "uploadButton": "Seleziona file",
+      "uploadButtonDemo": "Carica documento di prova",
+      "supportedFormats": "Formati supportati: DOC, DOCX, ODT, RTF, TXT"
+    },
+    "loading": {
+      "document": "Caricamento documento..."
+    },
+    "error": {
+      "title": "Qualcosa è andato storto",
+      "retry": "Riprova"
+    }
+  },
   "myData": {},
   "import": {},
-  "sidebar": {},
-  "download": {},
-  "compare": {},
+  "sidebar": {
+    "vaultData": {
+      "demoLabels": {
+        "companyName": "Ragione Sociale",
+        "vatNumber": "Partita IVA",
+        "taxCode": "Codice Fiscale",
+        "legalRepresentative": "Legale Rappresentante",
+        "email": "Email",
+        "pec": "PEC",
+        "phone": "Telefono",
+        "registeredOffice": "Sede Legale",
+        "iban": "IBAN"
+      },
+      "errors": {
+        "loadFailed": "Errore nel caricamento dei dati",
+        "addFailed": "Errore nell'aggiunta del dato",
+        "updateFailed": "Errore nell'aggiornamento del dato",
+        "deleteFailed": "Errore nell'eliminazione del dato"
+      }
+    },
+    "valueButton": {
+      "demoBadge": "demo",
+      "yoursBadge": "tuo",
+      "actionReplace": "sostituisci",
+      "actionInsert": "inserisci"
+    },
+    "onboarding": {
+      "welcome": "Benvenuto nei tuoi dati",
+      "welcomeDescription": "Questi sono dati di esempio. Prova a usarli nel documento, poi aggiungi i tuoi dati reali.",
+      "demoBadge": "demo",
+      "addYourData": "Aggiungi i tuoi dati",
+      "manageVault": "Gestisci i miei dati",
+      "demoNotSaved": "I dati demo non vengono salvati. Aggiungi i tuoi per usarli ovunque."
+    },
+    "constants": {
+      "groups": {
+        "identification": "Dati Identificativi",
+        "people": "Persone",
+        "contacts": "Contatti",
+        "addresses": "Indirizzi",
+        "banking": "Coordinate Bancarie",
+        "professional": "Dati Professionali",
+        "certifications": "Certificazioni",
+        "other": "Altri dati"
+      },
+      "demoLabels": {
+        "vatNumber": "Partita IVA",
+        "taxCode": "Codice Fiscale",
+        "legalRepresentative": "Legale Rappresentante",
+        "businessEmail": "Email aziendale",
+        "registeredOffice": "Sede legale"
+      },
+      "onboardingTips": {
+        "tip1": "Seleziona del testo nel documento per sostituirlo con un valore",
+        "tip2": "Clicca su un valore per inserirlo alla posizione del cursore",
+        "tip3": "Aggiungi i tuoi dati reali per compilare documenti in secondi",
+        "tip4": "I dati vengono salvati in modo sicuro nel tuo account"
+      }
+    },
+    "title": {
+      "demo": "I tuoi dati",
+      "default": "I miei dati"
+    },
+    "demoBadge": "DEMO",
+    "add": "Aggiungi",
+    "searchPlaceholder": "Cerca valori...",
+    "footer": {
+      "summary": "{values} valori in {categories} categorie",
+      "addedByYou": "· {count} aggiunti da te"
+    },
+    "status": {
+      "replaceHint": "Clicca un valore per <strong>sostituire</strong> il testo",
+      "insertHint": "Cursore attivo — clicca un valore per <strong>inserirlo</strong>",
+      "defaultHint": "Seleziona testo nel documento per sostituirlo",
+      "selected": "Selezionato:",
+      "saveButton": "Salva",
+      "addButton": "Aggiungi",
+      "saveTooltip": "Salva questo testo nei tuoi dati",
+      "saveTooltipDemo": "Aggiungi questo testo ai dati demo"
+    },
+    "demo": {
+      "banner": {
+        "title": "Prova subito!",
+        "description": "Questi sono dati di esempio. Carica un documento e clicca su un valore per inserirlo."
+      },
+      "yoursBadge": "+ tuoi",
+      "noResults": "Nessun risultato per \"{query}\"",
+      "cta": {
+        "title": "Ti piace? Salva i tuoi dati reali",
+        "description": "Accedi per salvare i tuoi dati e usarli su qualsiasi documento",
+        "includingAdded": "(inclusi i {count} che hai aggiunto)",
+        "button": "Accedi o registrati"
+      },
+      "notSavedNote": "I dati demo non vengono salvati. Accedi per conservarli."
+    },
+    "empty": {
+      "title": "I tuoi dati sono vuoti",
+      "description": "Aggiungi i tuoi dati per compilare i documenti in un attimo. Basta inserirli una volta sola.",
+      "addButton": "Aggiungi il primo dato",
+      "manageButton": "Gestisci i miei dati"
+    },
+    "error": {
+      "title": "Errore di caricamento",
+      "retry": "Riprova"
+    },
+    "categories": {
+      "noResults": "Nessun risultato per \"{query}\"",
+      "clearSearch": "Cancella ricerca",
+      "manage": "Gestisci tutti i dati"
+    },
+    "addDialog": {
+      "title": "Aggiungi un dato",
+      "description": "Inserisci il valore che vuoi riutilizzare nei documenti.",
+      "value": "Valore",
+      "valuePlaceholder": "Scrivi qui il dato...",
+      "valueHint": "Questo è il testo che verrà inserito nel documento",
+      "showOptions": "Opzioni aggiuntive",
+      "hideOptions": "Nascondi opzioni",
+      "optional": "facoltative",
+      "label": "Etichetta",
+      "labelPlaceholder": "Un nome per riconoscerlo",
+      "category": "Categoria",
+      "categoryNone": "Nessuna",
+      "createNewCategory": "Crea nuova categoria",
+      "categoryNamePlaceholder": "Nome categoria",
+      "chooseExisting": "← Scegli esistente",
+      "cancel": "Annulla",
+      "add": "Aggiungi",
+      "adding": "Aggiunta...",
+      "errors": {
+        "valueRequired": "Inserisci un valore",
+        "addFailed": "Impossibile aggiungere. Riprova.",
+        "unexpected": "Si è verificato un errore. Riprova."
+      }
+    }
+  },
+  "download": {
+    "title": "Scarica documento",
+    "description": "Scegli il nome e il formato del file.",
+    "fileName": "Nome file",
+    "fileNamePlaceholder": "Nome del file",
+    "format": "Formato",
+    "filePreview": "File:",
+    "cancel": "Annulla",
+    "download": "Scarica",
+    "downloading": "Download...",
+    "converting": "Conversione...",
+    "loginToDownload": "Accedi per scaricare",
+    "formats": {
+      "docx": {
+        "label": "DOCX",
+        "description": "Microsoft Word"
+      },
+      "pdf": {
+        "label": "PDF",
+        "description": "Documento portabile"
+      }
+    },
+    "auth": {
+      "title": "Accedi per scaricare",
+      "description": "Accedi o crea un account gratuito per scaricare il documento compilato.",
+      "continue": "Continua"
+    },
+    "credits": {
+      "checking": "Verifica crediti disponibili...",
+      "verificationError": "Impossibile verificare i crediti",
+      "exhausted": "Crediti esauriti",
+      "buy": "Acquista crediti",
+      "available": "{count, plural, =1 {# credito disponibile} other {# crediti disponibili}}",
+      "costPerDownload": "-1 per download"
+    },
+    "errors": {
+      "fileNameRequired": "Inserisci un nome per il file",
+      "insufficientCredits": "Crediti insufficienti per il download",
+      "insufficientCreditsRetry": "Crediti insufficienti. Ricarica la pagina e riprova.",
+      "downloadFailed": "Errore durante il download"
+    }
+  },
+  "compare": {
+    "title": "Confronta modifiche",
+    "modifications": "{count, plural, =1 {# modifica} other {# modifiche}}",
+    "affectedPages": "{count, plural, =1 {# pagina coinvolta} other {# pagine coinvolte}}",
+    "noPreview": "Nessuna preview disponibile",
+    "close": "Ho capito, chiudi",
+    "panels": {
+      "original": "Documento originale",
+      "modified": "Con le tue modifiche",
+      "previewOnly": "Solo anteprima"
+    },
+    "highlightBanner": {
+      "emphasis": "Le evidenziature in giallo sono solo per questa anteprima.",
+      "text": "Il documento che scaricherai non avrà alcuna evidenziatura: vedrai solo il testo modificato, esattamente come nell'originale."
+    },
+    "pagination": {
+      "pageOf": "Pagina {current} di {total}"
+    },
+    "loading": {
+      "title": "Generazione preview in corso...",
+      "description": "Conversione documenti in PDF"
+    },
+    "errors": {
+      "title": "Errore generazione preview",
+      "retry": "Riprova",
+      "serverError": "Errore server: {status}",
+      "generationFailed": "Errore durante la generazione della preview"
+    }
+  },
   "errors": {},
-  "footer": {}
+  "footer": {},
+  "vaultMock": {
+    "categories": {
+      "company": "Dati Azienda",
+      "contacts": "Contatti",
+      "addresses": "Indirizzi",
+      "legal": "Dati Legali",
+      "certifications": "Certificazioni",
+      "banking": "Dati Bancari"
+    },
+    "labels": {
+      "companyName": "Ragione Sociale",
+      "vatNumber": "Partita IVA",
+      "taxCode": "Codice Fiscale",
+      "rea": "REA",
+      "shareCapital": "Capitale Sociale",
+      "atecoCode": "Codice ATECO",
+      "email": "Email",
+      "pec": "PEC",
+      "phone": "Telefono",
+      "fax": "Fax",
+      "mobile": "Cellulare",
+      "website": "Sito Web",
+      "legalAddress": "Sede Legale",
+      "operativeAddress": "Sede Operativa",
+      "warehouse": "Magazzino",
+      "legalRepresentative": "Legale Rappresentante",
+      "legalRepTaxCode": "CF Legale Rappresentante",
+      "legalRepBirthDate": "Data Nascita LR",
+      "legalRepBirthPlace": "Luogo Nascita LR",
+      "legalRepResidence": "Residenza LR",
+      "legalForm": "Forma Giuridica",
+      "incorporationDate": "Data Costituzione",
+      "businessRegister": "Registro Imprese",
+      "iso9001": "ISO 9001",
+      "iso14001": "ISO 14001",
+      "soa": "SOA",
+      "bankName": "Banca",
+      "iban": "IBAN",
+      "swift": "SWIFT/BIC"
+    }
+  }
 }

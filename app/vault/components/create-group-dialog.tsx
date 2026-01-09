@@ -62,7 +62,7 @@ export function CreateGroupDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-(--brand-primary)/10 flex items-center justify-center">
-              <FolderPlus className="h-4 w-4 text-[var(--brand-primary)]" />
+              <FolderPlus className="h-4 w-4 text-(--brand-primary)" />
             </div>
             Nuova categoria
           </DialogTitle>
@@ -99,7 +99,7 @@ export function CreateGroupDialog({
             </Button>
             <Button
               type="submit"
-              className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)] text-white"
+              className="bg-(--brand-primary) hover:bg-(--brand-primary-hover) text-white"
             >
               <FolderPlus className="h-4 w-4 mr-2" />
               Crea

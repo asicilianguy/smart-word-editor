@@ -3,6 +3,7 @@
 import type React from "react";
 import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Upload,
   Download,
@@ -31,6 +32,7 @@ import {
   DocumentUploadPreviewDialog,
   shouldSkipUploadPreview,
 } from "@/components/document-upload-preview-dialog";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 import { useDocument } from "@/hooks/use-document";
 import { useVaultData } from "@/hooks/use-vault-data";
 import { useAuth } from "@/lib/auth-context";
@@ -43,15 +45,10 @@ import { cn } from "@/lib/utils";
  * Accessibile a tutti:
  * - Non autenticati: demo completa con dati mock interattivi
  * - Autenticati: accesso completo al vault personale
- *
- * Flusso upload:
- * 1. Utente seleziona file
- * 2. Mostra anteprima PDF del documento originale
- * 3. Utente conferma → carica documento nell'editor
- * 4. Mostra onboarding (solo prima volta in demo)
  */
 export default function EditorPage() {
   const router = useRouter();
+  const t = useTranslations("editor");
 
   // Auth context
   const { user, isAuthenticated, logout, isLoading: authLoading } = useAuth();
@@ -105,17 +102,12 @@ export default function EditorPage() {
 
   /**
    * Gestisce la selezione del file
-   * Salva il file e mostra l'anteprima PDF prima di procedere
    */
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Controlla se l'utente ha scelto di saltare l'anteprima
       if (shouldSkipUploadPreview()) {
-        // Carica direttamente senza mostrare l'anteprima
         uploadDocument(file);
-
-        // Mostra onboarding in demo mode (solo se non l'ha già visto)
         if (isDemo && typeof window !== "undefined") {
           const hasSeenOnboarding = localStorage.getItem(
             "demo_onboarding_seen"
@@ -125,7 +117,6 @@ export default function EditorPage() {
           }
         }
       } else {
-        // Mostra l'anteprima
         setUploadedFile(file);
         setShowUploadPreview(true);
       }
@@ -135,13 +126,10 @@ export default function EditorPage() {
 
   /**
    * Gestisce il click su "Continua" dopo l'anteprima
-   * Carica effettivamente il documento e mostra l'onboarding
    */
   const handleContinueAfterPreview = useCallback(() => {
     if (uploadedFile) {
       uploadDocument(uploadedFile);
-
-      // Mostra onboarding in demo mode (solo se non l'ha già visto)
       if (isDemo && typeof window !== "undefined") {
         const hasSeenOnboarding = localStorage.getItem("demo_onboarding_seen");
         if (!hasSeenOnboarding) {
@@ -152,9 +140,6 @@ export default function EditorPage() {
     setUploadedFile(null);
   }, [uploadedFile, uploadDocument, isDemo]);
 
-  /**
-   * Gestisce la chiusura dell'anteprima upload
-   */
   const handleUploadPreviewClose = (open: boolean) => {
     setShowUploadPreview(open);
     if (!open) {
@@ -162,9 +147,6 @@ export default function EditorPage() {
     }
   };
 
-  /**
-   * Gestisce la chiusura dell'onboarding
-   */
   const handleOnboardingClose = (open: boolean) => {
     setShowOnboarding(open);
     if (!open && typeof window !== "undefined") {
@@ -203,10 +185,6 @@ export default function EditorPage() {
     [registerCheckboxModification]
   );
 
-  /**
-   * Gestisce il download
-   * Chiamato solo se l'utente è autenticato (il dialog blocca altrimenti)
-   */
   const handleDownload = useCallback(
     async (fileName: string, format: DownloadFormat) => {
       setIsDownloading(true);
@@ -230,7 +208,7 @@ export default function EditorPage() {
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4 flex-shrink-0">
+      <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4 shrink-0">
         {/* Logo */}
         <button
           onClick={handleLogoClick}
@@ -240,7 +218,7 @@ export default function EditorPage() {
             <span className="text-white font-semibold text-xs">CE</span>
           </div>
           <h1 className="text-base font-semibold">
-            Compilalo<span className="text-[var(--brand-primary)]">Easy</span>
+            Compilalo<span className="text-(--brand-primary)">Easy</span>
           </h1>
         </button>
 
@@ -249,8 +227,7 @@ export default function EditorPage() {
           {/* Contatore modifiche */}
           {documentState && totalModifications > 0 && (
             <span className="text-xs text-muted-foreground">
-              {totalModifications} modific
-              {totalModifications === 1 ? "a" : "he"}
+              {t("header.modifications", { count: totalModifications })}
             </span>
           )}
 
@@ -264,17 +241,17 @@ export default function EditorPage() {
                 disabled={isLoading || totalModifications === 0}
               >
                 <GitCompare className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Confronta</span>
+                <span className="hidden sm:inline">{t("header.compare")}</span>
               </Button>
 
               <Button
                 size="sm"
                 onClick={() => setDownloadDialogOpen(true)}
                 disabled={isLoading}
-                className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
+                className="bg-(--brand-primary) hover:bg-(--brand-primary-hover)"
               >
                 <Download className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Scarica</span>
+                <span className="hidden sm:inline">{t("header.download")}</span>
               </Button>
 
               <Button
@@ -291,6 +268,9 @@ export default function EditorPage() {
           {/* Separatore */}
           <div className="h-5 w-px bg-border" />
 
+          {/* Language Switcher */}
+          <LocaleSwitcher variant="minimal" />
+
           {/* Sezione utente */}
           {authLoading ? (
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -306,7 +286,7 @@ export default function EditorPage() {
                 onClick={() => router.push("/vault")}
               >
                 <FolderOpen className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">I miei dati</span>
+                <span className="hidden sm:inline">{t("header.myData")}</span>
               </Button>
 
               <Button variant="ghost" size="sm" onClick={logout}>
@@ -317,10 +297,10 @@ export default function EditorPage() {
             <Button
               size="sm"
               onClick={() => router.push("/auth")}
-              className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
+              className="bg-(--brand-primary) hover:bg-(--brand-primary-hover)"
             >
               <User className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Accedi</span>
+              <span className="hidden sm:inline">{t("header.login")}</span>
             </Button>
           )}
         </div>
@@ -329,7 +309,7 @@ export default function EditorPage() {
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Editor Area - 70% */}
-        <div className="flex-[7] overflow-hidden">
+        <div className="flex-7 overflow-hidden">
           {!documentState && !isLoading && !error && (
             <EmptyState onFileUpload={handleFileUpload} isDemo={isDemo} />
           )}
@@ -353,7 +333,7 @@ export default function EditorPage() {
         </div>
 
         {/* Vault Sidebar - 30% */}
-        <div className="flex-[3] overflow-hidden">
+        <div className="flex-3 overflow-hidden">
           <VaultSidebar
             categories={vaultCategories}
             onValueClick={handleVaultValueClick}
@@ -374,7 +354,7 @@ export default function EditorPage() {
         </div>
       </div>
 
-      {/* Document Upload Preview Dialog */}
+      {/* Dialogs */}
       <DocumentUploadPreviewDialog
         open={showUploadPreview}
         onOpenChange={handleUploadPreviewClose}
@@ -382,7 +362,6 @@ export default function EditorPage() {
         onContinue={handleContinueAfterPreview}
       />
 
-      {/* Download Dialog */}
       {documentState && (
         <DownloadDialog
           open={downloadDialogOpen}
@@ -398,7 +377,6 @@ export default function EditorPage() {
         />
       )}
 
-      {/* Compare View Dialog */}
       {documentState && (
         <CompareView
           open={compareViewOpen}
@@ -409,7 +387,6 @@ export default function EditorPage() {
         />
       )}
 
-      {/* Demo Onboarding Dialog */}
       <DemoOnboardingDialog
         open={showOnboarding}
         onOpenChange={handleOnboardingClose}
@@ -429,34 +406,33 @@ function EmptyState({
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isDemo?: boolean;
 }) {
+  const t = useTranslations("editor");
+
   return (
     <div className="h-full flex items-center justify-center">
       <div className="text-center max-w-md px-6">
-        <div className="h-20 w-20 rounded-2xl bg-[var(--brand-primary-subtle)] border border-[var(--brand-primary)]/20 flex items-center justify-center mx-auto mb-6">
-          <FileText className="h-10 w-10 text-[var(--brand-primary)]" />
+        <div className="h-20 w-20 rounded-2xl bg-(--brand-primary-subtle) border border-(--brand-primary)/20 flex items-center justify-center mx-auto mb-6">
+          <FileText className="h-10 w-10 text-(--brand-primary)" />
         </div>
 
         <h2 className="text-2xl font-semibold mb-3 text-foreground">
-          {isDemo ? "Prova subito!" : "Carica un documento"}
+          {isDemo ? t("empty.titleDemo") : t("empty.title")}
         </h2>
 
         <p className="text-muted-foreground mb-8 leading-relaxed">
           {isDemo ? (
             <>
-              Carica un documento Word e usa i dati sulla destra per compilarlo
-              velocemente.
+              {t("empty.descriptionDemo")}
               <br />
-              <span className="text-sm text-[var(--brand-primary)]">
-                È una demo, niente viene salvato.
+              <span className="text-sm text-(--brand-primary)">
+                {t("empty.descriptionDemoHint")}
               </span>
             </>
           ) : (
             <>
-              Trascina qui il tuo file oppure clicca per selezionarlo.
+              {t("empty.description")}
               <br />
-              <span className="text-sm">
-                Potrai modificarlo e scaricarlo nel formato che preferisci.
-              </span>
+              <span className="text-sm">{t("empty.descriptionHint")}</span>
             </>
           )}
         </p>
@@ -471,18 +447,18 @@ function EmptyState({
           <Button
             size="lg"
             className={cn(
-              "bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]",
+              "bg-(--brand-primary) hover:bg-(--brand-primary-hover)",
               "shadow-lg hover:shadow-xl hover:-translate-y-0.5",
               "transition-all duration-200"
             )}
           >
             <Upload className="h-5 w-5 mr-2" />
-            {isDemo ? "Carica documento di prova" : "Seleziona file"}
+            {isDemo ? t("empty.uploadButtonDemo") : t("empty.uploadButton")}
           </Button>
         </div>
 
         <p className="text-xs text-muted-foreground mt-6">
-          Formati supportati: DOC, DOCX, ODT, RTF, TXT
+          {t("empty.supportedFormats")}
         </p>
       </div>
     </div>
@@ -490,11 +466,13 @@ function EmptyState({
 }
 
 function LoadingState() {
+  const t = useTranslations("editor");
+
   return (
     <div className="h-full flex items-center justify-center">
       <div className="text-center">
-        <Loader2 className="h-10 w-10 animate-spin text-[var(--brand-primary)] mx-auto mb-4" />
-        <p className="text-muted-foreground">Caricamento documento...</p>
+        <Loader2 className="h-10 w-10 animate-spin text-(--brand-primary) mx-auto mb-4" />
+        <p className="text-muted-foreground">{t("loading.document")}</p>
       </div>
     </div>
   );
@@ -507,17 +485,19 @@ function ErrorState({
   error: string;
   onRetry: () => void;
 }) {
+  const t = useTranslations("editor");
+
   return (
     <div className="h-full flex items-center justify-center">
       <div className="text-center max-w-sm px-6">
-        <div className="h-16 w-16 rounded-xl bg-[var(--error-bg)] border border-[var(--error-border)] flex items-center justify-center mx-auto mb-4">
-          <AlertCircle className="h-8 w-8 text-[var(--error)]" />
+        <div className="h-16 w-16 rounded-xl bg-(--error-bg) border border-(--error-border) flex items-center justify-center mx-auto mb-4">
+          <AlertCircle className="h-8 w-8 text-(--error)" />
         </div>
-        <h2 className="text-lg font-semibold mb-2">Qualcosa è andato storto</h2>
+        <h2 className="text-lg font-semibold mb-2">{t("error.title")}</h2>
         <p className="text-sm text-muted-foreground mb-6">{error}</p>
         <Button variant="outline" onClick={onRetry}>
           <RotateCcw className="h-4 w-4 mr-2" />
-          Riprova
+          {t("error.retry")}
         </Button>
       </div>
     </div>

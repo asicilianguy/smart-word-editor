@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ArrowRight, Sparkles, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,19 +37,20 @@ export function DemoState({
   actionType,
   demoEntriesCount,
 }: DemoStateProps) {
+  const t = useTranslations("sidebar.demo");
+
   return (
     <div className="flex flex-col h-full">
       {/* Intro banner */}
-      <div className="p-4 border-b border-border bg-gradient-to-r from-[var(--brand-primary-subtle)] to-transparent">
+      <div className="p-4 border-b border-border bg-linear-to-r from-(--brand-primary-subtle) to-transparent">
         <div className="flex items-start gap-3">
-          <div className="h-8 w-8 rounded-lg bg-(--brand-primary)/10 flex items-center justify-center flex-shrink-0">
-            <Sparkles className="h-4 w-4 text-[var(--brand-primary)]" />
+          <div className="h-8 w-8 rounded-lg bg-(--brand-primary)/10 flex items-center justify-center shrink-0">
+            <Sparkles className="h-4 w-4 text-(--brand-primary)" />
           </div>
           <div>
-            <h3 className="font-semibold text-sm">Prova subito!</h3>
+            <h3 className="font-semibold text-sm">{t("banner.title")}</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Questi sono dati di esempio. Carica un documento e clicca su un
-              valore per inserirlo.
+              {t("banner.description")}
             </p>
           </div>
         </div>
@@ -83,8 +85,8 @@ export function DemoState({
                     <Icon className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">{category.name}</span>
                     {hasUserValues && (
-                      <span className="text-[10px] bg-[var(--brand-primary-subtle)] text-[var(--brand-primary)] px-1.5 py-0.5 rounded">
-                        + tuoi
+                      <span className="text-[10px] bg-(--brand-primary-subtle) text-(--brand-primary) px-1.5 py-0.5 rounded">
+                        {t("yoursBadge")}
                       </span>
                     )}
                     <span className="text-xs text-muted-foreground ml-auto mr-2">
@@ -118,35 +120,35 @@ export function DemoState({
         {filteredCategories.length === 0 && searchQuery && (
           <div className="text-center py-12">
             <p className="text-sm text-muted-foreground">
-              Nessun risultato per &quot;{searchQuery}&quot;
+              {t("noResults", { query: searchQuery })}
             </p>
           </div>
         )}
       </div>
 
       {/* CTA Footer */}
-      <div className="flex-shrink-0 p-4 border-t border-border bg-card space-y-3">
+      <div className="shrink-0 p-4 border-t border-border bg-card space-y-3">
         {/* CTA Accesso */}
         {onAuthClick && (
-          <div className="bg-gradient-to-r from-[var(--brand-primary-subtle)] to-[var(--bg-surface)] rounded-lg p-3 border border-[var(--brand-primary)]/20">
+          <div className="bg-linear-to-r from-(--brand-primary-subtle) to-(--bg-surface) rounded-lg p-3 border border-(--brand-primary)/20">
             <p className="text-xs text-foreground font-medium mb-2">
-              Ti piace? Salva i tuoi dati reali
+              {t("cta.title")}
             </p>
             <p className="text-[11px] text-muted-foreground mb-3">
-              Accedi per salvare i tuoi dati e usarli su qualsiasi documento
+              {t("cta.description")}
               {demoEntriesCount > 0 && (
-                <span className="text-[var(--brand-primary)]">
+                <span className="text-(--brand-primary)">
                   {" "}
-                  (inclusi i {demoEntriesCount} che hai aggiunto)
+                  {t("cta.includingAdded", { count: demoEntriesCount })}
                 </span>
               )}
             </p>
             <Button
               onClick={onAuthClick}
               size="sm"
-              className="w-full bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
+              className="w-full bg-(--brand-primary) hover:bg-(--brand-primary-hover)"
             >
-              Accedi o registrati
+              {t("cta.button")}
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </div>
@@ -154,7 +156,7 @@ export function DemoState({
 
         {/* Note */}
         <p className="text-[10px] text-center text-muted-foreground">
-          I dati demo non vengono salvati. Accedi per conservarli.
+          {t("notSavedNote")}
         </p>
       </div>
     </div>

@@ -25,7 +25,7 @@ export function NotAuthenticatedState({
         {onAuthClick && (
           <Button
             onClick={onAuthClick}
-            className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
+            className="bg-(--brand-primary) hover:bg-(--brand-primary-hover)"
           >
             Accedi o registrati
             <ArrowRight className="h-4 w-4 ml-2" />

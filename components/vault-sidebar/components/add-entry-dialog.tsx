@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Plus, AlertTriangle, Loader2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +26,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { GROUP_OPTIONS } from "../constants";
+import { useGroupOptions } from "./use-translated-constants";
 import type { VaultEntryCreate } from "@/lib/vault-api";
 
 interface AddEntryDialogProps {
@@ -41,6 +42,9 @@ export function AddEntryDialog({
   onAdd,
   initialValue,
 }: AddEntryDialogProps) {
+  const t = useTranslations("sidebar.addDialog");
+  const groupOptions = useGroupOptions();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     valueData: "",
@@ -81,7 +85,7 @@ export function AddEntryDialog({
     e.preventDefault();
 
     if (!formData.valueData.trim()) {
-      setError("Inserisci un valore");
+      setError(t("errors.valueRequired"));
       return;
     }
 
@@ -103,10 +107,10 @@ export function AddEntryDialog({
       if (success) {
         handleOpenChange(false);
       } else {
-        setError("Impossibile aggiungere. Riprova.");
+        setError(t("errors.addFailed"));
       }
     } catch {
-      setError("Si è verificato un errore. Riprova.");
+      setError(t("errors.unexpected"));
     } finally {
       setIsSubmitting(false);
     }
@@ -116,10 +120,8 @@ export function AddEntryDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle>Aggiungi un dato</DialogTitle>
-          <DialogDescription>
-            Inserisci il valore che vuoi riutilizzare nei documenti.
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
@@ -127,11 +129,11 @@ export function AddEntryDialog({
             {/* Campo principale - VALORE */}
             <div className="space-y-2">
               <Label htmlFor="valueData" className="text-base font-medium">
-                Valore
+                {t("value")}
               </Label>
               <Input
                 id="valueData"
-                placeholder="Scrivi qui il dato..."
+                placeholder={t("valuePlaceholder")}
                 value={formData.valueData}
                 onChange={(e) =>
                   setFormData((prev) => ({
@@ -142,9 +144,7 @@ export function AddEntryDialog({
                 className="text-base h-11"
                 autoFocus
               />
-              <p className="text-xs text-muted-foreground">
-                Questo è il testo che verrà inserito nel documento
-              </p>
+              <p className="text-xs text-muted-foreground">{t("valueHint")}</p>
             </div>
 
             {/* Opzioni aggiuntive - collassate */}
@@ -161,8 +161,8 @@ export function AddEntryDialog({
                       showOptions ? "rotate-180" : ""
                     }`}
                   />
-                  {showOptions ? "Nascondi opzioni" : "Opzioni aggiuntive"}
-                  <span className="ml-1 opacity-60">(facoltative)</span>
+                  {showOptions ? t("hideOptions") : t("showOptions")}
+                  <span className="ml-1 opacity-60">({t("optional")})</span>
                 </Button>
               </CollapsibleTrigger>
 
@@ -173,11 +173,11 @@ export function AddEntryDialog({
                     htmlFor="nameLabel"
                     className="text-sm text-muted-foreground"
                   >
-                    Etichetta
+                    {t("label")}
                   </Label>
                   <Input
                     id="nameLabel"
-                    placeholder="Un nome per riconoscerlo"
+                    placeholder={t("labelPlaceholder")}
                     value={formData.nameLabel}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -192,7 +192,7 @@ export function AddEntryDialog({
                 {/* Categoria */}
                 <div className="space-y-1.5">
                   <Label className="text-sm text-muted-foreground">
-                    Categoria
+                    {t("category")}
                   </Label>
 
                   {!useCustomGroup ? (
@@ -204,10 +204,10 @@ export function AddEntryDialog({
                         }
                       >
                         <SelectTrigger className="h-9 text-sm">
-                          <SelectValue placeholder="Nessuna" />
+                          <SelectValue placeholder={t("categoryNone")} />
                         </SelectTrigger>
                         <SelectContent>
-                          {GROUP_OPTIONS.map((option) => (
+                          {groupOptions.map((option) => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}
                             </SelectItem>
@@ -221,13 +221,13 @@ export function AddEntryDialog({
                         className="h-auto p-0 text-xs text-muted-foreground"
                         onClick={() => setUseCustomGroup(true)}
                       >
-                        Crea nuova categoria
+                        {t("createNewCategory")}
                       </Button>
                     </div>
                   ) : (
                     <div className="space-y-1">
                       <Input
-                        placeholder="Nome categoria"
+                        placeholder={t("categoryNamePlaceholder")}
                         value={formData.customGroup}
                         onChange={(e) =>
                           setFormData((prev) => ({
@@ -247,7 +247,7 @@ export function AddEntryDialog({
                           setFormData((prev) => ({ ...prev, customGroup: "" }));
                         }}
                       >
-                        ← Scegli esistente
+                        {t("chooseExisting")}
                       </Button>
                     </div>
                   )}
@@ -258,7 +258,7 @@ export function AddEntryDialog({
             {/* Error */}
             {error && (
               <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
-                <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                <AlertTriangle className="h-4 w-4 shrink-0" />
                 {error}
               </div>
             )}
@@ -270,20 +270,20 @@ export function AddEntryDialog({
               variant="ghost"
               onClick={() => handleOpenChange(false)}
             >
-              Annulla
+              {t("cancel")}
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || !formData.valueData.trim()}
-              className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
+              className="bg-(--brand-primary) hover:bg-(--brand-primary-hover)"
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Aggiunta...
+                  {t("adding")}
                 </>
               ) : (
-                "Aggiungi"
+                t("add")
               )}
             </Button>
           </DialogFooter>

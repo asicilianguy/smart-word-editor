@@ -108,7 +108,7 @@ export function VaultSidebar({
         onMouseDown={handleMouseDown}
       >
         {/* Header - Fixed */}
-        <div className="flex-shrink-0 p-4 border-b border-border bg-card">
+        <div className="shrink-0 p-4 border-b border-border bg-card">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold">Vault</h2>
@@ -206,7 +206,7 @@ export function VaultSidebar({
 
         {/* Footer - Fixed (solo per dati reali) */}
         {showRealData && (
-          <div className="flex-shrink-0 p-4 border-t border-border bg-card">
+          <div className="shrink-0 p-4 border-t border-border bg-card">
             <p className="text-xs text-muted-foreground text-center">
               {categories.reduce((acc, cat) => acc + cat.values.length, 0)}{" "}
               valori in {categories.length} categorie

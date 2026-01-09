@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { FileText, Settings, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +35,8 @@ export function VaultCategoryList({
   actionType,
   hasSelection,
 }: VaultCategoryListProps) {
+  const t = useTranslations("sidebar.categories");
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto p-4">
@@ -83,7 +86,7 @@ export function VaultCategoryList({
         {filteredCategories.length === 0 && searchQuery && (
           <div className="text-center py-12">
             <p className="text-sm text-muted-foreground">
-              Nessun risultato per &quot;{searchQuery}&quot;
+              {t("noResults", { query: searchQuery })}
             </p>
           </div>
         )}
@@ -100,7 +103,7 @@ export function VaultCategoryList({
           >
             <span className="flex items-center gap-2">
               <Settings className="h-3.5 w-3.5" />
-              Gestisci tutti i dati
+              {t("manage")}
             </span>
             <ArrowRight className="h-3 w-3" />
           </Button>

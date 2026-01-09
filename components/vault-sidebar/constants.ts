@@ -12,7 +12,7 @@ import {
 import type { VaultCategory } from "@/lib/document-types";
 
 // ============================================================================
-// ICONS MAPPING
+// ICONS MAPPING (non richiede traduzione)
 // ============================================================================
 
 export const categoryIcons: Record<
@@ -37,87 +37,80 @@ export const categoryIcons: Record<
 };
 
 // ============================================================================
-// GROUP OPTIONS FOR ADD DIALOG
+// GROUP OPTIONS KEYS (i value restano fissi, le label sono chiavi di traduzione)
 // ============================================================================
 
-export const GROUP_OPTIONS = [
-  { value: "Dati Identificativi", label: "Dati Identificativi" },
-  { value: "Persone", label: "Persone" },
-  { value: "Contatti", label: "Contatti" },
-  { value: "Indirizzi", label: "Indirizzi" },
-  { value: "Coordinate Bancarie", label: "Coordinate Bancarie" },
-  { value: "Dati Professionali", label: "Dati Professionali" },
-  { value: "Certificazioni", label: "Certificazioni" },
-  { value: "Altri dati", label: "Altri dati" },
-];
+export const GROUP_OPTION_KEYS = [
+  "identification",
+  "people",
+  "contacts",
+  "addresses",
+  "banking",
+  "professional",
+  "certifications",
+  "other",
+] as const;
+
+export type GroupOptionKey = (typeof GROUP_OPTION_KEYS)[number];
+
+// Mapping da chiave traduzione a valore effettivo per il database
+export const GROUP_KEY_TO_VALUE: Record<GroupOptionKey, string> = {
+  identification: "Dati Identificativi",
+  people: "Persone",
+  contacts: "Contatti",
+  addresses: "Indirizzi",
+  banking: "Coordinate Bancarie",
+  professional: "Dati Professionali",
+  certifications: "Certificazioni",
+  other: "Altri dati",
+};
 
 // ============================================================================
-// DEMO DATA - Mostrati quando il vault è vuoto per guidare l'utente
+// DEMO CATEGORIES KEYS (struttura per traduzione)
 // ============================================================================
 
-export const DEMO_CATEGORIES: VaultCategory[] = [
+export const DEMO_CATEGORY_KEYS = [
   {
     id: "dati-identificativi",
-    name: "Dati Identificativi",
+    nameKey: "identification",
     icon: "building",
     values: [
-      {
-        id: "demo-1",
-        label: "Partita IVA",
-        value: "IT01234567890",
-      },
-      {
-        id: "demo-2",
-        label: "Codice Fiscale",
-        value: "RSSMRA80A01H501Z",
-      },
+      { id: "demo-1", labelKey: "vatNumber", value: "IT01234567890" },
+      { id: "demo-2", labelKey: "taxCode", value: "RSSMRA80A01H501Z" },
     ],
   },
   {
     id: "persone",
-    name: "Persone",
+    nameKey: "people",
     icon: "users",
     values: [
-      {
-        id: "demo-3",
-        label: "Legale Rappresentante",
-        value: "Mario Rossi",
-      },
+      { id: "demo-3", labelKey: "legalRepresentative", value: "Mario Rossi" },
     ],
   },
   {
     id: "contatti",
-    name: "Contatti",
+    nameKey: "contacts",
     icon: "mail",
     values: [
-      {
-        id: "demo-4",
-        label: "Email aziendale",
-        value: "info@azienda.it",
-      },
+      { id: "demo-4", labelKey: "businessEmail", value: "info@azienda.it" },
     ],
   },
   {
     id: "indirizzi",
-    name: "Indirizzi",
+    nameKey: "addresses",
     icon: "map-pin",
     values: [
       {
         id: "demo-5",
-        label: "Sede legale",
+        labelKey: "registeredOffice",
         value: "Via Roma 123, 20100 Milano (MI)",
       },
     ],
   },
-];
+] as const;
 
 // ============================================================================
-// ONBOARDING TIPS
+// ONBOARDING TIP KEYS
 // ============================================================================
 
-export const ONBOARDING_TIPS = [
-  "Seleziona del testo nel documento per sostituirlo con un valore",
-  "Clicca su un valore per inserirlo alla posizione del cursore",
-  "Aggiungi i tuoi dati reali per compilare documenti in secondi",
-  "I dati vengono salvati in modo sicuro nel tuo account",
-];
+export const ONBOARDING_TIP_KEYS = ["tip1", "tip2", "tip3", "tip4"] as const;

@@ -366,7 +366,7 @@ export function DocumentImportSection({
           <button className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors text-left">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-(--brand-primary)/10 flex items-center justify-center">
-                <Wand2 className="h-5 w-5 text-[var(--brand-primary)]" />
+                <Wand2 className="h-5 w-5 text-(--brand-primary)" />
               </div>
               <div>
                 <h3 className="font-medium">Importa da documenti</h3>
@@ -377,7 +377,7 @@ export function DocumentImportSection({
             </div>
             <div className="flex items-center gap-3">
               {hasFiles && !isOpen && (
-                <span className="text-xs px-2.5 py-1 rounded-full bg-(--brand-primary)/10 text-[var(--brand-primary)] font-medium">
+                <span className="text-xs px-2.5 py-1 rounded-full bg-(--brand-primary)/10 text-(--brand-primary) font-medium">
                   {uploadedFiles.length} file
                 </span>
               )}
@@ -398,9 +398,9 @@ export function DocumentImportSection({
             {/* ============================================================ */}
             {isReviewMode && (
               <>
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-(--brand-primary)/5 border border-[var(--brand-primary)]/20 text-sm">
-                  <Info className="h-4 w-4 text-[var(--brand-primary)] shrink-0" />
-                  <p className="text-[var(--brand-primary)]">
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-(--brand-primary)/5 border border-(--brand-primary)/20 text-sm">
+                  <Info className="h-4 w-4 text-(--brand-primary) shrink-0" />
+                  <p className="text-(--brand-primary)">
                     {isSaving
                       ? "Salvataggio in corso..."
                       : `Consumati ${tokensConsumed} token. Seleziona i dati da importare nel vault.`}
@@ -464,7 +464,7 @@ export function DocumentImportSection({
                     <strong
                       className={cn(
                         userTokens > 5
-                          ? "text-[var(--brand-primary)]"
+                          ? "text-(--brand-primary)"
                           : userTokens > 0
                           ? "text-amber-600"
                           : "text-destructive"
@@ -551,7 +551,7 @@ export function DocumentImportSection({
                     {workflowStep === "validated" && (
                       <Button
                         onClick={handleExtract}
-                        className="w-full bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
+                        className="w-full bg-(--brand-primary) hover:bg-(--brand-primary-hover)"
                         disabled={!hasEnoughTokens}
                       >
                         <Wand2 className="h-4 w-4 mr-2" />
