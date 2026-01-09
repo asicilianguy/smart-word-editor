@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback } from "react";
+import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ export function FileDropZone({
   currentFileCount,
   fileInputRef,
 }: FileDropZoneProps) {
+  const t = useTranslations("myData.fileDropZone");
   const [isDragOver, setIsDragOver] = useState(false);
 
   const handleDragOver = useCallback(
@@ -95,31 +97,25 @@ export function FileDropZone({
           <Upload
             className={cn(
               "h-6 w-6 transition-colors",
-              isDragOver
-                ? "text-(--brand-primary)"
-                : "text-muted-foreground"
+              isDragOver ? "text-(--brand-primary)" : "text-muted-foreground"
             )}
           />
         </div>
 
         <div>
           <p className="font-medium">
-            {isDragOver ? "Rilascia qui" : "Trascina i documenti"}
+            {isDragOver ? t("dropHere") : t("dragDocuments")}
           </p>
           <p className="text-sm text-muted-foreground mt-1">
-            oppure{" "}
+            {t("or")}{" "}
             <span className="text-(--brand-primary) font-medium">
-              clicca per sfogliare
+              {t("clickToBrowse")}
             </span>
           </p>
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          PDF, Word • Max 10MB • Max 3 file • Max 15 pagine/documento
-        </p>
+        <p className="text-xs text-muted-foreground">{t("constraints")}</p>
       </div>
     </div>
   );
 }
-
-import { useState } from "react";

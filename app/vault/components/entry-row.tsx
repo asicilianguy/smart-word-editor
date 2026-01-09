@@ -2,6 +2,7 @@
 
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
+import { useTranslations } from "next-intl";
 import {
   GripVertical,
   Pencil,
@@ -42,6 +43,7 @@ export function EntryRow({
   onMoveToGroup,
   availableGroups,
 }: EntryRowProps) {
+  const t = useTranslations("myData.entryRow");
   const [copied, setCopied] = useState(false);
 
   const { attributes, listeners, setNodeRef, transform, isDragging } =
@@ -110,7 +112,7 @@ export function EntryRow({
           size="icon"
           className="h-8 w-8 text-muted-foreground hover:text-foreground"
           onClick={handleCopy}
-          title="Copia valore"
+          title={t("copyValue")}
         >
           {copied ? (
             <Check className="h-4 w-4 text-green-500" />
@@ -124,7 +126,7 @@ export function EntryRow({
           size="icon"
           className="h-8 w-8 text-muted-foreground hover:text-foreground"
           onClick={onEdit}
-          title="Modifica"
+          title={t("edit")}
         >
           <Pencil className="h-4 w-4" />
         </Button>
@@ -142,11 +144,11 @@ export function EntryRow({
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={handleCopy}>
               <Copy className="h-4 w-4 mr-2" />
-              Copia valore
+              {t("copyValue")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onEdit}>
               <Pencil className="h-4 w-4 mr-2" />
-              Modifica
+              {t("edit")}
             </DropdownMenuItem>
 
             {availableGroups.length > 0 && (
@@ -155,7 +157,7 @@ export function EntryRow({
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <FolderInput className="h-4 w-4 mr-2" />
-                    Sposta in...
+                    {t("moveTo")}
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent>
                     {availableGroups.map((group) => (
@@ -177,7 +179,7 @@ export function EntryRow({
               className="text-destructive focus:text-destructive focus:bg-destructive/10"
             >
               <Trash2 className="h-4 w-4 mr-2" />
-              Elimina
+              {t("delete")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

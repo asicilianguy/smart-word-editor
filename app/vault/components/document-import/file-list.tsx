@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   File,
   FileText,
@@ -25,6 +26,8 @@ function formatSize(bytes: number): string {
 }
 
 export function FileList({ files, onRemove, canRemove }: FileListProps) {
+  const t = useTranslations("myData.fileList");
+
   if (files.length === 0) return null;
 
   return (
@@ -60,7 +63,7 @@ export function FileList({ files, onRemove, canRemove }: FileListProps) {
               {formatSize(file.size)}
               {file.pageCount !== undefined && file.pageCount > 0 && (
                 <span className="ml-2 text-(--brand-primary)">
-                  • {file.pageCount} pagin{file.pageCount === 1 ? "a" : "e"}
+                  • {t("pages", { count: file.pageCount })}
                 </span>
               )}
               {file.error && (

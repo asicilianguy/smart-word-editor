@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,8 @@ export function CreateGroupDialog({
   onCreateGroup,
   existingGroups,
 }: CreateGroupDialogProps) {
+  const t = useTranslations("myData.createGroupDialog");
+
   const [groupName, setGroupName] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -43,12 +46,12 @@ export function CreateGroupDialog({
     const trimmed = groupName.trim();
 
     if (!trimmed) {
-      setError("Il nome è obbligatorio");
+      setError(t("errors.nameRequired"));
       return;
     }
 
     if (existingGroups.some((g) => g.toLowerCase() === trimmed.toLowerCase())) {
-      setError("Questa categoria esiste già");
+      setError(t("errors.alreadyExists"));
       return;
     }
 
@@ -64,20 +67,18 @@ export function CreateGroupDialog({
             <div className="h-8 w-8 rounded-lg bg-(--brand-primary)/10 flex items-center justify-center">
               <FolderPlus className="h-4 w-4 text-(--brand-primary)" />
             </div>
-            Nuova categoria
+            {t("title")}
           </DialogTitle>
-          <DialogDescription>
-            Crea una categoria per organizzare i tuoi dati.
-          </DialogDescription>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
           <div className="py-4">
             <div className="space-y-2">
-              <Label htmlFor="group-name">Nome categoria</Label>
+              <Label htmlFor="group-name">{t("nameLabel")}</Label>
               <Input
                 id="group-name"
-                placeholder="es. Certificazioni, Progetti..."
+                placeholder={t("namePlaceholder")}
                 value={groupName}
                 onChange={(e) => {
                   setGroupName(e.target.value);
@@ -95,14 +96,14 @@ export function CreateGroupDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Annulla
+              {t("cancel")}
             </Button>
             <Button
               type="submit"
               className="bg-(--brand-primary) hover:bg-(--brand-primary-hover) text-white"
             >
               <FolderPlus className="h-4 w-4 mr-2" />
-              Crea
+              {t("create")}
             </Button>
           </DialogFooter>
         </form>

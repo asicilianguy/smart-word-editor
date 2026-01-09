@@ -184,7 +184,203 @@
       "retry": "Try again"
     }
   },
-  "myData": {},
+  "myData": {
+    "extractedEntriesReview": {
+      "title": "Data found",
+      "selectAll": "Select all",
+      "deselectAll": "Deselect",
+      "description": "The <strong>bold values</strong> are the data that will be inserted in your documents. Click on <icon></icon> to edit them.",
+      "categoryLabel": "Category:",
+      "groupCount": "{selected}/{total} items",
+      "legend": {
+        "category": "= Category (for organization)",
+        "data": "= Data (will be inserted in documents)"
+      },
+      "duplicates": {
+        "alreadyInVault": "{count, plural, =1 {# already exists} other {# already exist}} in your data",
+        "internal": "{count, plural, =1 {# duplicate} other {# duplicates}}",
+        "willBeIgnored": "will be ignored"
+      },
+      "uniqueData": "{count, plural, =1 {unique item} other {unique items}} to save",
+      "ignored": "{count, plural, =1 {# ignored} other {# ignored}}",
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "save": "{count, plural, =1 {Save # item} other {Save # items}}",
+      "entryRow": {
+        "editHeader": "Edit data",
+        "delete": "Delete",
+        "done": "Done",
+        "valueLabel": "Value to insert",
+        "valuePlaceholder": "The data that will be inserted in documents...",
+        "valueHint": "This is the text that will be copied to your documents",
+        "labelLabel": "Descriptive name",
+        "optional": "optional",
+        "labelPlaceholder": "e.g. Company VAT, Main email...",
+        "labelHint": "A name to help you recognize this data",
+        "categoryLabel": "Category",
+        "forOrganization": "for organization",
+        "selectCategory": "Select category...",
+        "createNewCategory": "Create new category",
+        "newCategoryPlaceholder": "Name of the new category...",
+        "createCategory": "Create category",
+        "cancel": "Cancel",
+        "edit": "Edit",
+        "errors": {
+          "nameRequired": "Enter a name",
+          "alreadyExists": "This category already exists"
+        }
+      }
+    },
+    "validationStatus": {
+      "valid": "Valid documents: {pages} total pages",
+      "failed": "Validation failed",
+      "readyToExtract": "Ready to extract data",
+      "pagesCount": "{current}/{max} pages"
+    },
+    "fileList": {
+      "pages": "{count, plural, =1 {# page} other {# pages}}"
+    },
+    "fileDropZone": {
+      "dropHere": "Drop here",
+      "dragDocuments": "Drag documents",
+      "or": "or",
+      "clickToBrowse": "click to browse",
+      "constraints": "PDF, Word • Max 10MB • Max 3 files • Max 15 pages/document"
+    },
+    "documentImport": {
+      "title": "Import from documents",
+      "subtitle": "Automatically extract reusable data",
+      "filesBadge": "{count, plural, =1 {# file} other {# files}}",
+      "defaultGroup": "Other data",
+      "documents": "Documents ({current}/{max})",
+      "removeAll": "Remove all",
+      "tokenInfo": "Each document uses <strong>1 credit</strong>. You have <tokenClass>{tokens} credits</tokenClass> available.",
+      "review": {
+        "saving": "Saving...",
+        "tokensConsumed": "{count} credits consumed. Select the data to import."
+      },
+      "completed": {
+        "title": "Import completed!",
+        "description": "The data has been added to your data",
+        "importMore": "Import more documents"
+      },
+      "buttons": {
+        "validate": "Validate documents",
+        "validating": "Validating...",
+        "extract": "Extract data ({tokens} credits)",
+        "extracting": "Analyzing..."
+      },
+      "errors": {
+        "maxFiles": "You can upload a maximum of {max} documents",
+        "invalidType": "{name}: use only PDF, DOC or DOCX",
+        "fileTooLarge": "{name}: too large (max 10MB)",
+        "tooManyPages": "Too many pages (max {max})",
+        "filesOverLimit": "Some files exceed the limit of {max} pages per document",
+        "validationFailed": "Validation failed",
+        "validationError": "Error during validation. Please try again.",
+        "notEnoughTokens": "You need {required} credits, you have {available}",
+        "noDataExtracted": "No data extracted",
+        "extractionError": "Error during extraction. Please try again.",
+        "saveFailed": "Error saving",
+        "insufficientTokens": "Insufficient credits. You need {required} credits."
+      }
+    },
+    "createGroupDialog": {
+      "title": "New category",
+      "description": "Create a category to organize your data.",
+      "nameLabel": "Category name",
+      "namePlaceholder": "e.g. Certifications, Projects...",
+      "cancel": "Cancel",
+      "create": "Create",
+      "errors": {
+        "nameRequired": "Name is required",
+        "alreadyExists": "This category already exists"
+      }
+    },
+    "editDialog": {
+      "title": "Edit data",
+      "description": "Update the information for this value.",
+      "value": "Value",
+      "valueHint": "This is the text that will be inserted in the document",
+      "label": "Label",
+      "labelPlaceholder": "A name to recognize it",
+      "category": "Category",
+      "moveToNewCategory": "Move to new category",
+      "categoryNamePlaceholder": "Category name",
+      "chooseExisting": "← Choose existing",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving..."
+    },
+    "addDialog": {
+      "title": "Add data",
+      "description": "Enter the value you want to reuse in documents.",
+      "value": "Value",
+      "valuePlaceholder": "Type your data here...",
+      "valueHint": "This is the text that will be inserted in the document",
+      "showOptions": "Additional options",
+      "hideOptions": "Hide options",
+      "optional": "optional",
+      "label": "Label",
+      "labelPlaceholder": "A name to recognize it",
+      "category": "Category",
+      "categoryNone": "None",
+      "createNewCategory": "Create new category",
+      "categoryNamePlaceholder": "Category name",
+      "chooseExisting": "← Choose existing",
+      "cancel": "Cancel",
+      "add": "Add",
+      "adding": "Adding...",
+      "errors": {
+        "valueRequired": "Please enter a value",
+        "addFailed": "Unable to add. Please try again.",
+        "unexpected": "An error occurred. Please try again."
+      }
+    },
+    "emptyState": {
+      "title": "Your data is empty",
+      "description": "Add your personal and business data, or import them automatically from existing documents.",
+      "addManually": "Add manually",
+      "tip": "Tip: use the \"Import from documents\" section above to automatically extract data from invoices, contracts or other documents."
+    },
+    "entryRow": {
+      "copyValue": "Copy value",
+      "edit": "Edit",
+      "moveTo": "Move to...",
+      "delete": "Delete"
+    },
+    "groupSection": {
+      "categoryLabel": "Category:",
+      "entriesCount": "{count, plural, =1 {# item} other {# items}}",
+      "dropHere": "Drop here",
+      "dropToMove": "Drop to move here",
+      "emptyCategory": "No data in this category"
+    },
+    "header": {
+      "title": "Your data",
+      "values": "{count, plural, =1 {# value} other {# values}}",
+      "tokens": "{count} credits",
+      "newGroup": "New category",
+      "add": "Add",
+      "searchPlaceholder": "Search values, labels or categories..."
+    },
+    "loading": "Loading data...",
+    "retry": "Retry",
+    "defaultGroup": "Other data",
+    "noResults": "No results for \"{query}\"",
+    "legend": {
+      "category": "= Category (for organization)",
+      "data": "= Data (will be inserted in documents)"
+    },
+    "dragHint": "Drag data to move them between categories",
+    "deleteDialog": {
+      "title": "Delete data",
+      "description": "Are you sure you want to delete this data?",
+      "warning": "This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    }
+  },
   "import": {},
   "sidebar": {
     "vaultData": {

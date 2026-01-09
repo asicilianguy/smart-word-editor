@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useDroppable } from "@dnd-kit/core";
 import { ChevronDown, ChevronUp, Folder } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,6 +26,7 @@ export function GroupSection({
   onMoveToGroup,
   availableGroups,
 }: GroupSectionProps) {
+  const t = useTranslations("myData.groupSection");
   const [isExpanded, setIsExpanded] = useState(false);
 
   const { setNodeRef, isOver, active } = useDroppable({
@@ -86,7 +88,7 @@ export function GroupSection({
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-1.5">
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                Categoria:
+                {t("categoryLabel")}
               </span>
               <span className="font-medium text-sm truncate">{group}</span>
             </div>
@@ -98,8 +100,8 @@ export function GroupSection({
                   : "text-muted-foreground"
               )}
             >
-              {entries.length} {entries.length === 1 ? "dato" : "dati"}
-              {isOver && isDraggingFromOtherGroup && " • Rilascia qui"}
+              {t("entriesCount", { count: entries.length })}
+              {isOver && isDraggingFromOtherGroup && ` • ${t("dropHere")}`}
             </p>
           </div>
 
@@ -140,8 +142,8 @@ export function GroupSection({
             >
               <p className="text-sm">
                 {isOver && isDraggingFromOtherGroup
-                  ? "Rilascia per spostare qui"
-                  : "Nessun dato in questa categoria"}
+                  ? t("dropToMove")
+                  : t("emptyCategory")}
               </p>
             </div>
           )}

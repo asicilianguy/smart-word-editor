@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   ArrowLeft,
   Plus,
@@ -36,6 +37,8 @@ export function VaultHeader({
   onBackClick,
   showSearch,
 }: VaultHeaderProps) {
+  const t = useTranslations("myData.header");
+
   return (
     <header className="shrink-0 bg-card border-b border-border">
       <div className="px-4 lg:px-6 py-4">
@@ -57,9 +60,9 @@ export function VaultHeader({
                 <Database className="h-5 w-5 text-(--brand-primary)" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-lg font-semibold truncate">I tuoi dati</h1>
+                <h1 className="text-lg font-semibold truncate">{t("title")}</h1>
                 <p className="text-sm text-muted-foreground">
-                  {totalEntries} valor{totalEntries === 1 ? "e" : "i"}
+                  {t("values", { count: totalEntries })}
                 </p>
               </div>
             </div>
@@ -83,7 +86,7 @@ export function VaultHeader({
               ) : (
                 <>
                   <Coins className="h-4 w-4" />
-                  <span>{userTokens} token</span>
+                  <span>{t("tokens", { count: userTokens })}</span>
                 </>
               )}
             </div>
@@ -96,7 +99,7 @@ export function VaultHeader({
               className="hidden md:flex gap-2"
             >
               <FolderPlus className="h-4 w-4" />
-              Nuovo gruppo
+              {t("newGroup")}
             </Button>
 
             <Button
@@ -105,7 +108,7 @@ export function VaultHeader({
               className="gap-2 bg-(--brand-primary) hover:bg-(--brand-primary-hover) text-white"
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Aggiungi</span>
+              <span className="hidden sm:inline">{t("add")}</span>
             </Button>
           </div>
         </div>
@@ -115,7 +118,7 @@ export function VaultHeader({
           <div className="relative mt-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Cerca valori, etichette o categorie..."
+              placeholder={t("searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               className="pl-10 bg-background"

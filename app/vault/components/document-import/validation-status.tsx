@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { CheckCircle2, AlertCircle, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ValidationResult } from "./types";
@@ -9,6 +10,8 @@ interface ValidationStatusProps {
 }
 
 export function ValidationStatus({ result }: ValidationStatusProps) {
+  const t = useTranslations("myData.validationStatus");
+
   return (
     <div
       className={cn(
@@ -32,21 +35,22 @@ export function ValidationStatus({ result }: ValidationStatusProps) {
           )}
         >
           {result.is_valid
-            ? `Documenti validi: ${result.total_pages} pagine totali`
-            : result.error || "Validazione fallita"}
+            ? t("valid", { pages: result.total_pages })
+            : result.error || t("failed")}
         </p>
 
         {result.is_valid && (
-          <p className="text-sm text-green-600 mt-0.5">
-            Pronto per estrarre i dati
-          </p>
+          <p className="text-sm text-green-600 mt-0.5">{t("readyToExtract")}</p>
         )}
       </div>
 
       <div className="flex items-center gap-1 text-xs text-muted-foreground">
         <FileText className="h-3.5 w-3.5" />
         <span>
-          {result.total_pages}/{result.max_pages} pagine
+          {t("pagesCount", {
+            current: result.total_pages,
+            max: result.max_pages,
+          })}
         </span>
       </div>
     </div>

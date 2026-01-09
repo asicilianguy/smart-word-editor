@@ -184,7 +184,203 @@
       "retry": "Riprova"
     }
   },
-  "myData": {},
+  "myData": {
+    "extractedEntriesReview": {
+      "title": "Dati trovati",
+      "selectAll": "Seleziona tutti",
+      "deselectAll": "Deseleziona",
+      "description": "I <strong>valori in grassetto</strong> sono i dati che verranno inseriti nei tuoi documenti. Clicca su <icon></icon> per modificarli.",
+      "categoryLabel": "Categoria:",
+      "groupCount": "{selected}/{total} dati",
+      "legend": {
+        "category": "= Categoria (per organizzare)",
+        "data": "= Dato (verrà inserito nei documenti)"
+      },
+      "duplicates": {
+        "alreadyInVault": "{count, plural, =1 {# già presente} other {# già presenti}} nei tuoi dati",
+        "internal": "{count, plural, =1 {# duplicato} other {# duplicati}}",
+        "willBeIgnored": "verranno ignorati"
+      },
+      "uniqueData": "{count, plural, =1 {dato unico} other {dati unici}} da salvare",
+      "ignored": "{count, plural, =1 {# ignorato} other {# ignorati}}",
+      "cancel": "Annulla",
+      "saving": "Salvataggio...",
+      "save": "{count, plural, =1 {Salva # dato} other {Salva # dati}}",
+      "entryRow": {
+        "editHeader": "Modifica dato",
+        "delete": "Elimina",
+        "done": "Fatto",
+        "valueLabel": "Valore da inserire",
+        "valuePlaceholder": "Il dato che verrà inserito nei documenti...",
+        "valueHint": "Questo è il testo che verrà copiato nei tuoi documenti",
+        "labelLabel": "Nome descrittivo",
+        "optional": "opzionale",
+        "labelPlaceholder": "es. Partita IVA azienda, Email principale...",
+        "labelHint": "Un nome per aiutarti a riconoscere questo dato",
+        "categoryLabel": "Categoria",
+        "forOrganization": "per organizzare",
+        "selectCategory": "Seleziona categoria...",
+        "createNewCategory": "Crea nuova categoria",
+        "newCategoryPlaceholder": "Nome della nuova categoria...",
+        "createCategory": "Crea categoria",
+        "cancel": "Annulla",
+        "edit": "Modifica",
+        "errors": {
+          "nameRequired": "Inserisci un nome",
+          "alreadyExists": "Questa categoria esiste già"
+        }
+      }
+    },
+    "validationStatus": {
+      "valid": "Documenti validi: {pages} pagine totali",
+      "failed": "Validazione fallita",
+      "readyToExtract": "Pronto per estrarre i dati",
+      "pagesCount": "{current}/{max} pagine"
+    },
+    "fileList": {
+      "pages": "{count, plural, =1 {# pagina} other {# pagine}}"
+    },
+    "fileDropZone": {
+      "dropHere": "Rilascia qui",
+      "dragDocuments": "Trascina i documenti",
+      "or": "oppure",
+      "clickToBrowse": "clicca per sfogliare",
+      "constraints": "PDF, Word • Max 10MB • Max 3 file • Max 15 pagine/documento"
+    },
+    "documentImport": {
+      "title": "Importa da documenti",
+      "subtitle": "Estrai automaticamente dati riutilizzabili",
+      "filesBadge": "{count, plural, =1 {# file} other {# file}}",
+      "defaultGroup": "Altri dati",
+      "documents": "Documenti ({current}/{max})",
+      "removeAll": "Rimuovi tutti",
+      "tokenInfo": "Ogni documento consuma <strong>1 credito</strong>. Hai <tokenClass>{tokens} crediti</tokenClass> disponibili.",
+      "review": {
+        "saving": "Salvataggio in corso...",
+        "tokensConsumed": "Consumati {count} crediti. Seleziona i dati da importare."
+      },
+      "completed": {
+        "title": "Importazione completata!",
+        "description": "I dati sono stati aggiunti ai tuoi dati",
+        "importMore": "Importa altri documenti"
+      },
+      "buttons": {
+        "validate": "Valida documenti",
+        "validating": "Validazione in corso...",
+        "extract": "Estrai dati ({tokens} crediti)",
+        "extracting": "Analisi in corso..."
+      },
+      "errors": {
+        "maxFiles": "Puoi caricare al massimo {max} documenti",
+        "invalidType": "{name}: usa solo PDF, DOC o DOCX",
+        "fileTooLarge": "{name}: troppo grande (max 10MB)",
+        "tooManyPages": "Troppe pagine (max {max})",
+        "filesOverLimit": "Alcuni file superano il limite di {max} pagine per documento",
+        "validationFailed": "Validazione fallita",
+        "validationError": "Errore durante la validazione. Riprova.",
+        "notEnoughTokens": "Servono {required} crediti, ne hai {available}",
+        "noDataExtracted": "Nessun dato estratto",
+        "extractionError": "Errore durante l'estrazione. Riprova.",
+        "saveFailed": "Errore nel salvataggio",
+        "insufficientTokens": "Crediti insufficienti. Servono {required} crediti."
+      }
+    },
+    "createGroupDialog": {
+      "title": "Nuova categoria",
+      "description": "Crea una categoria per organizzare i tuoi dati.",
+      "nameLabel": "Nome categoria",
+      "namePlaceholder": "es. Certificazioni, Progetti...",
+      "cancel": "Annulla",
+      "create": "Crea",
+      "errors": {
+        "nameRequired": "Il nome è obbligatorio",
+        "alreadyExists": "Questa categoria esiste già"
+      }
+    },
+    "editDialog": {
+      "title": "Modifica dato",
+      "description": "Aggiorna le informazioni di questo valore.",
+      "value": "Valore",
+      "valueHint": "Questo è il testo che verrà inserito nel documento",
+      "label": "Etichetta",
+      "labelPlaceholder": "Un nome per riconoscerlo",
+      "category": "Categoria",
+      "moveToNewCategory": "Sposta in nuova categoria",
+      "categoryNamePlaceholder": "Nome categoria",
+      "chooseExisting": "← Scegli esistente",
+      "cancel": "Annulla",
+      "save": "Salva",
+      "saving": "Salvataggio..."
+    },
+    "addDialog": {
+      "title": "Aggiungi un dato",
+      "description": "Inserisci il valore che vuoi riutilizzare nei documenti.",
+      "value": "Valore",
+      "valuePlaceholder": "Scrivi qui il dato...",
+      "valueHint": "Questo è il testo che verrà inserito nel documento",
+      "showOptions": "Opzioni aggiuntive",
+      "hideOptions": "Nascondi opzioni",
+      "optional": "facoltative",
+      "label": "Etichetta",
+      "labelPlaceholder": "Un nome per riconoscerlo",
+      "category": "Categoria",
+      "categoryNone": "Nessuna",
+      "createNewCategory": "Crea nuova categoria",
+      "categoryNamePlaceholder": "Nome categoria",
+      "chooseExisting": "← Scegli esistente",
+      "cancel": "Annulla",
+      "add": "Aggiungi",
+      "adding": "Aggiunta...",
+      "errors": {
+        "valueRequired": "Inserisci un valore",
+        "addFailed": "Impossibile aggiungere. Riprova.",
+        "unexpected": "Si è verificato un errore. Riprova."
+      }
+    },
+    "emptyState": {
+      "title": "I tuoi dati sono vuoti",
+      "description": "Aggiungi i tuoi dati personali e aziendali, oppure importali automaticamente da documenti esistenti.",
+      "addManually": "Aggiungi manualmente",
+      "tip": "Suggerimento: usa la sezione \"Importa da documenti\" qui sopra per estrarre automaticamente i dati da fatture, contratti o altri documenti."
+    },
+    "entryRow": {
+      "copyValue": "Copia valore",
+      "edit": "Modifica",
+      "moveTo": "Sposta in...",
+      "delete": "Elimina"
+    },
+    "groupSection": {
+      "categoryLabel": "Categoria:",
+      "entriesCount": "{count, plural, =1 {# dato} other {# dati}}",
+      "dropHere": "Rilascia qui",
+      "dropToMove": "Rilascia per spostare qui",
+      "emptyCategory": "Nessun dato in questa categoria"
+    },
+    "header": {
+      "title": "I tuoi dati",
+      "values": "{count, plural, =1 {# valore} other {# valori}}",
+      "tokens": "{count} crediti",
+      "newGroup": "Nuova categoria",
+      "add": "Aggiungi",
+      "searchPlaceholder": "Cerca valori, etichette o categorie..."
+    },
+    "loading": "Caricamento dati...",
+    "retry": "Riprova",
+    "defaultGroup": "Altri dati",
+    "noResults": "Nessun risultato per \"{query}\"",
+    "legend": {
+      "category": "= Categoria (per organizzare)",
+      "data": "= Dato (verrà inserito nei documenti)"
+    },
+    "dragHint": "Trascina i dati per spostarli tra le categorie",
+    "deleteDialog": {
+      "title": "Elimina dato",
+      "description": "Sei sicuro di voler eliminare questo dato?",
+      "warning": "Questa azione non può essere annullata.",
+      "cancel": "Annulla",
+      "confirm": "Elimina"
+    }
+  },
   "import": {},
   "sidebar": {
     "vaultData": {

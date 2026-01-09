@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   DndContext,
   DragOverlay,
@@ -42,6 +43,8 @@ import { DocumentImportSection } from "./document-import";
 
 export function VaultManager() {
   const router = useRouter();
+  const t = useTranslations("myData");
+
   const { user, refreshAuth } = useAuth();
   const {
     categories,
@@ -185,7 +188,7 @@ export function VaultManager() {
       const success = await addEntry({
         valueData: data.valueData,
         nameLabel: data.nameLabel,
-        nameGroup: data.nameGroup || "Altri dati",
+        nameGroup: data.nameGroup || t("defaultGroup"),
         source: "manual",
       });
       return success;
@@ -253,7 +256,7 @@ export function VaultManager() {
       <div className="h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-(--brand-primary) mx-auto mb-4" />
-          <p className="text-muted-foreground">Caricamento vault...</p>
+          <p className="text-muted-foreground">{t("loading")}</p>
         </div>
       </div>
     );
@@ -290,7 +293,7 @@ export function VaultManager() {
                 onClick={refresh}
                 className="shrink-0"
               >
-                Riprova
+                {t("retry")}
               </Button>
             </div>
           )}
@@ -321,7 +324,7 @@ export function VaultManager() {
                 {Object.entries(groupedEntries).length === 0 && searchQuery ? (
                   <div className="text-center py-12">
                     <p className="text-muted-foreground">
-                      Nessun risultato per &quot;{searchQuery}&quot;
+                      {t("noResults", { query: searchQuery })}
                     </p>
                   </div>
                 ) : (
@@ -353,17 +356,17 @@ export function VaultManager() {
               <div className="flex items-center justify-center gap-6 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1.5">
                   <Folder className="h-3.5 w-3.5" />
-                  <span>= Categoria (per organizzare)</span>
+                  <span>{t("legend.category")}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Database className="h-3.5 w-3.5 text-(--brand-primary)" />
-                  <span>= Dato (verrà inserito nei documenti)</span>
+                  <span>{t("legend.data")}</span>
                 </div>
               </div>
 
               {/* Info drag & drop */}
               <p className="text-xs text-center text-muted-foreground">
-                Trascina i dati per spostarli tra le categorie
+                {t("dragHint")}
               </p>
             </div>
           )}
@@ -399,9 +402,9 @@ export function VaultManager() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Elimina dato</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Sei sicuro di voler eliminare questo dato?
+              {t("deleteDialog.description")}
               <br />
               <span className="font-medium text-foreground">
                 {deletingEntry?.value}
@@ -414,12 +417,12 @@ export function VaultManager() {
               )}
               <br />
               <br />
-              Questa azione non può essere annullata.
+              {t("deleteDialog.warning")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isSubmitting}>
-              Annulla
+              {t("deleteDialog.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteEntry}
@@ -429,7 +432,7 @@ export function VaultManager() {
               {isSubmitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                "Elimina"
+                t("deleteDialog.confirm")
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,8 @@ export function EditEntryDialog({
   isSubmitting,
   availableGroups,
 }: EditEntryDialogProps) {
+  const t = useTranslations("myData.editDialog");
+
   const [formData, setFormData] = useState({
     valueData: "",
     nameLabel: "",
@@ -87,10 +90,8 @@ export function EditEntryDialog({
     <Dialog open={!!entry} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle>Modifica dato</DialogTitle>
-          <DialogDescription>
-            Aggiorna le informazioni di questo valore.
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
@@ -98,7 +99,7 @@ export function EditEntryDialog({
             {/* Campo principale - VALORE */}
             <div className="space-y-2">
               <Label htmlFor="edit-value" className="text-base font-medium">
-                Valore
+                {t("value")}
               </Label>
               <Input
                 id="edit-value"
@@ -108,9 +109,7 @@ export function EditEntryDialog({
                 }
                 className="text-base h-11"
               />
-              <p className="text-xs text-muted-foreground">
-                Questo è il testo che verrà inserito nel documento
-              </p>
+              <p className="text-xs text-muted-foreground">{t("valueHint")}</p>
             </div>
 
             {/* Etichetta - già visibile in edit mode */}
@@ -119,11 +118,11 @@ export function EditEntryDialog({
                 htmlFor="edit-label"
                 className="text-sm text-muted-foreground"
               >
-                Etichetta
+                {t("label")}
               </Label>
               <Input
                 id="edit-label"
-                placeholder="Un nome per riconoscerlo"
+                placeholder={t("labelPlaceholder")}
                 value={formData.nameLabel}
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, nameLabel: e.target.value }))
@@ -134,7 +133,9 @@ export function EditEntryDialog({
 
             {/* Categoria - già visibile in edit mode */}
             <div className="space-y-1.5">
-              <Label className="text-sm text-muted-foreground">Categoria</Label>
+              <Label className="text-sm text-muted-foreground">
+                {t("category")}
+              </Label>
 
               {!useCustomGroup ? (
                 <div className="space-y-1">
@@ -162,13 +163,13 @@ export function EditEntryDialog({
                     className="h-auto p-0 text-xs text-muted-foreground"
                     onClick={() => setUseCustomGroup(true)}
                   >
-                    Sposta in nuova categoria
+                    {t("moveToNewCategory")}
                   </Button>
                 </div>
               ) : (
                 <div className="space-y-1">
                   <Input
-                    placeholder="Nome categoria"
+                    placeholder={t("categoryNamePlaceholder")}
                     value={formData.customGroup}
                     onChange={(e) =>
                       setFormData((p) => ({
@@ -186,7 +187,7 @@ export function EditEntryDialog({
                     className="h-auto p-0 text-xs text-muted-foreground"
                     onClick={() => setUseCustomGroup(false)}
                   >
-                    ← Scegli esistente
+                    {t("chooseExisting")}
                   </Button>
                 </div>
               )}
@@ -199,7 +200,7 @@ export function EditEntryDialog({
               variant="ghost"
               onClick={() => onOpenChange(false)}
             >
-              Annulla
+              {t("cancel")}
             </Button>
             <Button
               type="submit"
@@ -209,10 +210,10 @@ export function EditEntryDialog({
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Salvataggio...
+                  {t("saving")}
                 </>
               ) : (
-                "Salva"
+                t("save")
               )}
             </Button>
           </DialogFooter>

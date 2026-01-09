@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import {
   Check,
   Pencil,
@@ -27,15 +28,19 @@ import {
 import { cn } from "@/lib/utils";
 import type { ExtractedEntry } from "./types";
 
-interface ExtractedEntriesReviewProps {
-  entries: ExtractedEntry[];
-  existingVaultValues: string[];
-  onEntriesChange: (entries: ExtractedEntry[]) => void;
-  onConfirm: () => void;
-  onCancel: () => void;
-  isSubmitting: boolean;
-}
+// Mappa da nome gruppo italiano a chiave di traduzione
+const GROUP_NAME_TO_KEY: Record<string, string> = {
+  "Dati Identificativi": "identification",
+  Persone: "people",
+  Contatti: "contacts",
+  Indirizzi: "addresses",
+  "Coordinate Bancarie": "banking",
+  "Dati Professionali": "professional",
+  Certificazioni: "certifications",
+  "Altri dati": "other",
+};
 
+// Valori interni (italiano) - usati come chiavi nel database
 const DEFAULT_GROUPS = [
   "Dati Identificativi",
   "Persone",
@@ -46,6 +51,17 @@ const DEFAULT_GROUPS = [
   "Altri dati",
 ];
 
+const DEFAULT_GROUP_VALUE = "Altri dati";
+
+interface ExtractedEntriesReviewProps {
+  entries: ExtractedEntry[];
+  existingVaultValues: string[];
+  onEntriesChange: (entries: ExtractedEntry[]) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+  isSubmitting: boolean;
+}
+
 export function ExtractedEntriesReview({
   entries,
   existingVaultValues,
@@ -54,25 +70,31 @@ export function ExtractedEntriesReview({
   onCancel,
   isSubmitting,
 }: ExtractedEntriesReviewProps) {
+  const t = useTranslations("myData.extractedEntriesReview");
+  const tGroups = useTranslations("sidebar.constants.groups");
+
+  // Funzione per tradurre i nomi dei gruppi
+  const translateGroup = (groupName: string): string => {
+    const key = GROUP_NAME_TO_KEY[groupName];
+    return key ? tGroups(key) : groupName;
+  };
+
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
     const groups = new Set<string>();
-    entries.forEach((e) => groups.add(e.nameGroup || "Altri dati"));
+    entries.forEach((e) => groups.add(e.nameGroup || DEFAULT_GROUP_VALUE));
     return groups;
   });
 
-  // State per gruppi custom creati dall'utente
   const [customGroups, setCustomGroups] = useState<string[]>([]);
 
-  // Tutti i gruppi disponibili (default + custom + quelli già nelle entries)
   const allGroups = [
     ...new Set([
       ...DEFAULT_GROUPS,
       ...customGroups,
-      ...entries.map((e) => e.nameGroup || "Altri dati"),
+      ...entries.map((e) => e.nameGroup || DEFAULT_GROUP_VALUE),
     ]),
   ];
 
-  // Funzione per aggiungere un nuovo gruppo custom
   const addCustomGroup = (groupName: string): boolean => {
     const trimmed = groupName.trim();
     if (!trimmed) return false;
@@ -87,10 +109,9 @@ export function ExtractedEntriesReview({
     return true;
   };
 
-  // Group entries by category
   function groupEntries(items: ExtractedEntry[]) {
     return items.reduce((acc, entry) => {
-      const group = entry.nameGroup || "Altri dati";
+      const group = entry.nameGroup || DEFAULT_GROUP_VALUE;
       if (!acc[group]) acc[group] = [];
       acc[group].push(entry);
       return acc;
@@ -100,8 +121,6 @@ export function ExtractedEntriesReview({
   const grouped = groupEntries(entries);
   const selectedCount = entries.filter((e) => e.selected).length;
 
-  // Calcola i dati unici selezionati (deduplicazione su valueData)
-  // Considera sia duplicati interni che dati già esistenti nel vault
   const { uniqueCount, duplicateCount, alreadyInVaultCount } = useMemo(() => {
     const selected = entries.filter((e) => e.selected);
     const seen = new Set<string>();
@@ -114,13 +133,11 @@ export function ExtractedEntriesReview({
     for (const entry of selected) {
       const key = (entry.valueData || "").trim().toLowerCase();
 
-      // Check se già nel vault
       if (existingSet.has(key)) {
         alreadyInVault++;
         continue;
       }
 
-      // Check duplicati interni
       if (seen.has(key)) {
         duplicatesInternal++;
       } else {
@@ -136,33 +153,29 @@ export function ExtractedEntriesReview({
     };
   }, [entries, existingVaultValues]);
 
-  // Toggle single selection
   const toggleSelect = (id: string) => {
     onEntriesChange(
       entries.map((e) => (e.id === id ? { ...e, selected: !e.selected } : e))
     );
   };
 
-  // Toggle group selection
   const toggleGroupSelect = (groupName: string, selected: boolean) => {
     onEntriesChange(
       entries.map((e) =>
         e.nameGroup === groupName ||
-        (!e.nameGroup && groupName === "Altri dati")
+        (!e.nameGroup && groupName === DEFAULT_GROUP_VALUE)
           ? { ...e, selected }
           : e
       )
     );
   };
 
-  // Toggle edit mode
   const toggleEdit = (id: string) => {
     onEntriesChange(
       entries.map((e) => (e.id === id ? { ...e, isEditing: !e.isEditing } : e))
     );
   };
 
-  // Update entry
   const updateEntry = (
     id: string,
     field: keyof ExtractedEntry,
@@ -173,12 +186,10 @@ export function ExtractedEntriesReview({
     );
   };
 
-  // Select/deselect all
   const toggleAll = (selected: boolean) => {
     onEntriesChange(entries.map((e) => ({ ...e, selected })));
   };
 
-  // Toggle group expand
   const toggleGroupExpand = (groupName: string) => {
     const newExpanded = new Set(expandedGroups);
     if (newExpanded.has(groupName)) {
@@ -189,9 +200,25 @@ export function ExtractedEntriesReview({
     setExpandedGroups(newExpanded);
   };
 
-  // Delete entry
   const deleteEntry = (id: string) => {
     onEntriesChange(entries.filter((e) => e.id !== id));
+  };
+
+  const getDuplicateWarning = () => {
+    const parts: string[] = [];
+
+    if (alreadyInVaultCount > 0) {
+      parts.push(
+        t("duplicates.alreadyInVault", { count: alreadyInVaultCount })
+      );
+    }
+
+    const internalDuplicates = duplicateCount - alreadyInVaultCount;
+    if (internalDuplicates > 0) {
+      parts.push(t("duplicates.internal", { count: internalDuplicates }));
+    }
+
+    return parts.join(", ") + " — " + t("duplicates.willBeIgnored");
   };
 
   return (
@@ -199,7 +226,7 @@ export function ExtractedEntriesReview({
       {/* Header con spiegazione */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-base">Dati trovati</h3>
+          <h3 className="font-semibold text-base">{t("title")}</h3>
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -207,7 +234,7 @@ export function ExtractedEntriesReview({
               onClick={() => toggleAll(true)}
               className="text-xs h-7"
             >
-              Seleziona tutti
+              {t("selectAll")}
             </Button>
             <Button
               variant="ghost"
@@ -215,14 +242,15 @@ export function ExtractedEntriesReview({
               onClick={() => toggleAll(false)}
               className="text-xs h-7"
             >
-              Deseleziona
+              {t("deselectAll")}
             </Button>
           </div>
         </div>
         <p className="text-sm text-muted-foreground">
-          I <strong>valori in grassetto</strong> sono i dati che verranno
-          inseriti nei tuoi documenti. Clicca su{" "}
-          <Pencil className="inline h-3 w-3" /> per modificarli.
+          {t.rich("description", {
+            strong: (chunks) => <strong>{chunks}</strong>,
+            icon: () => <Pencil className="inline h-3 w-3" />,
+          })}
         </p>
       </div>
 
@@ -236,7 +264,7 @@ export function ExtractedEntriesReview({
 
           return (
             <div key={groupName} className="rounded-xl border overflow-hidden">
-              {/* Group header - CATEGORIA chiaramente etichettata */}
+              {/* Group header */}
               <div className="flex items-center gap-3 px-4 py-2.5 bg-muted/40 border-b">
                 <Checkbox
                   checked={allSelected}
@@ -249,20 +277,24 @@ export function ExtractedEntriesReview({
                   className="flex-1 flex items-center justify-between cursor-pointer"
                   onClick={() => toggleGroupExpand(groupName)}
                 >
-                  {/* Icona + Label "Categoria" + Nome */}
                   <div className="flex items-center gap-2">
                     <Folder className="h-4 w-4 text-muted-foreground" />
                     <div className="flex items-baseline gap-1.5">
                       <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                        Categoria:
+                        {t("categoryLabel")}
                       </span>
-                      <span className="font-medium text-sm">{groupName}</span>
+                      <span className="font-medium text-sm">
+                        {translateGroup(groupName)}
+                      </span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">
-                      {selectedInGroup}/{groupEntries.length} dati
+                      {t("groupCount", {
+                        selected: selectedInGroup,
+                        total: groupEntries.length,
+                      })}
                     </span>
                     {isExpanded ? (
                       <ChevronUp className="h-4 w-4 text-muted-foreground" />
@@ -273,7 +305,7 @@ export function ExtractedEntriesReview({
                 </div>
               </div>
 
-              {/* Group entries - I VERI DATI */}
+              {/* Group entries */}
               {isExpanded && (
                 <div className="divide-y divide-border">
                   {groupEntries.map((entry) => (
@@ -281,6 +313,7 @@ export function ExtractedEntriesReview({
                       key={entry.id}
                       entry={entry}
                       allGroups={allGroups}
+                      translateGroup={translateGroup}
                       onToggleSelect={() => toggleSelect(entry.id)}
                       onToggleEdit={() => toggleEdit(entry.id)}
                       onUpdate={(field, value) =>
@@ -301,11 +334,11 @@ export function ExtractedEntriesReview({
       <div className="flex items-center gap-4 text-xs text-muted-foreground px-1">
         <div className="flex items-center gap-1.5">
           <Folder className="h-3.5 w-3.5" />
-          <span>= Categoria (per organizzare)</span>
+          <span>{t("legend.category")}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <Database className="h-3.5 w-3.5" />
-          <span>= Dato (verrà inserito nei documenti)</span>
+          <span>{t("legend.data")}</span>
         </div>
       </div>
 
@@ -313,26 +346,7 @@ export function ExtractedEntriesReview({
       {duplicateCount > 0 && (
         <div className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs">
           <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
-          <p className="text-amber-700">
-            {alreadyInVaultCount > 0 && (
-              <>
-                {alreadyInVaultCount} già{" "}
-                {alreadyInVaultCount === 1 ? "presente" : "presenti"} nel vault
-              </>
-            )}
-            {alreadyInVaultCount > 0 &&
-              duplicateCount - alreadyInVaultCount > 0 &&
-              ", "}
-            {duplicateCount - alreadyInVaultCount > 0 && (
-              <>
-                {duplicateCount - alreadyInVaultCount}{" "}
-                {duplicateCount - alreadyInVaultCount === 1
-                  ? "duplicato"
-                  : "duplicati"}
-              </>
-            )}
-            {" — verranno ignorati"}
-          </p>
+          <p className="text-amber-700">{getDuplicateWarning()}</p>
         </div>
       )}
 
@@ -340,19 +354,18 @@ export function ExtractedEntriesReview({
       <div className="flex items-center justify-between pt-3 border-t">
         <p className="text-sm text-muted-foreground">
           <span className="font-medium text-foreground">{uniqueCount}</span>{" "}
-          {uniqueCount === 1 ? "dato unico" : "dati unici"} da salvare
+          {t("uniqueData", { count: uniqueCount })}
           {duplicateCount > 0 && (
             <span className="text-amber-600">
               {" "}
-              ({duplicateCount} {duplicateCount === 1 ? "ignorato" : "ignorati"}
-              )
+              ({t("ignored", { count: duplicateCount })})
             </span>
           )}
         </p>
 
         <div className="flex gap-2">
           <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
-            Annulla
+            {t("cancel")}
           </Button>
           <Button
             onClick={onConfirm}
@@ -360,11 +373,11 @@ export function ExtractedEntriesReview({
             className="bg-(--brand-primary) hover:bg-(--brand-primary-hover)"
           >
             {isSubmitting ? (
-              "Salvataggio..."
+              t("saving")
             ) : (
               <>
                 <CheckCircle2 className="h-4 w-4 mr-2" />
-                Salva {uniqueCount} {uniqueCount === 1 ? "dato" : "dati"}
+                {t("save", { count: uniqueCount })}
               </>
             )}
           </Button>
@@ -381,6 +394,7 @@ export function ExtractedEntriesReview({
 function EntryRow({
   entry,
   allGroups,
+  translateGroup,
   onToggleSelect,
   onToggleEdit,
   onUpdate,
@@ -389,22 +403,24 @@ function EntryRow({
 }: {
   entry: ExtractedEntry;
   allGroups: string[];
+  translateGroup: (groupName: string) => string;
   onToggleSelect: () => void;
   onToggleEdit: () => void;
   onUpdate: (field: keyof ExtractedEntry, value: string) => void;
   onDelete: () => void;
   onAddCustomGroup: (groupName: string) => boolean;
 }) {
+  const t = useTranslations("myData.extractedEntriesReview.entryRow");
+
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
   const [groupError, setGroupError] = useState<string | null>(null);
 
-  // Crea nuovo gruppo e assegnalo a questa entry
   const handleCreateGroup = () => {
     const trimmed = newGroupName.trim();
 
     if (!trimmed) {
-      setGroupError("Inserisci un nome");
+      setGroupError(t("errors.nameRequired"));
       return;
     }
 
@@ -413,7 +429,7 @@ function EntryRow({
     );
 
     if (exists) {
-      setGroupError("Questa categoria esiste già");
+      setGroupError(t("errors.alreadyExists"));
       return;
     }
 
@@ -434,11 +450,11 @@ function EntryRow({
   // ===== EDIT MODE =====
   if (entry.isEditing) {
     return (
-      <div className="p-4 space-y-4 bg-muted/10 border-l-4 border-l-[var(--brand-primary)]">
+      <div className="p-4 space-y-4 bg-muted/10 border-l-4 border-l-(--brand-primary)">
         {/* Header edit */}
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Modifica dato
+            {t("editHeader")}
           </span>
           <div className="flex gap-1">
             <Button
@@ -448,7 +464,7 @@ function EntryRow({
               onClick={onDelete}
             >
               <X className="h-3 w-3 mr-1" />
-              Elimina
+              {t("delete")}
             </Button>
             <Button
               variant="default"
@@ -457,49 +473,47 @@ function EntryRow({
               onClick={onToggleEdit}
             >
               <Check className="h-3 w-3 mr-1" />
-              Fatto
+              {t("done")}
             </Button>
           </div>
         </div>
 
-        {/* VALORE - Campo principale con icona Database */}
+        {/* VALORE */}
         <div className="space-y-1.5">
           <Label className="text-sm font-medium flex items-center gap-2">
             <Database className="h-4 w-4 text-(--brand-primary)" />
-            Valore da inserire
+            {t("valueLabel")}
           </Label>
           <Input
             value={entry.valueData}
             onChange={(e) => onUpdate("valueData", e.target.value)}
             className="text-base font-semibold h-12 bg-background border-2 border-(--brand-primary)/30 focus:border-(--brand-primary)"
-            placeholder="Il dato che verrà inserito nei documenti..."
+            placeholder={t("valuePlaceholder")}
           />
-          <p className="text-xs text-muted-foreground">
-            Questo è il testo che verrà copiato nei tuoi documenti
-          </p>
+          <p className="text-xs text-muted-foreground">{t("valueHint")}</p>
         </div>
 
-        {/* ETICHETTA - Campo secondario */}
+        {/* ETICHETTA */}
         <div className="space-y-1.5">
           <Label className="text-sm text-muted-foreground">
-            Nome descrittivo <span className="font-normal">(opzionale)</span>
+            {t("labelLabel")}{" "}
+            <span className="font-normal">({t("optional")})</span>
           </Label>
           <Input
             value={entry.nameLabel}
             onChange={(e) => onUpdate("nameLabel", e.target.value)}
             className="h-9 text-sm"
-            placeholder="es. Partita IVA azienda, Email principale..."
+            placeholder={t("labelPlaceholder")}
           />
-          <p className="text-xs text-muted-foreground">
-            Un nome per aiutarti a riconoscere questo dato
-          </p>
+          <p className="text-xs text-muted-foreground">{t("labelHint")}</p>
         </div>
 
         {/* CATEGORIA */}
         <div className="space-y-2">
           <Label className="text-sm text-muted-foreground flex items-center gap-2">
             <Folder className="h-3.5 w-3.5" />
-            Categoria <span className="font-normal">(per organizzare)</span>
+            {t("categoryLabel")}{" "}
+            <span className="font-normal">({t("forOrganization")})</span>
           </Label>
 
           {!isCreatingGroup ? (
@@ -509,12 +523,16 @@ function EntryRow({
                 onValueChange={(v) => onUpdate("nameGroup", v)}
               >
                 <SelectTrigger className="w-full h-9 text-sm">
-                  <SelectValue placeholder="Seleziona categoria..." />
+                  <SelectValue placeholder={t("selectCategory")}>
+                    {entry.nameGroup
+                      ? translateGroup(entry.nameGroup)
+                      : t("selectCategory")}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {allGroups.map((group) => (
                     <SelectItem key={group} value={group}>
-                      {group}
+                      {translateGroup(group)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -528,7 +546,7 @@ function EntryRow({
                 onClick={() => setIsCreatingGroup(true)}
               >
                 <FolderPlus className="h-3.5 w-3.5 mr-2" />
-                Crea nuova categoria
+                {t("createNewCategory")}
               </Button>
             </>
           ) : (
@@ -540,7 +558,7 @@ function EntryRow({
                   setGroupError(null);
                 }}
                 className="h-9 text-sm"
-                placeholder="Nome della nuova categoria..."
+                placeholder={t("newCategoryPlaceholder")}
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -566,7 +584,7 @@ function EntryRow({
                   onClick={handleCreateGroup}
                 >
                   <Check className="h-3 w-3 mr-1" />
-                  Crea categoria
+                  {t("createCategory")}
                 </Button>
                 <Button
                   type="button"
@@ -575,7 +593,7 @@ function EntryRow({
                   className="h-8 text-xs"
                   onClick={handleCancelCreateGroup}
                 >
-                  Annulla
+                  {t("cancel")}
                 </Button>
               </div>
             </div>
@@ -593,36 +611,29 @@ function EntryRow({
         entry.selected ? "bg-(--brand-primary)/5" : "hover:bg-muted/30"
       )}
     >
-      {/* Checkbox */}
       <div className="pt-0.5">
         <Checkbox checked={entry.selected} onCheckedChange={onToggleSelect} />
       </div>
 
-      {/* Icona dato */}
       <div className="pt-0.5">
         <Database
           className={cn(
             "h-4 w-4",
-            entry.selected
-              ? "text-(--brand-primary)"
-              : "text-muted-foreground"
+            entry.selected ? "text-(--brand-primary)" : "text-muted-foreground"
           )}
         />
       </div>
 
-      {/* Content - VALORE in evidenza */}
       <div className="flex-1 min-w-0 space-y-0.5">
-        {/* VALORE - il dato principale */}
         <p
           className={cn(
-            "text-sm font-semibold break-words",
+            "text-sm font-semibold wrap-break-word",
             entry.selected ? "text-foreground" : "text-muted-foreground"
           )}
         >
           {entry.valueData}
         </p>
 
-        {/* ETICHETTA - secondaria, più piccola */}
         {entry.nameLabel && (
           <p className="text-xs text-muted-foreground italic">
             {entry.nameLabel}
@@ -630,13 +641,12 @@ function EntryRow({
         )}
       </div>
 
-      {/* Edit button */}
       <Button
         variant="ghost"
         size="icon"
         className="h-8 w-8 opacity-0 group-hover:opacity-100 shrink-0 transition-opacity"
         onClick={onToggleEdit}
-        title="Modifica"
+        title={t("edit")}
       >
         <Pencil className="h-4 w-4" />
       </Button>

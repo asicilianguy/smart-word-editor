@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import {
   Wand2,
   ChevronDown,
@@ -43,9 +44,9 @@ import type {
 
 const MAX_FILES = 3;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const MAX_PAGES_PER_FILE = 15; // Era 10
+const MAX_PAGES_PER_FILE = 15;
 const ACCEPTED_EXTENSIONS = [".pdf", ".doc", ".docx"];
-const MAX_TOTAL_PAGES = 30; // Aggiungi questa costante
+const MAX_TOTAL_PAGES = 30;
 
 // ============================================================================
 // PROPS
@@ -66,6 +67,8 @@ export function DocumentImportSection({
   onExtractionComplete,
   onTokensUpdated,
 }: DocumentImportSectionProps) {
+  const t = useTranslations("myData.documentImport");
+
   // State
   const [isOpen, setIsOpen] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
@@ -119,7 +122,7 @@ export function DocumentImportSection({
       const fileArray = Array.from(files);
 
       if (uploadedFiles.length + fileArray.length > MAX_FILES) {
-        setError(`Puoi caricare al massimo ${MAX_FILES} documenti`);
+        setError(t("errors.maxFiles", { max: MAX_FILES }));
         return;
       }
 
@@ -131,12 +134,12 @@ export function DocumentImportSection({
         );
 
         if (!isValidType) {
-          setError(`${file.name}: usa solo PDF, DOC o DOCX`);
+          setError(t("errors.invalidType", { name: file.name }));
           continue;
         }
 
         if (file.size > MAX_FILE_SIZE) {
-          setError(`${file.name}: troppo grande (max 10MB)`);
+          setError(t("errors.fileTooLarge", { name: file.name }));
           continue;
         }
 
@@ -160,7 +163,7 @@ export function DocumentImportSection({
         setExtractedEntries([]);
       }
     },
-    [uploadedFiles]
+    [uploadedFiles, t]
   );
 
   const handleRemoveFile = (id: string) => {
@@ -171,7 +174,6 @@ export function DocumentImportSection({
       setWorkflowStep("idle");
       setValidationResult(null);
     } else {
-      // Reset to files_added so user needs to re-validate
       setWorkflowStep("files_added");
       setValidationResult(null);
     }
@@ -206,7 +208,6 @@ export function DocumentImportSection({
 
       setValidationResult(result);
 
-      // Update files with page counts
       setUploadedFiles((prev) =>
         prev.map((f) => {
           const fileInfo = result.files.find((rf) => rf.filename === f.name);
@@ -220,31 +221,28 @@ export function DocumentImportSection({
             error:
               fileInfo?.error ||
               (pageCount > MAX_PAGES_PER_FILE
-                ? `Troppe pagine (max ${MAX_PAGES_PER_FILE})`
+                ? t("errors.tooManyPages", { max: MAX_PAGES_PER_FILE })
                 : undefined),
           };
         })
       );
 
-      // Check single file page limit
       const hasFileOverLimit = result.files.some(
         (f) => f.pages > MAX_PAGES_PER_FILE
       );
 
       if (hasFileOverLimit) {
-        setError(
-          `Alcuni file superano il limite di ${MAX_PAGES_PER_FILE} pagine per documento`
-        );
+        setError(t("errors.filesOverLimit", { max: MAX_PAGES_PER_FILE }));
         setWorkflowStep("files_added");
       } else if (result.is_valid) {
         setWorkflowStep("validated");
       } else {
-        setError(result.error || "Validazione fallita");
+        setError(result.error || t("errors.validationFailed"));
         setWorkflowStep("files_added");
       }
     } catch (err) {
       console.error("Validation error:", err);
-      setError("Errore durante la validazione. Riprova.");
+      setError(t("errors.validationError"));
       setWorkflowStep("files_added");
       setUploadedFiles((prev) =>
         prev.map((f) => ({ ...f, status: "error" as const }))
@@ -260,7 +258,12 @@ export function DocumentImportSection({
     if (uploadedFiles.length === 0) return;
 
     if (userTokens < tokensRequired) {
-      setError(`Servono ${tokensRequired} token, ne hai ${userTokens}`);
+      setError(
+        t("errors.notEnoughTokens", {
+          required: tokensRequired,
+          available: userTokens,
+        })
+      );
       return;
     }
 
@@ -275,7 +278,6 @@ export function DocumentImportSection({
       const result = await extractVaultData(files, false);
 
       if (result.success && result.entries.length > 0) {
-        // Carica i dati esistenti del vault per calcolare i duplicati
         const existingValues = await fetchExistingVaultValues();
         setExistingVaultValues(existingValues);
 
@@ -283,7 +285,7 @@ export function DocumentImportSection({
           id: `entry-${Date.now()}-${i}`,
           valueData: e.valueData,
           nameLabel: e.nameLabel || "",
-          nameGroup: e.nameGroup || "Altri dati",
+          nameGroup: e.nameGroup || t("defaultGroup"),
           confidence: e.confidence || undefined,
           selected: true,
           isEditing: false,
@@ -297,7 +299,7 @@ export function DocumentImportSection({
         );
         setWorkflowStep("review");
       } else {
-        setError(result.error || "Nessun dato estratto");
+        setError(result.error || t("errors.noDataExtracted"));
         setWorkflowStep("validated");
         setUploadedFiles((prev) =>
           prev.map((f) => ({ ...f, status: "validated" as const }))
@@ -305,7 +307,7 @@ export function DocumentImportSection({
       }
     } catch (err) {
       console.error("Extraction error:", err);
-      setError("Errore durante l'estrazione. Riprova.");
+      setError(t("errors.extractionError"));
       setWorkflowStep("validated");
     }
   };
@@ -334,15 +336,13 @@ export function DocumentImportSection({
       setWorkflowStep("completed");
       setIsSaving(false);
 
-      // Mostra messaggio appropriato
       if (result.savedCount === 0) {
-        // Tutti duplicati - mostra warning ma considera completato
         setError(result.error || null);
       }
 
       onExtractionComplete();
     } else {
-      setError(result.error || "Errore nel salvataggio");
+      setError(result.error || t("errors.saveFailed"));
       setWorkflowStep("review");
       setIsSaving(false);
     }
@@ -369,16 +369,14 @@ export function DocumentImportSection({
                 <Wand2 className="h-5 w-5 text-(--brand-primary)" />
               </div>
               <div>
-                <h3 className="font-medium">Importa da documenti</h3>
-                <p className="text-sm text-muted-foreground">
-                  Estrai automaticamente dati riutilizzabili
-                </p>
+                <h3 className="font-medium">{t("title")}</h3>
+                <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               {hasFiles && !isOpen && (
                 <span className="text-xs px-2.5 py-1 rounded-full bg-(--brand-primary)/10 text-(--brand-primary) font-medium">
-                  {uploadedFiles.length} file
+                  {t("filesBadge", { count: uploadedFiles.length })}
                 </span>
               )}
               {isOpen ? (
@@ -402,8 +400,8 @@ export function DocumentImportSection({
                   <Info className="h-4 w-4 text-(--brand-primary) shrink-0" />
                   <p className="text-(--brand-primary)">
                     {isSaving
-                      ? "Salvataggio in corso..."
-                      : `Consumati ${tokensConsumed} token. Seleziona i dati da importare nel vault.`}
+                      ? t("review.saving")
+                      : t("review.tokensConsumed", { count: tokensConsumed })}
                   </p>
                 </div>
 
@@ -427,13 +425,12 @@ export function DocumentImportSection({
                   <Wand2 className="h-6 w-6 text-green-600" />
                 </div>
                 <p className="font-medium text-green-800">
-                  Importazione completata!
+                  {t("completed.title")}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  I dati sono stati aggiunti al tuo vault
+                  {t("completed.description")}
                 </p>
 
-                {/* Warning se c'erano duplicati */}
                 {error && (
                   <p className="text-xs text-amber-600 mt-2">{error}</p>
                 )}
@@ -443,12 +440,13 @@ export function DocumentImportSection({
                   className="mt-4"
                   onClick={handleClearAll}
                 >
-                  Importa altri documenti
+                  {t("completed.importMore")}
                 </Button>
               </div>
             )}
+
             {/* ============================================================ */}
-            {/* NORMAL FLOW (idle, files_added, validating, validated, extracting) */}
+            {/* NORMAL FLOW */}
             {/* ============================================================ */}
             {showNormalFlow && (
               <>
@@ -459,20 +457,25 @@ export function DocumentImportSection({
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 text-sm">
                   <Coins className="h-4 w-4 text-muted-foreground shrink-0" />
                   <p className="text-muted-foreground">
-                    Ogni documento consuma{" "}
-                    <strong className="text-foreground">1 token</strong>. Hai{" "}
-                    <strong
-                      className={cn(
-                        userTokens > 5
-                          ? "text-(--brand-primary)"
-                          : userTokens > 0
-                          ? "text-amber-600"
-                          : "text-destructive"
-                      )}
-                    >
-                      {userTokens} token
-                    </strong>{" "}
-                    disponibili.
+                    {t.rich("tokenInfo", {
+                      strong: (chunks) => (
+                        <strong className="text-foreground">{chunks}</strong>
+                      ),
+                      tokens: userTokens,
+                      tokenClass: (chunks) => (
+                        <strong
+                          className={cn(
+                            userTokens > 5
+                              ? "text-(--brand-primary)"
+                              : userTokens > 0
+                              ? "text-amber-600"
+                              : "text-destructive"
+                          )}
+                        >
+                          {chunks}
+                        </strong>
+                      ),
+                    })}
                   </p>
                 </div>
 
@@ -500,7 +503,10 @@ export function DocumentImportSection({
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <h4 className="text-sm font-medium">
-                        Documenti ({uploadedFiles.length}/{MAX_FILES})
+                        {t("documents", {
+                          current: uploadedFiles.length,
+                          max: MAX_FILES,
+                        })}
                       </h4>
                       {canRemoveFiles && uploadedFiles.length > 0 && (
                         <Button
@@ -509,7 +515,7 @@ export function DocumentImportSection({
                           className="h-7 text-xs text-muted-foreground"
                           onClick={handleClearAll}
                         >
-                          Rimuovi tutti
+                          {t("removeAll")}
                         </Button>
                       )}
                     </div>
@@ -530,24 +536,21 @@ export function DocumentImportSection({
                 {/* Action buttons */}
                 {hasFiles && (
                   <div className="space-y-2">
-                    {/* IDLE or FILES_ADDED: Show validate button */}
                     {(workflowStep === "idle" ||
                       workflowStep === "files_added") && (
                       <Button onClick={handleValidate} className="w-full">
                         <FileCheck className="h-4 w-4 mr-2" />
-                        Valida documenti
+                        {t("buttons.validate")}
                       </Button>
                     )}
 
-                    {/* VALIDATING: Show loading */}
                     {workflowStep === "validating" && (
                       <Button className="w-full" disabled>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Validazione in corso...
+                        {t("buttons.validating")}
                       </Button>
                     )}
 
-                    {/* VALIDATED: Show extract button */}
                     {workflowStep === "validated" && (
                       <Button
                         onClick={handleExtract}
@@ -555,28 +558,27 @@ export function DocumentImportSection({
                         disabled={!hasEnoughTokens}
                       >
                         <Wand2 className="h-4 w-4 mr-2" />
-                        Estrai dati ({tokensRequired} token)
+                        {t("buttons.extract", { tokens: tokensRequired })}
                       </Button>
                     )}
 
-                    {/* EXTRACTING: Show loading */}
                     {workflowStep === "extracting" && (
                       <Button className="w-full" disabled>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Analisi in corso...
+                        {t("buttons.extracting")}
                       </Button>
                     )}
 
-                    {/* Token warning */}
                     {!hasEnoughTokens && workflowStep === "validated" && (
                       <p className="text-xs text-center text-destructive">
-                        Token insufficienti. Servono {tokensRequired} token.
+                        {t("errors.insufficientTokens", {
+                          required: tokensRequired,
+                        })}
                       </p>
                     )}
                   </div>
                 )}
 
-                {/* Privacy note compact when no files */}
                 {!hasFiles && <PrivacyNote variant="compact" />}
               </>
             )}
