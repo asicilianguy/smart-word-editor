@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
   Wand2,
   ChevronDown,
@@ -68,6 +68,7 @@ export function DocumentImportSection({
   onTokensUpdated,
 }: DocumentImportSectionProps) {
   const t = useTranslations("myData.documentImport");
+  const locale = useLocale();
 
   // State
   const [isOpen, setIsOpen] = useState(false);
@@ -275,7 +276,7 @@ export function DocumentImportSection({
 
     try {
       const files = uploadedFiles.map((f) => f.file);
-      const result = await extractVaultData(files, false);
+      const result = await extractVaultData(files, false, locale);
 
       if (result.success && result.entries.length > 0) {
         const existingValues = await fetchExistingVaultValues();

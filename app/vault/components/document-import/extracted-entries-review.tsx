@@ -28,31 +28,6 @@ import {
 import { cn } from "@/lib/utils";
 import type { ExtractedEntry } from "./types";
 
-// Mappa da nome gruppo italiano a chiave di traduzione
-const GROUP_NAME_TO_KEY: Record<string, string> = {
-  "Dati Identificativi": "identification",
-  Persone: "people",
-  Contatti: "contacts",
-  Indirizzi: "addresses",
-  "Coordinate Bancarie": "banking",
-  "Dati Professionali": "professional",
-  Certificazioni: "certifications",
-  "Altri dati": "other",
-};
-
-// Valori interni (italiano) - usati come chiavi nel database
-const DEFAULT_GROUPS = [
-  "Dati Identificativi",
-  "Persone",
-  "Contatti",
-  "Indirizzi",
-  "Coordinate Bancarie",
-  "Dati Professionali",
-  "Altri dati",
-];
-
-const DEFAULT_GROUP_VALUE = "Altri dati";
-
 interface ExtractedEntriesReviewProps {
   entries: ExtractedEntry[];
   existingVaultValues: string[];
@@ -71,29 +46,33 @@ export function ExtractedEntriesReview({
   isSubmitting,
 }: ExtractedEntriesReviewProps) {
   const t = useTranslations("myData.extractedEntriesReview");
-  const tGroups = useTranslations("sidebar.constants.groups");
 
-  // Funzione per tradurre i nomi dei gruppi
-  const translateGroup = (groupName: string): string => {
-    const key = GROUP_NAME_TO_KEY[groupName];
-    return key ? tGroups(key) : groupName;
-  };
+  // I gruppi arrivano già tradotti dal backend nella lingua corretta
+  // Estraiamo i gruppi unici dalle entries
+  const defaultGroups = useMemo(() => {
+    const groupsFromEntries = entries.map((e) => e.nameGroup).filter(Boolean);
+    return [...new Set(groupsFromEntries)];
+  }, [entries]);
 
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
     const groups = new Set<string>();
-    entries.forEach((e) => groups.add(e.nameGroup || DEFAULT_GROUP_VALUE));
+    entries.forEach((e) => {
+      if (e.nameGroup) groups.add(e.nameGroup);
+    });
     return groups;
   });
 
   const [customGroups, setCustomGroups] = useState<string[]>([]);
 
-  const allGroups = [
-    ...new Set([
-      ...DEFAULT_GROUPS,
-      ...customGroups,
-      ...entries.map((e) => e.nameGroup || DEFAULT_GROUP_VALUE),
-    ]),
-  ];
+  const allGroups = useMemo(() => {
+    return [
+      ...new Set([
+        ...defaultGroups,
+        ...customGroups,
+        ...entries.map((e) => e.nameGroup).filter(Boolean),
+      ]),
+    ];
+  }, [defaultGroups, customGroups, entries]);
 
   const addCustomGroup = (groupName: string): boolean => {
     const trimmed = groupName.trim();
@@ -111,7 +90,7 @@ export function ExtractedEntriesReview({
 
   function groupEntries(items: ExtractedEntry[]) {
     return items.reduce((acc, entry) => {
-      const group = entry.nameGroup || DEFAULT_GROUP_VALUE;
+      const group = entry.nameGroup || "";
       if (!acc[group]) acc[group] = [];
       acc[group].push(entry);
       return acc;
@@ -161,12 +140,7 @@ export function ExtractedEntriesReview({
 
   const toggleGroupSelect = (groupName: string, selected: boolean) => {
     onEntriesChange(
-      entries.map((e) =>
-        e.nameGroup === groupName ||
-        (!e.nameGroup && groupName === DEFAULT_GROUP_VALUE)
-          ? { ...e, selected }
-          : e
-      )
+      entries.map((e) => (e.nameGroup === groupName ? { ...e, selected } : e))
     );
   };
 
@@ -283,9 +257,7 @@ export function ExtractedEntriesReview({
                       <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
                         {t("categoryLabel")}
                       </span>
-                      <span className="font-medium text-sm">
-                        {translateGroup(groupName)}
-                      </span>
+                      <span className="font-medium text-sm">{groupName}</span>
                     </div>
                   </div>
 
@@ -313,7 +285,6 @@ export function ExtractedEntriesReview({
                       key={entry.id}
                       entry={entry}
                       allGroups={allGroups}
-                      translateGroup={translateGroup}
                       onToggleSelect={() => toggleSelect(entry.id)}
                       onToggleEdit={() => toggleEdit(entry.id)}
                       onUpdate={(field, value) =>
@@ -394,7 +365,6 @@ export function ExtractedEntriesReview({
 function EntryRow({
   entry,
   allGroups,
-  translateGroup,
   onToggleSelect,
   onToggleEdit,
   onUpdate,
@@ -403,7 +373,6 @@ function EntryRow({
 }: {
   entry: ExtractedEntry;
   allGroups: string[];
-  translateGroup: (groupName: string) => string;
   onToggleSelect: () => void;
   onToggleEdit: () => void;
   onUpdate: (field: keyof ExtractedEntry, value: string) => void;
@@ -524,15 +493,13 @@ function EntryRow({
               >
                 <SelectTrigger className="w-full h-9 text-sm">
                   <SelectValue placeholder={t("selectCategory")}>
-                    {entry.nameGroup
-                      ? translateGroup(entry.nameGroup)
-                      : t("selectCategory")}
+                    {entry.nameGroup || t("selectCategory")}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {allGroups.map((group) => (
                     <SelectItem key={group} value={group}>
-                      {translateGroup(group)}
+                      {group}
                     </SelectItem>
                   ))}
                 </SelectContent>

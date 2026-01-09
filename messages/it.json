@@ -185,6 +185,13 @@
     }
   },
   "myData": {
+    "privacyNote": {
+      "compact": "I tuoi documenti restano privati e non vengono condivisi",
+      "title": "I tuoi dati sono al sicuro",
+      "processed": "I documenti vengono elaborati e poi eliminati dai nostri server",
+      "control": "Tu decidi quali dati salvare nei tuoi dati personali",
+      "delete": "Puoi eliminare qualsiasi dato in qualsiasi momento"
+    },
     "extractedEntriesReview": {
       "title": "Dati trovati",
       "selectAll": "Seleziona tutti",

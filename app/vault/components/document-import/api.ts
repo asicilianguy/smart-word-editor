@@ -42,7 +42,8 @@ export async function validateDocuments(
  */
 export async function extractVaultData(
   files: File[],
-  usePremium: boolean = false
+  usePremium: boolean = false,
+  locale: string = "it"
 ): Promise<ExtractionResult> {
   const authHeaders = getAuthHeaders();
   const hasAuth = authHeaders && Object.keys(authHeaders).length > 0;
@@ -68,6 +69,7 @@ export async function extractVaultData(
   const url = new URL(`${API_BASE_URL}/api/vault/extract-authenticated`);
   url.searchParams.set("use_premium", usePremium.toString());
   url.searchParams.set("save_to_vault", "false");
+  url.searchParams.set("locale", locale);
 
   try {
     const response = await fetch(url.toString(), {
@@ -135,7 +137,6 @@ export async function fetchExistingVaultValues(): Promise<string[]> {
     const data = await response.json();
     const entries = data.entries || [];
 
-    // Estrai solo i valueData normalizzati
     return entries
       .map((e: { valueData?: string }) =>
         (e.valueData || "").trim().toLowerCase()
@@ -156,17 +157,10 @@ interface VaultEntryForSave {
   nameGroup?: string;
 }
 
-/**
- * Genera una chiave univoca per la deduplicazione
- * Basata solo su valueData
- */
 function generateEntryKey(entry: VaultEntryForSave): string {
   return (entry.valueData || "").trim().toLowerCase();
 }
 
-/**
- * Rimuove duplicati basati sulla tripla (valueData, nameLabel, nameGroup)
- */
 function deduplicateEntries<T extends VaultEntryForSave>(entries: T[]): T[] {
   const seen = new Set<string>();
   const result: T[] = [];
@@ -188,7 +182,8 @@ function deduplicateEntries<T extends VaultEntryForSave>(entries: T[]): T[] {
  * Gestisce deduplicazione automatica
  */
 export async function saveEntriesToVault(
-  entries: VaultEntryForSave[]
+  entries: VaultEntryForSave[],
+  defaultGroup: string = "Altri dati"
 ): Promise<{ success: boolean; savedCount: number; error?: string }> {
   const authHeaders = getAuthHeaders();
 
@@ -197,7 +192,6 @@ export async function saveEntriesToVault(
   }
 
   try {
-    // 1. Prima otteniamo le entries esistenti per deduplicare
     const getResponse = await fetch(`${API_BASE_URL}/api/auth/vault`, {
       method: "GET",
       headers: {
@@ -217,22 +211,17 @@ export async function saveEntriesToVault(
     const currentVault = await getResponse.json();
     const existingEntries: VaultEntryForSave[] = currentVault.entries || [];
 
-    // 2. Crea un set delle chiavi esistenti per deduplicazione
     const existingKeys = new Set<string>();
     for (const entry of existingEntries) {
       existingKeys.add(generateEntryKey(entry));
     }
 
-    // 3. Filtra le nuove entries per rimuovere duplicati
-    // - Prima rimuovi duplicati interni alle nuove entries
-    // - Poi rimuovi quelle già esistenti nel vault
     const dedupedNew = deduplicateEntries(entries);
     const uniqueNewEntries = dedupedNew.filter(
       (entry) => !existingKeys.has(generateEntryKey(entry))
     );
 
     if (uniqueNewEntries.length === 0) {
-      // Tutte le entries erano duplicati
       return {
         success: true,
         savedCount: 0,
@@ -240,15 +229,13 @@ export async function saveEntriesToVault(
       };
     }
 
-    // 4. Prepara le entries nel formato richiesto dal backend
     const entriesToSave = uniqueNewEntries.map((entry) => ({
       valueData: entry.valueData,
       nameLabel: entry.nameLabel || null,
-      nameGroup: entry.nameGroup || "Altri dati",
+      nameGroup: entry.nameGroup || defaultGroup,
       source: "extracted",
     }));
 
-    // 5. Usa POST /vault/add per appendere (formato corretto: { entries: [...] })
     const postResponse = await fetch(`${API_BASE_URL}/api/auth/vault/add`, {
       method: "POST",
       headers: {
