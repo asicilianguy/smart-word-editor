@@ -41,7 +41,7 @@ export function DemoState({
       {/* Intro banner */}
       <div className="p-4 border-b border-border bg-gradient-to-r from-[var(--brand-primary-subtle)] to-transparent">
         <div className="flex items-start gap-3">
-          <div className="h-8 w-8 rounded-lg bg-[var(--brand-primary)]/10 flex items-center justify-center flex-shrink-0">
+          <div className="h-8 w-8 rounded-lg bg-(--brand-primary)/10 flex items-center justify-center flex-shrink-0">
             <Sparkles className="h-4 w-4 text-[var(--brand-primary)]" />
           </div>
           <div>
@@ -144,7 +144,7 @@ export function DemoState({
             <Button
               onClick={onAuthClick}
               size="sm"
-              className="w-full bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+              className="w-full bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
             >
               Accedi o registrati
               <ArrowRight className="h-4 w-4 ml-2" />

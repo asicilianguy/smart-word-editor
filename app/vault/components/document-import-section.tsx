@@ -346,7 +346,7 @@ export function DocumentImportSection({
         <CollapsibleTrigger asChild>
           <button className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors text-left">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-[var(--brand-primary)]/10 flex items-center justify-center">
+              <div className="h-10 w-10 rounded-lg bg-(--brand-primary)/10 flex items-center justify-center">
                 <Wand2 className="h-5 w-5 text-[var(--brand-primary)]" />
               </div>
               <div>
@@ -358,7 +358,7 @@ export function DocumentImportSection({
             </div>
             <div className="flex items-center gap-3">
               {hasFiles && !isOpen && (
-                <span className="text-xs px-2 py-1 rounded-full bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]">
+                <span className="text-xs px-2 py-1 rounded-full bg-(--brand-primary)/10 text-[var(--brand-primary)]">
                   {uploadedFiles.length} file
                 </span>
               )}
@@ -400,7 +400,7 @@ export function DocumentImportSection({
                   className={cn(
                     "relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
                     isDragOver
-                      ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/5"
+                      ? "border-[var(--brand-primary)] bg-(--brand-primary)/5"
                       : "border-muted-foreground/25 hover:border-[var(--brand-primary)]/50 hover:bg-muted/50",
                     isExtracting && "pointer-events-none opacity-50"
                   )}
@@ -419,7 +419,7 @@ export function DocumentImportSection({
                     <div
                       className={cn(
                         "h-10 w-10 rounded-lg flex items-center justify-center",
-                        isDragOver ? "bg-[var(--brand-primary)]/20" : "bg-muted"
+                        isDragOver ? "bg-(--brand-primary)/20" : "bg-muted"
                       )}
                     >
                       <Upload
@@ -628,7 +628,7 @@ export function DocumentImportSection({
                 <Button
                   onClick={handleExtract}
                   disabled={!canExtract}
-                  className="w-full bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+                  className="w-full bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
                 >
                   {isExtracting ? (
                     <>

@@ -188,7 +188,7 @@ export function DocumentUploadPreviewDialog({
         {/* Header */}
         <header className="flex items-center justify-between px-6 py-4 border-b bg-card shrink-0">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-[var(--brand-primary)] flex items-center justify-center">
+            <div className="h-9 w-9 rounded-lg bg-(--brand-primary) flex items-center justify-center">
               <Eye className="h-5 w-5 text-white" />
             </div>
             <div>
@@ -268,7 +268,7 @@ export function DocumentUploadPreviewDialog({
           <div className="flex-[2] flex flex-col overflow-hidden bg-gradient-to-b from-muted/30 to-muted/10">
             <div className="flex-1 overflow-y-auto p-6">
               {/* Success banner */}
-              <div className="bg-[var(--brand-primary)] text-white rounded-xl p-4 mb-6">
+              <div className="bg-(--brand-primary) text-white rounded-xl p-4 mb-6">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
                     <CheckCircle2 className="h-5 w-5" />
@@ -368,7 +368,7 @@ export function DocumentUploadPreviewDialog({
               onClick={handleContinue}
               disabled={isLoading || !!error}
               size="lg"
-              className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] px-6"
+              className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)] px-6"
             >
               Inizia a modificare
               <ArrowRight className="h-4 w-4 ml-2" />
@@ -458,7 +458,7 @@ function ErrorState({
         <p className="text-sm text-muted-foreground mb-4">{error}</p>
         <Button
           onClick={onRetry}
-          className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+          className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
         >
           <RotateCcw className="h-4 w-4 mr-2" />
           Riprova

@@ -2,6 +2,8 @@ import type React from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
 
@@ -24,9 +26,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Smart Word Editor",
+  title: "CompilaloEasy",
   description:
-    "Editor di documenti professionale con preview live e sostituzione testo da vault",
+    "Compila documenti in pochi click. Salva i tuoi dati una volta, usali per sempre.",
   icons: {
     icon: [
       {
@@ -46,15 +48,21 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Ottieni lingua e traduzioni lato server
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="it" className={inter.variable}>
+    <html lang={locale} className={inter.variable}>
       <body className="font-sans antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <NextIntlClientProvider messages={messages}>
+          <AuthProvider>{children}</AuthProvider>
+        </NextIntlClientProvider>
         <Analytics />
       </body>
     </html>

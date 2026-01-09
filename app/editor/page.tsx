@@ -236,7 +236,7 @@ export default function EditorPage() {
           onClick={handleLogoClick}
           className="flex items-center gap-3 hover:opacity-80 transition-opacity"
         >
-          <div className="h-8 w-8 rounded-lg bg-[var(--brand-primary)] flex items-center justify-center">
+          <div className="h-8 w-8 rounded-lg bg-(--brand-primary) flex items-center justify-center">
             <span className="text-white font-semibold text-xs">CE</span>
           </div>
           <h1 className="text-base font-semibold">
@@ -271,7 +271,7 @@ export default function EditorPage() {
                 size="sm"
                 onClick={() => setDownloadDialogOpen(true)}
                 disabled={isLoading}
-                className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+                className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
               >
                 <Download className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Scarica</span>
@@ -317,7 +317,7 @@ export default function EditorPage() {
             <Button
               size="sm"
               onClick={() => router.push("/auth")}
-              className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+              className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
             >
               <User className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Accedi</span>
@@ -471,7 +471,7 @@ function EmptyState({
           <Button
             size="lg"
             className={cn(
-              "bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]",
+              "bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]",
               "shadow-lg hover:shadow-xl hover:-translate-y-0.5",
               "transition-all duration-200"
             )}

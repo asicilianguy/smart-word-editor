@@ -53,7 +53,7 @@ export function VaultHeader({
             </Button>
 
             <div className="flex items-center gap-3 min-w-0">
-              <div className="h-9 w-9 rounded-lg bg-[var(--brand-primary)]/10 flex items-center justify-center shrink-0">
+              <div className="h-9 w-9 rounded-lg bg-(--brand-primary)/10 flex items-center justify-center shrink-0">
                 <Database className="h-5 w-5 text-[var(--brand-primary)]" />
               </div>
               <div className="min-w-0">
@@ -72,7 +72,7 @@ export function VaultHeader({
               className={cn(
                 "hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium",
                 userTokens > 5
-                  ? "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]"
+                  ? "bg-(--brand-primary)/10 text-[var(--brand-primary)]"
                   : userTokens > 0
                   ? "bg-amber-100 text-amber-700"
                   : "bg-red-100 text-red-700"
@@ -102,7 +102,7 @@ export function VaultHeader({
             <Button
               onClick={onAddClick}
               size="sm"
-              className="gap-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] text-white"
+              className="gap-2 bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)] text-white"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Aggiungi</span>

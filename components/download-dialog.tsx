@@ -289,7 +289,7 @@ export function DownloadDialog({
             <Button
               onClick={onAuthClick}
               size="sm"
-              className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+              className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
             >
               Accedi per scaricare
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -309,7 +309,7 @@ function AuthRequiredBanner({ onAuthClick }: { onAuthClick?: () => void }) {
   return (
     <div className="rounded-lg border border-[var(--brand-primary)]/30 bg-[var(--brand-primary-subtle)] p-4">
       <div className="flex items-start gap-3">
-        <div className="h-10 w-10 rounded-full bg-[var(--brand-primary)]/10 flex items-center justify-center flex-shrink-0">
+        <div className="h-10 w-10 rounded-full bg-(--brand-primary)/10 flex items-center justify-center flex-shrink-0">
           <Lock className="h-5 w-5 text-[var(--brand-primary)]" />
         </div>
         <div className="flex-1">
@@ -321,7 +321,7 @@ function AuthRequiredBanner({ onAuthClick }: { onAuthClick?: () => void }) {
           <Button
             size="sm"
             onClick={onAuthClick}
-            className="h-8 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+            className="h-8 bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
           >
             Continua
             <ArrowRight className="h-3.5 w-3.5 ml-1.5" />

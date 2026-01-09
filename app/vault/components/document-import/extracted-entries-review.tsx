@@ -357,7 +357,7 @@ export function ExtractedEntriesReview({
           <Button
             onClick={onConfirm}
             disabled={uniqueCount === 0 || isSubmitting}
-            className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+            className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
           >
             {isSubmitting ? (
               "Salvataggio..."
@@ -453,7 +453,7 @@ function EntryRow({
             <Button
               variant="default"
               size="sm"
-              className="h-7 text-xs bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+              className="h-7 text-xs bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
               onClick={onToggleEdit}
             >
               <Check className="h-3 w-3 mr-1" />
@@ -562,7 +562,7 @@ function EntryRow({
                   type="button"
                   variant="default"
                   size="sm"
-                  className="flex-1 h-8 text-xs bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+                  className="flex-1 h-8 text-xs bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
                   onClick={handleCreateGroup}
                 >
                   <Check className="h-3 w-3 mr-1" />
@@ -590,7 +590,7 @@ function EntryRow({
     <div
       className={cn(
         "flex items-start gap-3 px-4 py-3 group transition-colors",
-        entry.selected ? "bg-[var(--brand-primary)]/5" : "hover:bg-muted/30"
+        entry.selected ? "bg-(--brand-primary)/5" : "hover:bg-muted/30"
       )}
     >
       {/* Checkbox */}

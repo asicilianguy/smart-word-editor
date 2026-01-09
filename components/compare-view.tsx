@@ -262,7 +262,7 @@ export function CompareView({
         {/* Header */}
         <header className="flex items-center justify-between px-6 py-4 border-b bg-card shrink-0">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-[var(--brand-primary)] flex items-center justify-center">
+            <div className="h-9 w-9 rounded-lg bg-(--brand-primary) flex items-center justify-center">
               <GitCompare className="h-5 w-5 text-white" />
             </div>
             <div>
@@ -416,7 +416,7 @@ export function CompareView({
                           className={cn(
                             "h-8 min-w-[2rem] px-2",
                             currentPage === page
-                              ? "bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+                              ? "bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
                               : "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
                           )}
                           onClick={() => goToPage(page)}
@@ -453,7 +453,7 @@ export function CompareView({
             {/* Close button */}
             <Button
               onClick={() => onOpenChange(false)}
-              className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+              className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
             >
               Ho capito, chiudi
             </Button>
@@ -502,7 +502,7 @@ function ErrorState({
         <p className="text-sm text-muted-foreground mb-4">{error}</p>
         <Button
           onClick={onRetry}
-          className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+          className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
         >
           <RotateCcw className="h-4 w-4 mr-2" />
           Riprova

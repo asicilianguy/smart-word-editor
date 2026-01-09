@@ -47,7 +47,7 @@ export function DemoOnboardingDialog({
       <DialogContent className="sm:max-w-[480px] gap-0">
         <DialogHeader className="pb-4">
           <div className="flex items-center gap-2 mb-1">
-            <div className="h-8 w-8 rounded-lg bg-[var(--brand-primary)] flex items-center justify-center">
+            <div className="h-8 w-8 rounded-lg bg-(--brand-primary) flex items-center justify-center">
               <Sparkles className="h-4 w-4 text-white" />
             </div>
             <DialogTitle className="text-xl">
@@ -177,7 +177,7 @@ export function DemoOnboardingDialog({
                 onClick={() => setStep(i)}
                 className={`h-1.5 rounded-full transition-all ${
                   i === step
-                    ? "w-4 bg-[var(--brand-primary)]"
+                    ? "w-4 bg-(--brand-primary)"
                     : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50"
                 }`}
               />
@@ -191,7 +191,7 @@ export function DemoOnboardingDialog({
             <Button
               size="sm"
               onClick={handleNext}
-              className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+              className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
             >
               {step === 1 ? "Ho capito!" : "Avanti"}
             </Button>

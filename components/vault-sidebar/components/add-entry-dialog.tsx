@@ -275,7 +275,7 @@ export function AddEntryDialog({
             <Button
               type="submit"
               disabled={isSubmitting || !formData.valueData.trim()}
-              className="bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+              className="bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
             >
               {isSubmitting ? (
                 <>

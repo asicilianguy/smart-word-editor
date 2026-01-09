@@ -365,7 +365,7 @@ export function DocumentImportSection({
         <CollapsibleTrigger asChild>
           <button className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors text-left">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-[var(--brand-primary)]/10 flex items-center justify-center">
+              <div className="h-10 w-10 rounded-xl bg-(--brand-primary)/10 flex items-center justify-center">
                 <Wand2 className="h-5 w-5 text-[var(--brand-primary)]" />
               </div>
               <div>
@@ -377,7 +377,7 @@ export function DocumentImportSection({
             </div>
             <div className="flex items-center gap-3">
               {hasFiles && !isOpen && (
-                <span className="text-xs px-2.5 py-1 rounded-full bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] font-medium">
+                <span className="text-xs px-2.5 py-1 rounded-full bg-(--brand-primary)/10 text-[var(--brand-primary)] font-medium">
                   {uploadedFiles.length} file
                 </span>
               )}
@@ -398,7 +398,7 @@ export function DocumentImportSection({
             {/* ============================================================ */}
             {isReviewMode && (
               <>
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-[var(--brand-primary)]/5 border border-[var(--brand-primary)]/20 text-sm">
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-(--brand-primary)/5 border border-[var(--brand-primary)]/20 text-sm">
                   <Info className="h-4 w-4 text-[var(--brand-primary)] shrink-0" />
                   <p className="text-[var(--brand-primary)]">
                     {isSaving
@@ -551,7 +551,7 @@ export function DocumentImportSection({
                     {workflowStep === "validated" && (
                       <Button
                         onClick={handleExtract}
-                        className="w-full bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]"
+                        className="w-full bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]"
                         disabled={!hasEnoughTokens}
                       >
                         <Wand2 className="h-4 w-4 mr-2" />

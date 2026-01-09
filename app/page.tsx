@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 
 /**
  * CompilaloEasy Landing Page
@@ -12,47 +14,21 @@ import { cn } from "@/lib/utils";
  */
 
 // ============================================================================
-// SLIDE CONTENT
+// SLIDE CONFIG (solo metadata, testi vengono dalle traduzioni)
 // ============================================================================
 
-interface Slide {
+interface SlideConfig {
   id: number;
-  headline: string;
-  subtext?: string;
-  emphasis?: "problem" | "solution" | "cta";
+  emphasis: "problem" | "solution" | "cta";
+  hasSubtext: boolean;
 }
 
-const SLIDES: Slide[] = [
-  {
-    id: 1,
-    headline: "Stanco di compilare documenti con sempre gli stessi dati?",
-    emphasis: "problem",
-  },
-  {
-    id: 2,
-    headline: "Nome, cognome, indirizzo, codice fiscale...",
-    subtext: "Ancora. E ancora. E ancora.",
-    emphasis: "problem",
-  },
-  {
-    id: 3,
-    headline: "E quando sbagli una virgola?",
-    subtext: "Riconverti. Ricorreggi. Riscarica. Da capo.",
-    emphasis: "problem",
-  },
-  {
-    id: 4,
-    headline: "Non ti serve qualcuno che faccia il lavoro al posto tuo.",
-    subtext:
-      "Ti serve qualcuno che ti aiuti a farlo meglio. Senza perdere il controllo.",
-    emphasis: "solution",
-  },
-  {
-    id: 5,
-    headline: "Datti una chance.",
-    subtext: "Provalo. È più semplice di quanto pensi.",
-    emphasis: "cta",
-  },
+const SLIDES_CONFIG: SlideConfig[] = [
+  { id: 1, emphasis: "problem", hasSubtext: false },
+  { id: 2, emphasis: "problem", hasSubtext: true },
+  { id: 3, emphasis: "problem", hasSubtext: true },
+  { id: 4, emphasis: "solution", hasSubtext: true },
+  { id: 5, emphasis: "cta", hasSubtext: true },
 ];
 
 // ============================================================================
@@ -61,12 +37,14 @@ const SLIDES: Slide[] = [
 
 export default function LandingPage() {
   const router = useRouter();
+  const t = useTranslations("landing");
+
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
 
-  const isLastSlide = currentSlide === SLIDES.length - 1;
-  const slide = SLIDES[currentSlide];
+  const isLastSlide = currentSlide === SLIDES_CONFIG.length - 1;
+  const slideConfig = SLIDES_CONFIG[currentSlide];
 
   // Auto-advance disabled after user interaction
   useEffect(() => {
@@ -103,7 +81,6 @@ export default function LandingPage() {
     [isTransitioning, currentSlide]
   );
 
-  // CTA porta all'editor
   const handleCTA = () => {
     router.push("/editor");
   };
@@ -134,6 +111,12 @@ export default function LandingPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [currentSlide, isLastSlide, goToNextSlide, goToSlide]);
 
+  // Testi tradotti per la slide corrente
+  const headline = t(`slides.${slideConfig.id}.headline`);
+  const subtext = slideConfig.hasSubtext
+    ? t(`slides.${slideConfig.id}.subtext`)
+    : null;
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header - Minimal */}
@@ -141,7 +124,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-lg bg-[var(--brand-primary)] flex items-center justify-center">
+            <div className="h-9 w-9 rounded-lg bg-(--brand-primary) flex items-center justify-center">
               <span className="text-white font-semibold text-sm">CE</span>
             </div>
             <span className="text-lg font-semibold text-foreground">
@@ -149,16 +132,22 @@ export default function LandingPage() {
             </span>
           </div>
 
-          {/* Login link */}
-          <button
-            onClick={handleLogin}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Hai già un account?{" "}
-            <span className="font-medium text-[var(--brand-primary)]">
-              Accedi
-            </span>
-          </button>
+          {/* Right side: Language + Login */}
+          <div className="flex items-center gap-4">
+            {/* Language Switcher */}
+            <LocaleSwitcher variant="compact" />
+
+            {/* Login link */}
+            <button
+              onClick={handleLogin}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t("header.alreadyHaveAccount")}{" "}
+              <span className="font-medium text-[var(--brand-primary)]">
+                {t("header.login")}
+              </span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -184,25 +173,25 @@ export default function LandingPage() {
             <h1
               className={cn(
                 "text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight tracking-tight",
-                slide.emphasis === "cta"
+                slideConfig.emphasis === "cta"
                   ? "text-[var(--brand-primary)]"
                   : "text-foreground"
               )}
             >
-              {slide.headline}
+              {headline}
             </h1>
 
             {/* Subtext */}
-            {slide.subtext && (
+            {subtext && (
               <p
                 className={cn(
                   "mt-6 text-xl md:text-2xl",
-                  slide.emphasis === "solution"
+                  slideConfig.emphasis === "solution"
                     ? "text-foreground/80"
                     : "text-muted-foreground"
                 )}
               >
-                {slide.subtext}
+                {subtext}
               </p>
             )}
 
@@ -216,18 +205,18 @@ export default function LandingPage() {
                   }}
                   className={cn(
                     "inline-flex items-center gap-3 px-8 py-4",
-                    "bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]",
+                    "bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)]",
                     "text-white text-lg font-medium",
                     "rounded-xl shadow-lg hover:shadow-xl",
                     "transform hover:-translate-y-0.5",
                     "transition-all duration-200"
                   )}
                 >
-                  Prova l'editor
+                  {t("cta.tryEditor")}
                   <ArrowRight className="h-5 w-5" />
                 </button>
                 <p className="mt-4 text-sm text-muted-foreground">
-                  Gratis. Nessuna registrazione richiesta.
+                  {t("cta.freeNoRegistration")}
                 </p>
               </div>
             )}
@@ -240,7 +229,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Slide Indicators */}
           <div className="flex items-center gap-2">
-            {SLIDES.map((_, index) => (
+            {SLIDES_CONFIG.map((_, index) => (
               <button
                 key={index}
                 onClick={(e) => {
@@ -250,10 +239,10 @@ export default function LandingPage() {
                 className={cn(
                   "h-2 rounded-full transition-all duration-300",
                   index === currentSlide
-                    ? "w-8 bg-[var(--brand-primary)]"
+                    ? "w-8 bg-(--brand-primary)"
                     : "w-2 bg-[var(--border-emphasis)] hover:bg-muted-foreground"
                 )}
-                aria-label={`Vai alla slide ${index + 1}`}
+                aria-label={t("navigation.goToSlide", { number: index + 1 })}
               />
             ))}
           </div>
@@ -261,7 +250,9 @@ export default function LandingPage() {
           {/* Next hint - hidden on last slide */}
           {!isLastSlide && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground animate-pulse">
-              <span className="hidden sm:inline">Clicca o premi spazio</span>
+              <span className="hidden sm:inline">
+                {t("navigation.clickOrPressSpace")}
+              </span>
               <ChevronDown className="h-4 w-4 rotate-[-90deg]" />
             </div>
           )}
@@ -271,11 +262,11 @@ export default function LandingPage() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                goToSlide(SLIDES.length - 1);
+                goToSlide(SLIDES_CONFIG.length - 1);
               }}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              Salta
+              {t("navigation.skip")}
             </button>
           )}
         </div>

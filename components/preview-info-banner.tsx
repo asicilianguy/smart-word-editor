@@ -57,7 +57,7 @@ export function PreviewInfoBanner({ className }: PreviewInfoBannerProps) {
         </p>
         <button
           onClick={handleDismiss}
-          className="ml-auto p-1 rounded-md hover:bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] transition-colors"
+          className="ml-auto p-1 rounded-md hover:bg-(--brand-primary)/10 text-[var(--brand-primary)] transition-colors"
           aria-label="Chiudi banner"
         >
           <X className="h-4 w-4" />

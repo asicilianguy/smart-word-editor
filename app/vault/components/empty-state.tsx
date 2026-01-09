@@ -10,7 +10,7 @@ interface EmptyStateProps {
 export function EmptyState({ onAddClick }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
-      <div className="w-16 h-16 rounded-2xl bg-[var(--brand-primary)]/10 flex items-center justify-center mb-6">
+      <div className="w-16 h-16 rounded-2xl bg-(--brand-primary)/10 flex items-center justify-center mb-6">
         <Database className="h-8 w-8 text-[var(--brand-primary)]" />
       </div>
 
@@ -26,7 +26,7 @@ export function EmptyState({ onAddClick }: EmptyStateProps) {
       <div className="flex flex-col sm:flex-row gap-3">
         <Button
           onClick={onAddClick}
-          className="gap-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] text-white"
+          className="gap-2 bg-(--brand-primary) hover:bg-[var(--brand-primary-hover)] text-white"
         >
           <Plus className="h-5 w-5" />
           Aggiungi manualmente

@@ -70,7 +70,7 @@ export function FileDropZone({
       className={cn(
         "relative border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all",
         isDragOver
-          ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/5 scale-[1.02]"
+          ? "border-[var(--brand-primary)] bg-(--brand-primary)/5 scale-[1.02]"
           : "border-muted-foreground/25 hover:border-[var(--brand-primary)]/50 hover:bg-muted/50",
         disabled && "pointer-events-none opacity-50"
       )}
@@ -89,7 +89,7 @@ export function FileDropZone({
         <div
           className={cn(
             "h-12 w-12 rounded-xl flex items-center justify-center transition-colors",
-            isDragOver ? "bg-[var(--brand-primary)]/20" : "bg-muted"
+            isDragOver ? "bg-(--brand-primary)/20" : "bg-muted"
           )}
         >
           <Upload

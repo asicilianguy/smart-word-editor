@@ -1,0 +1,48 @@
+{
+  "common": {},
+  "auth": {},
+  "landing": {
+    "header": {
+      "alreadyHaveAccount": "Hai già un account?",
+      "login": "Accedi"
+    },
+    "slides": {
+      "1": {
+        "headline": "Stanco di compilare documenti con sempre gli stessi dati?"
+      },
+      "2": {
+        "headline": "Nome, cognome, indirizzo, codice fiscale...",
+        "subtext": "Ancora. E ancora. E ancora."
+      },
+      "3": {
+        "headline": "E quando sbagli una virgola?",
+        "subtext": "Riconverti. Ricorreggi. Riscarica. Da capo."
+      },
+      "4": {
+        "headline": "Non ti serve qualcuno che faccia il lavoro al posto tuo.",
+        "subtext": "Ti serve qualcuno che ti aiuti a farlo meglio. Senza perdere il controllo."
+      },
+      "5": {
+        "headline": "Datti una chance.",
+        "subtext": "Provalo. È più semplice di quanto pensi."
+      }
+    },
+    "cta": {
+      "tryEditor": "Prova l'editor",
+      "freeNoRegistration": "Gratis. Nessuna registrazione richiesta."
+    },
+    "navigation": {
+      "clickOrPressSpace": "Clicca o premi spazio",
+      "skip": "Salta",
+      "goToSlide": "Vai alla slide {number}"
+    }
+  },
+  "editor": {},
+  "myData": {},
+  "import": {},
+  "sidebar": {},
+  "download": {},
+  "compare": {},
+  "errors": {},
+  "footer": {}
+}

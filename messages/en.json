@@ -1,0 +1,48 @@
+{
+  "common": {},
+  "auth": {},
+  "landing": {
+    "header": {
+      "alreadyHaveAccount": "Already have an account?",
+      "login": "Log in"
+    },
+    "slides": {
+      "1": {
+        "headline": "Tired of filling out documents with the same data over and over?"
+      },
+      "2": {
+        "headline": "Name, surname, address, tax code...",
+        "subtext": "Again. And again. And again."
+      },
+      "3": {
+        "headline": "And when you make a tiny mistake?",
+        "subtext": "Reconvert. Refix. Redownload. Start over."
+      },
+      "4": {
+        "headline": "You don't need someone to do the work for you.",
+        "subtext": "You need someone to help you do it better. Without losing control."
+      },
+      "5": {
+        "headline": "Give yourself a chance.",
+        "subtext": "Try it. It's easier than you think."
+      }
+    },
+    "cta": {
+      "tryEditor": "Try the editor",
+      "freeNoRegistration": "Free. No registration required."
+    },
+    "navigation": {
+      "clickOrPressSpace": "Click or press space",
+      "skip": "Skip",
+      "goToSlide": "Go to slide {number}"
+    }
+  },
+  "editor": {},
+  "myData": {},
+  "import": {},
+  "sidebar": {},
+  "download": {},
+  "compare": {},
+  "errors": {},
+  "footer": {}
+}
